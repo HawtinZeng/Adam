@@ -3,12 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@stylexjs/stylex": "^0.5.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.28",
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
+    "typescript": "^5.4.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -37,6 +43,11 @@
     ]
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "@craco/types": "^7.1.0",
+    "@stylexjs/babel-plugin": "^0.5.1",
+    "@stylexjs/eslint-plugin": "^0.5.1",
+    "@stylexjs/webpack-plugin": "^0.5.1",
     "cross-env": "^7.0.3",
     "electron": "^29.1.4",
     "electron-builder": "^24.13.3",

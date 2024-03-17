@@ -1,12 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
+import React from "react";
 
-const ipcRenderer  = window.ipcRenderer;
-const setTranspanrent = () => ipcRenderer.send('set-ignore-mouse-events', true, { forward: true })
-const unsetTranspanrent = () => ipcRenderer.send('set-ignore-mouse-events', false)
+const ipcRenderer = (window as any).ipcRenderer;
 
-function App()  {
-    return (
+const setTranspanrent = () => {
+  ipcRenderer.send("set-ignore-mouse-events", true, { forward: true });
+};
+const unsetTranspanrent = () =>
+  ipcRenderer.send("set-ignore-mouse-events", false);
+
+function App() {
+  return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
