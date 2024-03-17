@@ -15,7 +15,8 @@
     "preinstall": "npx only-allow pnpm",
     "start:electron": "cross-env PORT=5000 electron ./main.js",
     "start:react": "cross-env BROWSER=none PORT=5000 react-scripts start",
-    "re": "concurrently \"npm:start:react\" \"npm:start:electron\""
+    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js",
+    "re": "nf start"
   },
   "eslintConfig": {
     "extends": [
@@ -36,10 +37,10 @@
     ]
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^29.1.4",
     "electron-builder": "^24.13.3",
-    "electron-is-dev": "^3.0.1"
+    "electron-is-dev": "^3.0.1",
+    "foreman": "^3.0.1"
   }
 }

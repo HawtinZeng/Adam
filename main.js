@@ -10,9 +10,13 @@ const createWindow = () => {
     frame: false,
     titleBarStyle: 'hidden',
     transparent: true,
+    alwaysOnTop: true,
     webPreferences: {
-      nodeIntegration: true
-      }
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,   // 允許在 Render Process 使用 Remote Module
+      preload: path.join(__dirname, './preload.js'),
+    }
   })
   const servePort = process.env.PORT ?? 3000
   const startURL = isDev
