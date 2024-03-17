@@ -7,8 +7,10 @@ const createWindow = () => {
   console.log("createWindow");
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
-    width,
-    height,
+    width: 500,
+    height: 700,
+    x: width - 500,
+    y: 0,
     frame: false,
     titleBarStyle: "hidden",
     transparent: true,
@@ -16,7 +18,6 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true, // 允許在 Render Process 使用 Remote Module
       preload: path.join(__dirname, "./preload.js"),
     },
   });
@@ -30,8 +31,6 @@ const createWindow = () => {
 
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  console.log(ignore);
-  console.log(options);
   win.setIgnoreMouseEvents(ignore, options);
 });
 

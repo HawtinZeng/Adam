@@ -1,32 +1,23 @@
-import logo from "./logo.svg";
-import "./App.css";
 import React from "react";
+import MainMenu from "./MainMenu";
+import * as stylex from "@stylexjs/stylex";
+import { setTranspanrent } from "./commonUtils";
 
-const ipcRenderer = (window as any).ipcRenderer;
-
-const setTranspanrent = () => {
-  ipcRenderer.send("set-ignore-mouse-events", true, { forward: true });
-};
-const unsetTranspanrent = () =>
-  ipcRenderer.send("set-ignore-mouse-events", false);
-
+const styles = stylex.create({
+  root: {
+    height: "100vh",
+    border: "5px solid red",
+    display: "flex",
+    justifyContent: "right",
+    alignItems: "center",
+    paddingRight: "20px",
+  },
+});
 function App() {
+  // setTranspanrent();
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p onMouseEnter={unsetTranspanrent} onMouseLeave={setTranspanrent}>
-          don't clickThrought
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div {...stylex.props(styles.root)}>
+      <MainMenu></MainMenu>
     </div>
   );
 }
