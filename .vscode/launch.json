@@ -11,7 +11,8 @@
         "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/electron.cmd"
       },
       "program": "${workspaceRoot}/main.js",
-      "protocol": "inspector"
+      "protocol": "inspector",
+      "port": 5000,
     },
     {
       "name": "Debug Renderer Process",
