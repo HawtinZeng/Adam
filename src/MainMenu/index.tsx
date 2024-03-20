@@ -5,14 +5,7 @@
 // import save from "../images/svgs/save.svg";
 // import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
 import { computePosition, flip } from "@floating-ui/dom";
-import React, {
-  Component,
-  EventHandler,
-  createRef,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { Component, useRef, useState } from "react";
 import { ReactSVG } from "react-svg";
 import stylex from "@stylexjs/stylex";
 import Draggable from "react-draggable";
@@ -30,11 +23,8 @@ import { SizeSlider } from "../SizeSlider";
 import { ShapePanel } from "../ShapePanel";
 import { ScreenShotPanel } from "../ScreenShotPanel";
 import { SettingsPanel } from "../SettingsPanel";
-interface IMenu {
-  selectedKey: number;
-  activeSelectedKey: number;
-}
-const styles = stylex.create({
+import { Menu } from "../components/Menu";
+export const mainStyles = stylex.create({
   root: {
     backgroundColor: "#ffffff",
     borderRadius: "32px",
@@ -71,8 +61,18 @@ const styles = stylex.create({
     position: "absolute",
     background: "gray",
   },
+  selectedArrow: (isShow) => ({
+    position: "absolute",
+    width: "10px",
+    height: "10px",
+    borderTop: "5px solid transparent",
+    borderBottom: "5px solid transparent",
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid #00a82f",
+    visibility: isShow ? "visible" : "hidden",
+  }),
 });
-const btnConfigs = [
+const configs = [
   {
     label: "画笔",
     svg: pen,
@@ -129,98 +129,54 @@ const btnConfigs = [
   },
 ];
 
-class MainMenu extends Component {
-  isDragging = false;
-  state: IMenu = {
-    selectedKey: -1,
-    activeSelectedKey: -1,
-  };
-  render() {
-    const btnsMark: JSX.Element[] = [];
-    for (let i = 0; i < btnConfigs.length; i++) {
-      btnsMark.push(
-        <div
-          {...stylex.props(
-            styles.btnArea,
-            this.state.selectedKey === i ? styles.selectedBtnArea : null
-          )}
-          key={i}
-          id="btn"
-          onClick={() => {
-            this.setState({
-              selectedKey: i,
-            });
-          }}
-          onMouseEnter={(evt) => {
-            this.setState({
-              activeSelectedKey: i,
-            });
-          }}
-        >
-          <div {...stylex.props(styles.center)} id={`btnGrp-${i}`}>
-            <ReactSVG
-              src={btnConfigs[i].svg}
-              useRequestCache={true}
-              beforeInjection={(svg) => {
-                if (this.state.selectedKey === i) {
-                  svg
-                    .getElementsByTagName("path")[0]
-                    .setAttribute("fill", "#ffffff");
-                }
-              }}
-            />
-          </div>
-        </div>
-      );
-    }
-    return (
-      <>
-        <Draggable
-          cancel="#btn"
-          onDrag={() => {
-            this.isDragging = true;
-          }}
-          onStop={() => {
-            if (this.isDragging) {
-              this.isDragging = false;
-            }
-          }}
-        >
-          <div
-            {...stylex.props(styles.root)}
-            // onMouseEnter={unsetTranspanrent}
-            // onMouseLeave={() => {
-            //   if (!this.isDragging) {
-            //     setTranspanrent();
-            //   }
-            // }}
-          >
-            {btnsMark}
-          </div>
-        </Draggable>
-        <div {...stylex.props(styles.subMenu)} id="subMenu">
-          {btnConfigs[this.state.activeSelectedKey]?.subMenu?.()}
-        </div>
-      </>
-    );
-  }
-  componentDidUpdate(prevState: Readonly<IMenu>): void {
-    if (prevState.activeSelectedKey !== this.state.activeSelectedKey) {
-      const reference = document.getElementById(
-        `btnGrp-${this.state.activeSelectedKey}`
-      );
-      const floating = document.getElementById("subMenu");
-      if (!reference || !floating) return;
-      computePosition(reference, floating, {
-        placement: "left",
-        middleware: [flip()],
-      }).then(({ x, y }) => {
-        Object.assign(floating.style, {
-          top: `${y}px`,
-          left: `${x - 20}px`,
-        });
-      });
-    }
-  }
+export function MainMenu() {
+  const isDragging = false;
+  const btnRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [selectedKey, setSelectedKey] = useState(-1);
+  const [hoveredKey, setHoveredKey] = useState(-1);
+  return (
+    <>
+      <Menu
+        btnConfigs={configs}
+        setParentHoverKey={setHoveredKey}
+        setParentSelectedKey={setSelectedKey}
+        genBtnRef={(node: HTMLDivElement | null) =>
+          (btnRefs.current[btnRefs.current.length] = node)
+        }
+      />
+      <div {...stylex.props(mainStyles.subMenu)} id="subMenu">
+        {/* {configs[this.state.hoveredKey]?.subMenu?.()} */}
+      </div>
+    </>
+  );
+  // componentDidUpdate(prevState: Readonly<IMenu>): void {
+  // if (prevState.hoveredKey !== this.state.hoveredKey) {
+  //   const reference = document.getElementById(
+  //     `btnGrp-${this.state.hoveredKey}`
+  //   );
+  //   const subMenu = document.getElementById("subMenu");
+  //   const arrow = document.getElementById("selectedArrow");
+  //   if (!reference || !subMenu) return;
+  //   computePosition(reference, subMenu, {
+  //     placement: "left",
+  //     middleware: [flip()],
+  //   }).then(({ x, y }) => {
+  //     Object.assign(subMenu.style, {
+  //       top: `${y}px`,
+  //       left: `${x - 20}px`,
+  //     });
+  //   });
+  //   if (!arrow) return;
+  //   computePosition(reference, arrow, {
+  //     placement: "left",
+  //   }).then(({ x, y }) => {
+  //     if (this.state.hoveredKey === this.state.selectedKey)
+  //       Object.assign(arrow.style, {
+  //         top: `${y}px`,
+  //         left: `${x - 2}px`,
+  //       });
+  //   });
+  // }
+  // }
 }
 export default MainMenu;
