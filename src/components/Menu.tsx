@@ -1,10 +1,9 @@
-import React, { MutableRefObject, useEffect, useState } from "react";
+import React, { MutableRefObject, useEffect, useRef, useState } from "react";
 import { Component } from "react";
 import Draggable from "react-draggable";
-
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
-
+import { unsetTranspanrent, setTranspanrent } from "../commonUtils";
 export const mainStyles = stylex.create({
   root: {
     backgroundColor: "#ffffff",
@@ -39,17 +38,17 @@ export const mainStyles = stylex.create({
     backgroundColor: "#4b4f52",
   },
   subMenu: {
-    position: "absolute",
-    background: "gray",
+    background: "#3c4043",
   },
   selectedArrow: (isShow) => ({
     position: "absolute",
+    left: "-3%",
     width: "10px",
     height: "10px",
     borderTop: "5px solid transparent",
     borderBottom: "5px solid transparent",
     borderLeft: "5px solid transparent",
-    borderRight: "5px solid #00a82f",
+    borderRight: "5px solid #80868b",
     visibility: isShow ? "visible" : "hidden",
   }),
 });
@@ -62,12 +61,13 @@ export function Menu(props: {
   }>;
   setParentHoverKey: ((k: number) => void) | null;
   setParentSelectedKey: ((k: number) => void) | null;
-  genBtnRef: (node: HTMLDivElement | null) => HTMLDivElement | null;
+  setBtnsRef: (node: HTMLDivElement[]) => void;
 }) {
   let isDragging = false;
-  const { setParentSelectedKey, setParentHoverKey, genBtnRef } = props;
+  const { setParentSelectedKey, setParentHoverKey, setBtnsRef } = props;
   const [selectedKey, setSelectedKey] = useState(-1);
   const [hoveredKey, setHoveredKey] = useState(-1);
+
   const btnsMark: JSX.Element[] = [];
   const { btnConfigs } = props;
   useEffect(() => {
@@ -77,6 +77,7 @@ export function Menu(props: {
   useEffect(() => setSelectedKey?.(selectedKey), [selectedKey]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setParentHoverKey?.(hoveredKey), [hoveredKey]);
+  const nodes: HTMLDivElement[] = [];
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
       <div
@@ -92,9 +93,13 @@ export function Menu(props: {
         onMouseEnter={(evt) => {
           setHoveredKey(i);
         }}
-        ref={(node) => genBtnRef(node)}
+        ref={(node) => node && nodes.push(node)}
       >
-        <div {...stylex.props(mainStyles.center)} id={`btnGrp-${i}`}>
+        <div
+          {...stylex.props(mainStyles.center)}
+          onMouseEnter={unsetTranspanrent}
+          onMouseLeave={setTranspanrent}
+        >
           <ReactSVG
             src={btnConfigs[i].svg}
             useRequestCache={true}
@@ -106,11 +111,17 @@ export function Menu(props: {
               }
             }}
           />
+          <span
+            {...stylex.props(
+              mainStyles.selectedArrow(btnConfigs[i].subMenu !== null)
+            )}
+            id="selectedArrow"
+          ></span>
         </div>
       </div>
     );
   }
-
+  setBtnsRef(nodes);
   return (
     <>
       <Draggable
@@ -126,10 +137,6 @@ export function Menu(props: {
       >
         <div {...stylex.props(mainStyles.root)}>{btnsMark}</div>
       </Draggable>
-      <span
-        {...stylex.props(mainStyles.selectedArrow(selectedKey !== -1))}
-        id="selectedArrow"
-      ></span>
     </>
   );
 }

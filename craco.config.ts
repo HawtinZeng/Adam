@@ -1,4 +1,5 @@
 import styleXPlugin from "@stylexjs/babel-plugin";
+import path from "path";
 const StylexPlugin = require("@stylexjs/webpack-plugin");
 module.exports = {
   babel: {
@@ -23,6 +24,9 @@ module.exports = {
     ],
   },
   webpack: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+    },
     plugins: (webpackConfig, { env, paths }) => {
       return [
         // Ensure that the stylex plugin is used before Babel

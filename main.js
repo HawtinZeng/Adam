@@ -1,16 +1,20 @@
+const {
+  default: installExtension,
+  REACT_DEVELOPER_TOOLS,
+} = require("electron-devtools-installer");
+// import installExtension, { REDUX_DEVTOOLS } from "electron-devtools-installer";
 const { screen } = require("electron");
 const { ipcMain } = require("electron");
 const { app, BrowserWindow } = require("electron/main");
 const path = require("path");
 const isDev = import("electron-is-dev");
 const createWindow = () => {
-  console.log("createWindow");
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
     width: 500,
     height: 700,
     x: width - 500,
-    y: 0,
+    y: 600,
     frame: false,
     titleBarStyle: "hidden",
     transparent: true,
@@ -42,6 +46,10 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+
+  installExtension(REACT_DEVELOPER_TOOLS)
+    .then((name) => console.log(`Added Extension:  ${name}`))
+    .catch((err) => console.log("An error occurred: ", err));
 });
 
 app.on("window-all-closed", () => {

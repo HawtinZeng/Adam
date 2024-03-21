@@ -1,7 +1,7 @@
 import React from "react";
 import MainMenu from "./MainMenu";
 import * as stylex from "@stylexjs/stylex";
-import { setTranspanrent } from "./commonUtils";
+import { setTranspanrent, unsetTranspanrent } from "./commonUtils";
 
 const styles = stylex.create({
   root: {
@@ -14,7 +14,7 @@ const styles = stylex.create({
   },
 });
 function App() {
-  // setTranspanrent();
+  setTranspanrent();
   return (
     <div {...stylex.props(styles.root)}>
       <MainMenu></MainMenu>

@@ -5,7 +5,7 @@
 // import save from "../images/svgs/save.svg";
 // import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
 import { computePosition, flip } from "@floating-ui/dom";
-import React, { Component, useRef, useState } from "react";
+import React, { Component, useEffect, useRef, useState } from "react";
 import { ReactSVG } from "react-svg";
 import stylex from "@stylexjs/stylex";
 import Draggable from "react-draggable";
@@ -24,6 +24,7 @@ import { ShapePanel } from "../ShapePanel";
 import { ScreenShotPanel } from "../ScreenShotPanel";
 import { SettingsPanel } from "../SettingsPanel";
 import { Menu } from "../components/Menu";
+import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
 export const mainStyles = stylex.create({
   root: {
     backgroundColor: "#ffffff",
@@ -131,52 +132,41 @@ const configs = [
 
 export function MainMenu() {
   const isDragging = false;
-  const btnRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const btnRefs = useRef<Array<HTMLDivElement>>([]);
   const [selectedKey, setSelectedKey] = useState(-1);
+  const [isShow, setIsShow] = useState(true);
   const [hoveredKey, setHoveredKey] = useState(-1);
+  useEffect(() => {
+    if (hoveredKey === -1 || selectedKey === -1) return;
+    const subMenu = document.getElementById("subMenu") as HTMLDivElement;
+    const reference = btnRefs.current[selectedKey];
+    computePosition(reference, subMenu, {
+      placement: "left",
+      middleware: [flip()],
+    }).then(({ x, y }) => {
+      Object.assign(subMenu.style, {
+        top: `${y}px`,
+        left: `${x - 20}px`,
+      });
+    });
+  }, [selectedKey]);
   return (
-    <>
+    <div>
       <Menu
         btnConfigs={configs}
         setParentHoverKey={setHoveredKey}
         setParentSelectedKey={setSelectedKey}
-        genBtnRef={(node: HTMLDivElement | null) =>
-          (btnRefs.current[btnRefs.current.length] = node)
-        }
+        setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
       />
-      <div {...stylex.props(mainStyles.subMenu)} id="subMenu">
-        {/* {configs[this.state.hoveredKey]?.subMenu?.()} */}
+      <div
+        {...stylex.props(mainStyles.subMenu)}
+        id="subMenu"
+        onMouseEnter={unsetTranspanrent}
+        onMouseLeave={setTranspanrent}
+      >
+        {configs[selectedKey]?.subMenu?.()}
       </div>
-    </>
+    </div>
   );
-  // componentDidUpdate(prevState: Readonly<IMenu>): void {
-  // if (prevState.hoveredKey !== this.state.hoveredKey) {
-  //   const reference = document.getElementById(
-  //     `btnGrp-${this.state.hoveredKey}`
-  //   );
-  //   const subMenu = document.getElementById("subMenu");
-  //   const arrow = document.getElementById("selectedArrow");
-  //   if (!reference || !subMenu) return;
-  //   computePosition(reference, subMenu, {
-  //     placement: "left",
-  //     middleware: [flip()],
-  //   }).then(({ x, y }) => {
-  //     Object.assign(subMenu.style, {
-  //       top: `${y}px`,
-  //       left: `${x - 20}px`,
-  //     });
-  //   });
-  //   if (!arrow) return;
-  //   computePosition(reference, arrow, {
-  //     placement: "left",
-  //   }).then(({ x, y }) => {
-  //     if (this.state.hoveredKey === this.state.selectedKey)
-  //       Object.assign(arrow.style, {
-  //         top: `${y}px`,
-  //         left: `${x - 2}px`,
-  //       });
-  //   });
-  // }
-  // }
 }
 export default MainMenu;
