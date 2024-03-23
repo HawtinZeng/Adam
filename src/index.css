@@ -9,3 +9,6 @@ body,
 header {
   height: 100%;
 }
+body {
+  overflow: hidden; /* Hide scrollbars */
+}

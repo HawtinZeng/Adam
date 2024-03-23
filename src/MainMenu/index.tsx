@@ -19,48 +19,16 @@ import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
 import { NotePanel } from "../NotePanel";
+import { PenPanel } from "../PenPanel";
 import { SizeSlider } from "../SizeSlider";
 import { ShapePanel } from "../ShapePanel";
 import { ScreenShotPanel } from "../ScreenShotPanel";
 import { SettingsPanel } from "../SettingsPanel";
-import { Menu } from "../components/Menu";
+import { BtnConfigs, Menu } from "../components/Menu";
 import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
-export const mainStyles = stylex.create({
-  root: {
-    backgroundColor: "#ffffff",
-    borderRadius: "32px",
-    border: "2px solid #898989",
-    padding: "9px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  center: {
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnArea: {
-    height: "46px",
-    width: "46px",
-    marginBottom: {
-      default: "10px",
-      ":last-child": "0px",
-    },
-    borderRadius: "50%",
-    backgroundColor: {
-      default: "#ffffff",
-      ":hover": "#eaeaeb",
-    },
-  },
-  selectedBtnArea: {
-    backgroundColor: "#4b4f52",
-  },
+export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
-    background: "gray",
   },
   selectedArrow: (isShow) => ({
     position: "absolute",
@@ -73,68 +41,63 @@ export const mainStyles = stylex.create({
     visibility: isShow ? "visible" : "hidden",
   }),
 });
-const configs = [
+const configs: BtnConfigs = [
   {
     label: "画笔",
     svg: pen,
     key: "pen",
-    subMenu: NotePanel,
+    subMenu: <PenPanel />,
   },
   {
     label: "橡皮",
     svg: eraser,
     key: "eraser",
-    subMenu: SizeSlider,
+    subMenu: <SizeSlider />,
   },
   {
     label: "选择",
     svg: arrow,
     key: "arrow",
-    subMenu: null,
   },
   {
     label: "便签",
     svg: note,
     key: "note",
-    subMenu: NotePanel,
+    subMenu: <NotePanel />,
   },
   {
     label: "图片",
     svg: image,
     key: "image",
-    subMenu: null,
   },
   {
     label: "圆圈",
     svg: circle,
     key: "circle",
-    subMenu: ShapePanel,
+    subMenu: <ShapePanel />,
   },
   {
     label: "文字",
     svg: textArea,
     key: "textArea",
-    subMenu: null,
   },
   {
     label: "截屏",
     svg: screenShot,
     key: "screenShot",
-    subMenu: ScreenShotPanel,
+    subMenu: <ScreenShotPanel />,
   },
   {
     label: "设置",
     svg: settings,
     key: "settings",
-    subMenu: SettingsPanel,
+    subMenu: <SettingsPanel />,
   },
 ];
 
 export function MainMenu() {
-  const isDragging = false;
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
   const [selectedKey, setSelectedKey] = useState(-1);
-  const [isShow, setIsShow] = useState(true);
   const [hoveredKey, setHoveredKey] = useState(-1);
   useEffect(() => {
     if (hoveredKey === -1 || selectedKey === -1) return;
@@ -159,12 +122,12 @@ export function MainMenu() {
         setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
       />
       <div
-        {...stylex.props(mainStyles.subMenu)}
+        {...stylex.props(mainMenu.subMenu)}
         id="subMenu"
         onMouseEnter={unsetTranspanrent}
         onMouseLeave={setTranspanrent}
       >
-        {configs[selectedKey]?.subMenu?.()}
+        {configs[selectedKey]?.subMenu}
       </div>
     </div>
   );

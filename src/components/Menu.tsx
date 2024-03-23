@@ -1,10 +1,16 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
-import { Component } from "react";
+import React, { useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import stylex from "@stylexjs/stylex";
-import { ReactSVG } from "react-svg";
 import { unsetTranspanrent, setTranspanrent } from "../commonUtils";
-export const mainStyles = stylex.create({
+import { Btn } from "./Btn";
+
+export type BtnConfigs = Array<{
+  label: string;
+  svg: any;
+  key: string;
+  subMenu?: JSX.Element | null;
+}>;
+export const menuStyles = stylex.create({
   root: {
     backgroundColor: "#ffffff",
     borderRadius: "32px",
@@ -24,21 +30,26 @@ export const mainStyles = stylex.create({
   btnArea: {
     height: "46px",
     width: "46px",
-    marginBottom: {
-      default: "10px",
-      ":last-child": "0px",
-    },
     borderRadius: "50%",
     backgroundColor: {
       default: "#ffffff",
       ":hover": "#eaeaeb",
     },
   },
+  verticalGap: {
+    marginBottom: {
+      default: "10px",
+      ":last-child": "0px",
+    },
+  },
+  horizontalGap: {
+    marginRight: {
+      default: "10px",
+      ":last-child": "0px",
+    },
+  },
   selectedBtnArea: {
     backgroundColor: "#4b4f52",
-  },
-  subMenu: {
-    background: "#3c4043",
   },
   selectedArrow: (isShow) => ({
     position: "absolute",
@@ -53,12 +64,7 @@ export const mainStyles = stylex.create({
   }),
 });
 export function Menu(props: {
-  btnConfigs: Array<{
-    label: string;
-    svg: any;
-    key: string;
-    subMenu: (() => JSX.Element) | null;
-  }>;
+  btnConfigs: BtnConfigs;
   setParentHoverKey: ((k: number) => void) | null;
   setParentSelectedKey: ((k: number) => void) | null;
   setBtnsRef: (node: HTMLDivElement[]) => void;
@@ -68,8 +74,15 @@ export function Menu(props: {
   const [selectedKey, setSelectedKey] = useState(-1);
   const [hoveredKey, setHoveredKey] = useState(-1);
 
-  const btnsMark: JSX.Element[] = [];
   const { btnConfigs } = props;
+  const btnsMark = Btn(
+    setSelectedKey,
+    selectedKey,
+    btnConfigs,
+    setBtnsRef,
+    setHoveredKey,
+    true
+  );
   useEffect(() => {
     setParentSelectedKey?.(selectedKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,51 +90,6 @@ export function Menu(props: {
   useEffect(() => setSelectedKey?.(selectedKey), [selectedKey]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setParentHoverKey?.(hoveredKey), [hoveredKey]);
-  const nodes: HTMLDivElement[] = [];
-  for (let i = 0; i < btnConfigs.length; i++) {
-    btnsMark.push(
-      <div
-        {...stylex.props(
-          mainStyles.btnArea,
-          selectedKey === i ? mainStyles.selectedBtnArea : null
-        )}
-        key={i}
-        id="btn"
-        onClick={() => {
-          setSelectedKey(i);
-        }}
-        onMouseEnter={(evt) => {
-          setHoveredKey(i);
-        }}
-        ref={(node) => node && nodes.push(node)}
-      >
-        <div
-          {...stylex.props(mainStyles.center)}
-          onMouseEnter={unsetTranspanrent}
-          onMouseLeave={setTranspanrent}
-        >
-          <ReactSVG
-            src={btnConfigs[i].svg}
-            useRequestCache={true}
-            beforeInjection={(svg) => {
-              if (selectedKey === i) {
-                svg
-                  .getElementsByTagName("path")[0]
-                  .setAttribute("fill", "#ffffff");
-              }
-            }}
-          />
-          <span
-            {...stylex.props(
-              mainStyles.selectedArrow(btnConfigs[i].subMenu !== null)
-            )}
-            id="selectedArrow"
-          ></span>
-        </div>
-      </div>
-    );
-  }
-  setBtnsRef(nodes);
   return (
     <>
       <Draggable
@@ -135,7 +103,13 @@ export function Menu(props: {
           }
         }}
       >
-        <div {...stylex.props(mainStyles.root)}>{btnsMark}</div>
+        <div
+          onMouseEnter={unsetTranspanrent}
+          onMouseLeave={() => !isDragging && setTranspanrent()}
+          {...stylex.props(menuStyles.root)}
+        >
+          {btnsMark}
+        </div>
       </Draggable>
     </>
   );
