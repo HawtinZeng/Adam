@@ -7,13 +7,14 @@ const staticCvsSte = stylex.create({
     backgroundColor: "green",
   }
 })
-export function StaticCanvas() {
+type InteractiveCanvasProps = {
+
+}
+export function DrawCanvas() {
   const cvsRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cvs = cvsRef.current!;
     const ctx = cvs.getContext('2d')!;
-    ctx.lineWidth = 10;
-    ctx.strokeRect(0, 0, 150, 110);
   });
-  return <canvas ref={cvsRef} {...stylex.props(staticCvsSte.container)}></canvas>
+  return <canvas ref={props.tranferCvs} {...stylex.props(staticCvsSte.container)}></canvas>
 }

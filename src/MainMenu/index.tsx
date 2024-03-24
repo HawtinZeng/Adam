@@ -4,7 +4,7 @@
 // import laser from "../images/svgs/laser.svg";
 // import save from "../images/svgs/save.svg";
 // import { setTransparent, unsetTransparent } from "../commonUtils";
-import { computePosition } from "@floating-ui/dom";
+import { computePosition, flip } from "@floating-ui/dom";
 import React, { useEffect, useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
 import pen from "../images/svgs/pen.svg";
@@ -109,7 +109,7 @@ export function MainMenu() {
 
     computePosition(reference, subMenuRef.current, {
       placement: "left",
-      middleware: [],
+      middleware: [flip()],
     }).then(({ x, y }) => {
       Object.assign(subMenuRef!.current!.style, {
         top: `${y}px`,

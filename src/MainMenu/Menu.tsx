@@ -1,4 +1,4 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Btn } from "../components/Btn";
 import { DraggableTransparent } from "../components/DraggableTransparent";
 import { Point } from "../Utils/Data/geometry";
@@ -38,7 +38,7 @@ export function Menu(props: {
   useEffect(() => {
     const eleWid = menuRef.current?.clientWidth ?? 0;
     const eleHei = menuRef.current?.clientHeight ?? 0;
-    // setDefaultPosition(new Point(window.innerWidth - eleWid - 20,window.innerHeight / 2 - eleHei / 2));
+    setDefaultPosition(new Point(window.innerWidth - eleWid - 20,window.innerHeight / 2 - eleHei / 2));
   }, [])
   
   return (
