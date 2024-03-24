@@ -1,7 +1,58 @@
 import React from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
-import { BtnConfigs, menuStyles } from "../MainMenu/Menu";
+import { BtnConfigs } from "../MainMenu/Menu";
+
+export const btn = stylex.create({
+  btnArea: {
+    height: "46px",
+    width: "46px",
+    borderRadius: "50%",
+    backgroundColor: {
+      default: "#ffffff",
+      ":hover": "#eaeaeb",
+    },
+  },
+  selectedBtnArea: {
+    backgroundColor: "#4b4f52",
+  },
+  selectedBtnAreaBk: {
+    backgroundColor: "#eaeaeb",
+  },
+  verticalGap: {
+    marginBottom: {
+      default: "10px",
+      ":last-child": "0px",
+    },
+  },
+  horizontalGap: {
+    marginRight: {
+      default: "10px",
+      ":last-child": "0px",
+    },
+  },
+  selectedArrow: (isShow) => ({
+    position: "absolute",
+    left: "-3%",
+    width: "10px",
+    height: "10px",
+    borderTop: "5px solid transparent",
+    borderBottom: "5px solid transparent",
+    borderLeft: "5px solid transparent",
+    borderRight: "5px solid #80868b",
+    visibility: isShow ? "visible" : "hidden",
+  }),
+  redCircle: {
+    backgroundColor: 'red',
+    borderRadius: '50%',
+  },
+  center: {
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
 
 export function Btn(
   setSelectedKey: React.Dispatch<React.SetStateAction<number>>,
@@ -19,9 +70,9 @@ export function Btn(
     btnsMark.push(
       <div
         {...stylex.props(
-          menuStyles.btnArea,
-          selectedKey === i ? (selectedStyle ==='turnBlack' ? menuStyles.selectedBtnArea : menuStyles.selectedBtnAreaBk) : null,
-          direction === "vertical" ? menuStyles.verticalGap : menuStyles.horizontalGap,
+          btn.btnArea,
+          selectedKey === i ? (selectedStyle ==='turnBlack' ? btn.selectedBtnArea : btn.selectedBtnAreaBk) : null,
+          direction === "vertical" ? btn.verticalGap : btn.horizontalGap,
         )}
         key={i}
         id="btn"
@@ -37,7 +88,7 @@ export function Btn(
         }}
         ref={(node) => node && nodes && nodes.push(node)}
       >
-        <div {...stylex.props(menuStyles.center)}>
+        <div {...stylex.props(btn.center)}>
           {btnConfigs[i].svg !== undefined ? <ReactSVG
             src={btnConfigs[i].svg}
             useRequestCache={true}
@@ -47,11 +98,11 @@ export function Btn(
                 .getElementsByTagName("path")[0]
                 .setAttribute("fill", "#ffffff");
               }
-            }} /> : <div {...stylex.props(menuStyles.redCircle)} />}
+            }} /> : <div {...stylex.props(btn.redCircle)} />}
           {needLeftArrow ? (
             <span
               {...stylex.props(
-                menuStyles.selectedArrow(btnConfigs[i].subMenu !== undefined)
+                btn.selectedArrow(btnConfigs[i].subMenu !== undefined)
               )}
               id="selectedArrow"
             ></span>) : null}

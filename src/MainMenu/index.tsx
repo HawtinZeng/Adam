@@ -4,11 +4,9 @@
 // import laser from "../images/svgs/laser.svg";
 // import save from "../images/svgs/save.svg";
 // import { setTransparent, unsetTransparent } from "../commonUtils";
-import { computePosition, flip } from "@floating-ui/dom";
-import React, { Component, useEffect, useRef, useState } from "react";
-import { ReactSVG } from "react-svg";
+import { computePosition } from "@floating-ui/dom";
+import React, { useEffect, useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
-import Draggable from "react-draggable";
 import pen from "../images/svgs/pen.svg";
 import eraser from "../images/svgs/eraser.svg";
 import arrow from "../images/svgs/arrow.svg";
@@ -19,14 +17,14 @@ import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
 import { NotePanel } from "../NotePanel";
-import { PenPanel, penPanelStyles } from "../PenPanel";
+import { PenPanel } from "../PenPanel";
 import { SizeSlider } from "../SizeSlider";
 import { ShapePanel } from "../ShapePanel";
 import { ScreenShotPanel } from "../ScreenShotPanel";
 import { SettingsPanel } from "../SettingsPanel";
-import { BtnConfigs, Menu, menuStyles } from "./Menu";
-import { setTransparent, unsetTransparent } from "../commonUtils";
+import { BtnConfigs, Menu } from "./Menu";
 import { DraggableTransparent } from "../components/DraggableTransparent";
+import { nanoid } from "nanoid";
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
@@ -95,46 +93,54 @@ const configs: BtnConfigs = [
     subMenu: <SettingsPanel />,
   },
 ];
-
 export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
+  const subMenuRef = useRef<HTMLElement>(null);
   const [selectedKey, setSelectedKey] = useState(-1);
   const [hoveredKey, setHoveredKey] = useState(-1);
-  useEffect(() => {
+
+
+  // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
+  const [subMenuDragCtrl, setSubMenuDragCtrl] = useState('');
+  function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
-    const subMenu = document.getElementById("subMenu");
     const reference = btnRefs.current[selectedKey];
-    if (!subMenu || !reference) return;
-    computePosition(reference, subMenu, {
+    if (!reference || !subMenuRef?.current) return;
+
+    computePosition(reference, subMenuRef.current, {
       placement: "left",
-      middleware: [flip()],
+      middleware: [],
     }).then(({ x, y }) => {
-      Object.assign(subMenu.style, {
+      Object.assign(subMenuRef!.current!.style, {
         top: `${y}px`,
         left: `${x - 20}px`,
       });
     });
+  }
+  useEffect(() => {
+    setSubMenuDragCtrl(nanoid());
   }, [selectedKey]);
+  useEffect(() => {
+    updateSubMenuPosition();
+  }, [subMenuDragCtrl]);
   return (
-    <div>
-      <Menu
-        btnConfigs={configs}
-        setParentHoverKey={setHoveredKey}
-        setParentSelectedKey={setSelectedKey}
-        setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
-      />
-      <div
-        {...stylex.props(mainMenu.subMenu)}// 子菜单绝对定位就不会占用父块的空间
-        key={selectedKey}
-        id="subMenu"
-      >{
-        selectedKey !== -1 && configs[selectedKey].subMenu !== undefined ? (
-          <DraggableTransparent horizontal={true}>
-              {configs[selectedKey].subMenu}
-          </DraggableTransparent>) : null
-      }
-      </div>
-    </div>
+    <>
+    <Menu
+      btnConfigs={configs}
+      setParentHoverKey={setHoveredKey}
+      setParentSelectedKey={setSelectedKey}
+      setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
+      onDrag={() => {
+        setSubMenuDragCtrl(nanoid())
+      }}
+    />{
+      selectedKey !== -1 && configs[selectedKey].subMenu !== undefined
+      ? (<DraggableTransparent horizontal={true} ref={subMenuRef} key={subMenuDragCtrl}>
+            {configs[selectedKey].subMenu}
+        </DraggableTransparent>)
+      : null
+    }
+    </>
   );
 }
 export default MainMenu;
