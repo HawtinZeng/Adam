@@ -5,12 +5,10 @@ process.env.ELECTRON_START_URL = `http://localhost:${port}`;
 
 const client = new net.Socket();
 
-console.log("tryConnection line 8");
 let startedElectron = false;
-console.log(port);
-const tryConnection = () =>
+const tryConnection = () => {
   client.connect({ port: port }, () => {
-    console.log("tryConnection");
+    console.log('try to connect to ' + port)
     client.end();
     if (!startedElectron) {
       console.log("starting electron");
@@ -19,10 +17,10 @@ const tryConnection = () =>
       exec("npm run start:electron");
     }
   });
+}
 
 tryConnection();
 
 client.on("error", (error) => {
-  console.log(error);
   setTimeout(tryConnection, 1000);
 });

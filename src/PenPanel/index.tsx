@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Draggable from "react-draggable";
-import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
+import { setTransparent, unsetTransparent } from "../commonUtils";
 import { mainMenu } from "../MainMenu";
-import { BtnConfigs, menuStyles } from "../components/Menu";
+import { BtnConfigs, menuStyles } from "../MainMenu/Menu";
 import stylex from "@stylexjs/stylex";
 import { Btn } from "../components/Btn";
 import pen from "../images/svgs/pen.svg"
@@ -10,10 +10,13 @@ import highlighterPen from "../images/svgs/highlighterPen.svg"
 import brush from "../images/svgs/brush.svg"
 import laser from "../images/svgs/laser.svg"
 
-const penPanelStyles = stylex.create({
+export const penPanelStyles = stylex.create({
   horizontalPanel: {
     flexDirection: "row",
-  }
+  },
+  corner: {
+    borderRadius: '5px',
+  },
 })
 const penConfigs: BtnConfigs = [
   {
@@ -39,25 +42,5 @@ const penConfigs: BtnConfigs = [
 ]
 export function PenPanel() {
   const [selectedKey, setSelectedKey] = useState(-1);
-  let isDragging = false;
-  return (
-  <Draggable
-    onDrag={() => {
-      isDragging = true;
-    }}
-    onStop={() => {
-      if (isDragging) {
-        isDragging = false;
-      }
-    }}
-  >
-    <div
-      onMouseEnter={unsetTranspanrent}
-      onMouseLeave={() => !isDragging && setTranspanrent()}
-      {...stylex.props(menuStyles.root, penPanelStyles.horizontalPanel)}
-    >
-      {Btn(setSelectedKey, selectedKey, penConfigs, undefined, undefined, undefined, "horizontal")}
-    </div>
-  </Draggable>
-  )
+  return Btn(setSelectedKey, selectedKey, penConfigs, undefined, undefined, undefined, "horizontal", "trunGrey")
 }

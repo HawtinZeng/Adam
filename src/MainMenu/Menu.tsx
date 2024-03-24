@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import stylex from "@stylexjs/stylex";
-import { unsetTranspanrent, setTranspanrent } from "../commonUtils";
-import { Btn } from "./Btn";
+import { unsetTransparent, setTransparent } from "../commonUtils";
+import { Btn } from "../components/Btn";
+import { DraggableTransparent } from "../components/DraggableTransparent";
 
 export type BtnConfigs = Array<{
   label: string;
@@ -51,6 +52,9 @@ export const menuStyles = stylex.create({
   selectedBtnArea: {
     backgroundColor: "#4b4f52",
   },
+  selectedBtnAreaBk: {
+    backgroundColor: "#eaeaeb",
+  },
   selectedArrow: (isShow) => ({
     position: "absolute",
     left: "-3%",
@@ -62,6 +66,10 @@ export const menuStyles = stylex.create({
     borderRight: "5px solid #80868b",
     visibility: isShow ? "visible" : "hidden",
   }),
+  redCircle: {
+    backgroundColor: 'red',
+    borderRadius: '50%',
+  }
 });
 export function Menu(props: {
   btnConfigs: BtnConfigs;
@@ -69,7 +77,6 @@ export function Menu(props: {
   setParentSelectedKey: ((k: number) => void) | null;
   setBtnsRef: (node: HTMLDivElement[]) => void;
 }) {
-  let isDragging = false;
   const { setParentSelectedKey, setParentHoverKey, setBtnsRef } = props;
   const [selectedKey, setSelectedKey] = useState(-1);
   const [hoveredKey, setHoveredKey] = useState(-1);
@@ -85,32 +92,12 @@ export function Menu(props: {
   );
   useEffect(() => {
     setParentSelectedKey?.(selectedKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKey]);
   useEffect(() => setSelectedKey?.(selectedKey), [selectedKey]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setParentHoverKey?.(hoveredKey), [hoveredKey]);
   return (
-    <>
-      <Draggable
-        cancel="#btn"
-        onDrag={() => {
-          isDragging = true;
-        }}
-        onStop={() => {
-          if (isDragging) {
-            isDragging = false;
-          }
-        }}
-      >
-        <div
-          onMouseEnter={unsetTranspanrent}
-          onMouseLeave={() => !isDragging && setTranspanrent()}
-          {...stylex.props(menuStyles.root)}
-        >
-          {btnsMark}
-        </div>
-      </Draggable>
-    </>
+    <DraggableTransparent >
+      {btnsMark}
+    </DraggableTransparent>
   );
 }

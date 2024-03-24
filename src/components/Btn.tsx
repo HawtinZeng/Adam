@@ -1,7 +1,7 @@
 import React from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
-import { BtnConfigs, menuStyles } from "./Menu";
+import { BtnConfigs, menuStyles } from "../MainMenu/Menu";
 
 export function Btn(
   setSelectedKey: React.Dispatch<React.SetStateAction<number>>,
@@ -10,7 +10,8 @@ export function Btn(
   setBtnsRef?: (node: HTMLDivElement[]) => void,
   setHoveredKey?: React.Dispatch<React.SetStateAction<number>>,
   needLeftArrow = false,
-  direction: 'vertical' | 'horizontal' = 'vertical'
+  direction: 'vertical' | 'horizontal' = 'vertical',
+  selectedStyle: 'turnBlack' | 'trunGrey' = 'turnBlack',
 ) {
   const btnsMark: JSX.Element[] = [];
   const nodes: HTMLDivElement[] = [];
@@ -19,13 +20,17 @@ export function Btn(
       <div
         {...stylex.props(
           menuStyles.btnArea,
-          selectedKey === i ? menuStyles.selectedBtnArea : null,
+          selectedKey === i ? (selectedStyle ==='turnBlack' ? menuStyles.selectedBtnArea : menuStyles.selectedBtnAreaBk) : null,
           direction === "vertical" ? menuStyles.verticalGap : menuStyles.horizontalGap,
         )}
         key={i}
         id="btn"
         onClick={() => {
-          setSelectedKey(i);
+          if (selectedKey === i){
+            setSelectedKey(-1);
+          } else {
+            setSelectedKey(i);
+          }
         }}
         onMouseEnter={() => {
           setHoveredKey && setHoveredKey(i);
@@ -33,16 +38,16 @@ export function Btn(
         ref={(node) => node && nodes && nodes.push(node)}
       >
         <div {...stylex.props(menuStyles.center)}>
-          <ReactSVG
+          {btnConfigs[i].svg !== undefined ? <ReactSVG
             src={btnConfigs[i].svg}
             useRequestCache={true}
             beforeInjection={(svg) => {
-              if (selectedKey === i) {
+              if (selectedKey === i && selectedStyle === "turnBlack") {
                 svg
-                  .getElementsByTagName("path")[0]
-                  .setAttribute("fill", "#ffffff");
+                .getElementsByTagName("path")[0]
+                .setAttribute("fill", "#ffffff");
               }
-            }} />
+            }} /> : <div {...stylex.props(menuStyles.redCircle)} />}
           {needLeftArrow ? (
             <span
               {...stylex.props(

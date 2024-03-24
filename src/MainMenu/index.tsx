@@ -3,7 +3,7 @@
 // import highlighterPen from "../images/svgs/copy.svg";
 // import laser from "../images/svgs/laser.svg";
 // import save from "../images/svgs/save.svg";
-// import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
+// import { setTransparent, unsetTransparent } from "../commonUtils";
 import { computePosition, flip } from "@floating-ui/dom";
 import React, { Component, useEffect, useRef, useState } from "react";
 import { ReactSVG } from "react-svg";
@@ -19,13 +19,14 @@ import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
 import { NotePanel } from "../NotePanel";
-import { PenPanel } from "../PenPanel";
+import { PenPanel, penPanelStyles } from "../PenPanel";
 import { SizeSlider } from "../SizeSlider";
 import { ShapePanel } from "../ShapePanel";
 import { ScreenShotPanel } from "../ScreenShotPanel";
 import { SettingsPanel } from "../SettingsPanel";
-import { BtnConfigs, Menu } from "../components/Menu";
-import { setTranspanrent, unsetTranspanrent } from "../commonUtils";
+import { BtnConfigs, Menu, menuStyles } from "./Menu";
+import { setTransparent, unsetTransparent } from "../commonUtils";
+import { DraggableTransparent } from "../components/DraggableTransparent";
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
@@ -101,8 +102,9 @@ export function MainMenu() {
   const [hoveredKey, setHoveredKey] = useState(-1);
   useEffect(() => {
     if (hoveredKey === -1 || selectedKey === -1) return;
-    const subMenu = document.getElementById("subMenu") as HTMLDivElement;
+    const subMenu = document.getElementById("subMenu");
     const reference = btnRefs.current[selectedKey];
+    if (!subMenu || !reference) return;
     computePosition(reference, subMenu, {
       placement: "left",
       middleware: [flip()],
@@ -122,12 +124,15 @@ export function MainMenu() {
         setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
       />
       <div
-        {...stylex.props(mainMenu.subMenu)}
+        {...stylex.props(mainMenu.subMenu)}// 子菜单绝对定位就不会占用父块的空间
+        key={selectedKey}
         id="subMenu"
-        onMouseEnter={unsetTranspanrent}
-        onMouseLeave={setTranspanrent}
-      >
-        {configs[selectedKey]?.subMenu}
+      >{
+        selectedKey !== -1 && configs[selectedKey].subMenu !== undefined ? (
+          <DraggableTransparent horizontal={true}>
+              {configs[selectedKey].subMenu}
+          </DraggableTransparent>) : null
+      }
       </div>
     </div>
   );
