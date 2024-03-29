@@ -16,13 +16,21 @@ type DrawingElement = {
   belongedFrame: string;
   belongedGroup: string;
   
+  status: 'locked' | 'notLocked';
+
   isDeleted: boolean;
 
   position: Point;
   rotation: Degree;
 }
 type FrameData = {
+  width: number;
+  height: number;
+  position: Point;
 
+  status: 'locked' | 'notLocked';
+
+  isDeleted: boolean;
 }
 
 type SceneOptions = {
@@ -33,4 +41,5 @@ type SceneData = {
   elements: DrawingElement[];
   frames: FrameData[];
   options: SceneOptions;
+  scale: number;
 }

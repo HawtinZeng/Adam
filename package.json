@@ -14,6 +14,7 @@
     "@types/react-dom": "^18.2.22",
     "i": "^0.3.7",
     "nanoid": "^5.0.6",
+    "perfect-freehand": "^1.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-draggable": "^4.4.6",

@@ -1,5 +1,5 @@
-import { Point } from "../Utils/Data/geometry"
-import { BaseDrawComp } from "./BaseDrawComp";
+import { Point } from "../utils/data/geometry"
+import { BaseDrawComp } from "./baseDrawComp";
 export class FreedrawComp extends BaseDrawComp{
   readonly type = 'freedraw'
   points: readonly Point[]

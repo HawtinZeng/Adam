@@ -2,8 +2,8 @@ import React, { ReactNode, Ref, forwardRef, useEffect } from "react";
 import { setTransparent, unsetTransparent } from "../commonUtils";
 import stylex from "@stylexjs/stylex";
 import Draggable from "react-draggable";
-import { penPanelStyles } from "../PenPanel/index"
-import { Point } from "../Utils/Data/geometry"
+import { penPanelStyles } from "../penPanel/index"
+import { Point } from "../utils/data/geometry"
 const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",

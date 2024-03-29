@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { renderDrawCanvas } from "./core"
+import {  } from "@components/btn.tsx"
 import stylex from "@stylexjs/stylex"
 const staticCvsSte = stylex.create({
   container: {

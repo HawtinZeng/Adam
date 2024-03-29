@@ -1,7 +1,7 @@
 import React from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
-import { BtnConfigs } from "../MainMenu/Menu";
+import { BtnConfigs } from "../mainMenu/Menu";
 
 export const btn = stylex.create({
   btnArea: {

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Btn } from "../components/Btn";
 import { DraggableTransparent } from "../components/DraggableTransparent";
-import { Point } from "../Utils/Data/geometry";
+import { Point } from "../utils/data/geometry";
 
 export type BtnConfigs = Array<{
   label: string;
