@@ -16,15 +16,16 @@ import note from "../images/svgs/note.svg";
 import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
-import { NotePanel } from "../notePanel";
-import { PenPanel } from "../penPanel";
-import { SizeSlider } from "../sizeSlider";
-import { ShapePanel } from "../shapePanel";
-import { ScreenShotPanel } from "../screenShotPanel";
-import { SettingsPanel } from "../settingsPanel";
-import { BtnConfigs, Menu } from "./Menu";
-import { DraggableTransparent } from "../components/DraggableTransparent";
+
 import { nanoid } from "nanoid";
+import { SizeSlider } from "src/sizeSlider/index";
+import { PenPanel } from "src/penPanel/index";
+import { BtnConfigs, Menu } from "src/mainMenu/menu";
+import { NotePanel } from "src/notePanel/index";
+import { ShapePanel } from "src/shapePanel/index";
+import { ScreenShotPanel } from "src/screenShotPanel/index";
+import { DraggableTransparent } from "src/components/DraggableTransparent";
+import { SettingsPanel } from "src/settingsPanel";
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",

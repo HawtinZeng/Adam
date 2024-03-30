@@ -26,8 +26,8 @@ module.exports = {
   webpack: {
     alias: {
       '@': path.resolve(__dirname, 'src/'),
-      '@test': path.resolve(__dirname, 'testCase/'),
-      '@components': path.resolve(__dirname, 'src/components/'),
+      'test': path.resolve(__dirname, 'test/'),
+      'components': path.resolve(__dirname, 'src/components/'),
     },
     plugins: (webpackConfig, { env, paths }) => {
       return [

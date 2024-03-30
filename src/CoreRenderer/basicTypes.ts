@@ -1,9 +1,9 @@
-type Point = {
+export type Point = {
   x: number;
   y: number;
 }
-type Degree = number;
-type DrawingElement = {
+export type Degree = number;
+export type DrawingElement = {
   type: string;
   points: Point[];
 
@@ -23,7 +23,7 @@ type DrawingElement = {
   position: Point;
   rotation: Degree;
 }
-type FrameData = {
+export type FrameData = {
   width: number;
   height: number;
   position: Point;
@@ -33,13 +33,13 @@ type FrameData = {
   isDeleted: boolean;
 }
 
-type SceneOptions = {
+export type SceneOptions = {
   backgroundColor?: string
   scale: number;
 }
-type SceneData = {
+export type SceneData = {
   elements: DrawingElement[];
   frames: FrameData[];
   options: SceneOptions;
-  scale: number;
 }
+export type Bounds = [number, number, number, number] // [minX, minY, maxX, maxY];

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@flatten-js/core": "^1.5.0",
     "@floating-ui/dom": "^1.6.3",
     "@stylexjs/stylex": "^0.5.1",
     "@testing-library/jest-dom": "^5.17.0",
@@ -25,7 +26,7 @@
   },
   "scripts": {
     "re": "nvm use 21.5.0 && nf start",
-    "start:react": "cross-env BROWSER=none PORT=5000 craco start --verbose",
+    "start:react": "cross-env BROWSER=none PORT=5000 craco start",
     "start:electron": "cross-env PORT=5000 electron ./main.js",
     "preinstall": "npx only-allow pnpm",
     "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js"

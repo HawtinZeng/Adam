@@ -1,4 +1,4 @@
-[
+export const testedPoints = [
   [
       161.125,
       181.4375,

@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@flatten-js/core':
+    specifier: ^1.5.0
+    version: 1.5.0
   '@floating-ui/dom':
     specifier: ^1.6.3
     version: 1.6.3
@@ -1758,6 +1761,17 @@ packages:
   /@eslint/js@8.57.0:
     resolution: {integrity: sha512-Ys+3g2TaW7gADOJzPt83SJtCDhMjndcDMFVQ/Tj9iA1BfJzFKD9mAUXT3OenpuPHbI6P/myECxRJrofUsDx/5g==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  /@flatten-js/core@1.5.0:
+    resolution: {integrity: sha512-5IhP8LsqWlrHX5DUuIM+M/eV2hINiibVlDe14W/sC5kttKto+WrNQAV/cNB+D5DKhvCtGcRKdRGodZZzxCESjw==}
+    engines: {node: '>=4.2.4'}
+    dependencies:
+      '@flatten-js/interval-tree': 1.1.3
+    dev: false
+
+  /@flatten-js/interval-tree@1.1.3:
+    resolution: {integrity: sha512-xhFWUBoHJFF77cJO1D6REjdgJEMRf2Y2Z+eKEPav8evGKcLSnj1ud5pLXQSbGuxF3VSvT1rWhMfVpXEKJLTL+A==}
+    dev: false
 
   /@floating-ui/core@1.6.0:
     resolution: {integrity: sha512-PcF++MykgmTj3CIyOQbKA/hDzOAiqI3mhuoN44WRCopIs1sgoDoU4oty4Jtqaj/y3oDU6fnVSm4QG0a3t5i0+g==}

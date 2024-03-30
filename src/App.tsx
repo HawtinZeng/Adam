@@ -1,15 +1,15 @@
 import React from "react";
-import MainMenu from "./MainMenu";
 import * as stylex from "@stylexjs/stylex";
 import { setTransparent, unsetTransparent } from "./commonUtils";
-import { DrawCanvas } from "./coreRenderer/DrawCanvas"
-
+import MainMenu from "src/mainMenu";
+import { DrawCanvas } from "src/coreRenderer/drawCanvas";
+import { defaultScene } from "src/test/someDrawingData";
 function App() {
   setTransparent();
   return (
       <>
         <MainMenu />
-        <DrawCanvas />
+        <DrawCanvas sceneData={defaultScene} />
       </>
   );
 }

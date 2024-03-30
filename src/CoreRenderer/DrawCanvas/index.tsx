@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { renderDrawCanvas } from "./core"
-import {  } from "@components/btn.tsx"
 import stylex from "@stylexjs/stylex"
+import { SceneData } from "src/coreRenderer/basicTypes";
+import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
 const staticCvsSte = stylex.create({
   container: {
     width: "100%",
@@ -9,12 +9,13 @@ const staticCvsSte = stylex.create({
     backgroundColor: "green",
   }
 })
-export function DrawCanvas(sceneData: SceneData) {
+export function DrawCanvas(props: {sceneData: SceneData}) {
+  const sceneData = props.sceneData;
   const cvsRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const cvs = cvsRef.current!;
-    const ctx = cvs.getContext('2d')!;
-    renderDrawCanvas(sceneData, ctx)
+    cvsRef.current!.height = cvsRef.current!.offsetHeight
+    cvsRef.current!.width = cvsRef.current!.offsetWidth;
+    renderDrawCanvas(sceneData, cvsRef.current!)
   });
   return <canvas ref={cvsRef} {...stylex.props(staticCvsSte.container)} />
 }

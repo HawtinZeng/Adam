@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import Draggable from "react-draggable";
 import { setTransparent, unsetTransparent } from "../commonUtils";
-import { mainMenu } from "../mainMenu";
-import { BtnConfigs } from "../mainMenu/Menu";
+import { BtnConfigs } from "../mainMenu/menu";
 import stylex from "@stylexjs/stylex";
 import { Btn } from "../components/Btn";
 import pen from "../images/svgs/pen.svg"
