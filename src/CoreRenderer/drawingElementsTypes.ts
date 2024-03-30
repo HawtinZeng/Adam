@@ -1,11 +1,11 @@
 import { DrawingElement, Point } from "src/coreRenderer/basicTypes";
 
 export interface FreeDrawing extends DrawingElement {
-  readonly type: FreeDrawingType.freeDraw;
+  readonly type: DrawingType.freeDraw;
   readonly points: Point[];
   readonly pressures: number[];
   needSimulate: boolean;
 }
-export enum FreeDrawingType {
+export enum DrawingType {
   freeDraw = "freeDraw",
 }

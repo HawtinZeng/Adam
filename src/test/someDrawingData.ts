@@ -1,6 +1,6 @@
 import { getBoundsFromPoints } from "src/common/utils";
-import { SceneData } from "src/coreRenderer/basicTypes";
-import { FreeDrawingType } from "src/coreRenderer/drawingElementsTypes";
+import { DrawingElement, FrameData } from "src/coreRenderer/basicTypes";
+import { DrawingType } from "src/coreRenderer/drawingElementsTypes";
 import { testedPoints } from "src/test/points";
 
 const boundingMinPt = getBoundsFromPoints(testedPoints.map(pt => {
@@ -10,9 +10,13 @@ const boundingMinPt = getBoundsFromPoints(testedPoints.map(pt => {
 const relativeTestedPoints = testedPoints.map(pt => {
   return {x: pt[0] - boundingMinPt.x, y: pt[1] - boundingMinPt.y};
 })
-export const defaultScene: SceneData = {
+export const defaultSceneData: {
+  elements: DrawingElement[],
+  frames: FrameData[],
+} = {
   elements: [ {
-    type: FreeDrawingType.freeDraw,
+    id: '1',
+    type: DrawingType.freeDraw,
     points: relativeTestedPoints,
     strokeColor: "red",
     strokeWidth: 40,
@@ -29,7 +33,8 @@ export const defaultScene: SceneData = {
     position: {x: boundingMinPt.x, y: boundingMinPt.y},
     rotation: 0,
   },{
-    type: FreeDrawingType.freeDraw,
+    id: '2',
+    type: DrawingType.freeDraw,
     points: relativeTestedPoints,
     strokeColor: "#ffffff",
     strokeWidth: 20,
@@ -57,8 +62,4 @@ export const defaultScene: SceneData = {
       isDeleted: false,
     }
   ],
-  options: {
-    backgroundColor: "#ffffff",
-    scale: 1,
-  },
 }

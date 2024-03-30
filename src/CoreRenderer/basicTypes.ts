@@ -6,7 +6,7 @@ export type Degree = number;
 export type DrawingElement = {
   type: string;
   points: Point[];
-
+  id: string;
   strokeColor: string;
   strokeWidth: number;
   strokeStyle: "solid" | "dashed";
@@ -36,10 +36,5 @@ export type FrameData = {
 export type SceneOptions = {
   backgroundColor?: string
   scale: number;
-}
-export type SceneData = {
-  elements: DrawingElement[];
-  frames: FrameData[];
-  options: SceneOptions;
 }
 export type Bounds = [number, number, number, number] // [minX, minY, maxX, maxY];

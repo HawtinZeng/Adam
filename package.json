@@ -14,6 +14,8 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "i": "^0.3.7",
+    "jotai": "^2.7.2",
+    "lodash": "^4.17.21",
     "nanoid": "^5.0.6",
     "perfect-freehand": "^1.2.2",
     "react": "^18.2.0",
@@ -35,7 +37,27 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "padding-line-between-statements": [
+        "error",
+        {
+          "blankLine": "always",
+          "prev": "const",
+          "next": "return"
+        },
+        {
+          "blankLine": "always",
+          "prev": "let",
+          "next": "return"
+        },
+        {
+          "blankLine": "always",
+          "prev": "block-like",
+          "next": "block-like"
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [
@@ -55,6 +77,7 @@
     "@stylexjs/babel-plugin": "^0.5.1",
     "@stylexjs/eslint-plugin": "^0.5.1",
     "@stylexjs/webpack-plugin": "^0.5.1",
+    "@types/lodash": "^4.17.0",
     "cross-env": "^7.0.3",
     "electron": "^29.1.4",
     "electron-builder": "^24.13.3",
