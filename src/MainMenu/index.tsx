@@ -16,16 +16,23 @@ import note from "../images/svgs/note.svg";
 import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
-
+import { setTransparent, unsetTransparent } from "../commonUtils";
+import { BtnConfigs } from "../mainMenu/menu";
+import highlighterPen from "../images/svgs/highlighterPen.svg";
+import brush from "../images/svgs/brush.svg";
+import laser from "../images/svgs/laser.svg";
 import { nanoid } from "nanoid";
 import { SizeSlider } from "src/sizeSlider/index";
 import { PenPanel } from "src/penPanel/index";
-import { BtnConfigs, Menu } from "src/mainMenu/menu";
+import { Menu } from "src/mainMenu/menu";
 import { NotePanel } from "src/notePanel/index";
 import { ShapePanel } from "src/shapePanel/index";
 import { ScreenShotPanel } from "src/screenShotPanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { SettingsPanel } from "src/settingsPanel";
+import { selectedKeyAtom, selectedKeyEffectAtom } from "src/state/uiState";
+import { useAtom } from "jotai";
+import { freedrawContl } from "src/drawingElements/controllers/freedrawContl";
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
@@ -41,12 +48,39 @@ export const mainMenu = stylex.create({
     visibility: isShow ? "visible" : "hidden",
   }),
 });
-const configs: BtnConfigs = [
+export const penConfigs: BtnConfigs = [
+  {
+    label: "铅笔",
+    svg: pen,
+    key: "pen",
+    controller: freedrawContl,
+  },
+  {
+    label: "高光笔",
+    svg: highlighterPen,
+    key: "highlighterPen",
+    controller: freedrawContl,
+  },
+  {
+    label: "笔刷",
+    svg: brush,
+    key: "brush",
+    controller: freedrawContl,
+  },
+  {
+    label: "激光笔",
+    svg: laser,
+    key: "laser",
+    controller: freedrawContl,
+  },
+];
+export const menuConfigs: BtnConfigs = [
   {
     label: "画笔",
     svg: pen,
     key: "pen",
-    subMenu: <PenPanel />,
+    subMenu: <PenPanel btnConfigs={penConfigs} />,
+    btnConfigs: penConfigs,
   },
   {
     label: "橡皮",
@@ -94,15 +128,17 @@ const configs: BtnConfigs = [
     subMenu: <SettingsPanel />,
   },
 ];
+
 export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
   const subMenuRef = useRef<HTMLElement>(null);
-  const [selectedKey, setSelectedKey] = useState(-1);
+  // 全局状态
+  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
+  useAtom(selectedKeyEffectAtom);
+
   const [hoveredKey, setHoveredKey] = useState(-1);
-
-
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
-  const [subMenuDragCtrl, setSubMenuDragCtrl] = useState('');
+  const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
   function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];
@@ -126,21 +162,24 @@ export function MainMenu() {
   }, [subMenuDragCtrl]);
   return (
     <>
-    <Menu
-      btnConfigs={configs}
-      setParentHoverKey={setHoveredKey}
-      setParentSelectedKey={setSelectedKey}
-      setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
-      onDrag={() => {
-        setSubMenuDragCtrl(nanoid())
-      }}
-    />{
-      selectedKey !== -1 && configs[selectedKey].subMenu !== undefined
-      ? (<DraggableTransparent horizontal={true} ref={subMenuRef} key={subMenuDragCtrl}>
-            {configs[selectedKey].subMenu}
-        </DraggableTransparent>)
-      : null
-    }
+      <Menu
+        btnConfigs={menuConfigs}
+        setParentHoverKey={setHoveredKey}
+        setParentSelectedKey={setSelectedKey}
+        setBtnsRef={(nodes: HTMLDivElement[]) => (btnRefs.current = nodes)}
+        onDrag={() => {
+          setSubMenuDragCtrl(nanoid());
+        }}
+      />
+      {selectedKey !== -1 && menuConfigs[selectedKey].subMenu !== undefined ? (
+        <DraggableTransparent
+          horizontal={true}
+          ref={subMenuRef}
+          key={subMenuDragCtrl}
+        >
+          {menuConfigs[selectedKey].subMenu}
+        </DraggableTransparent>
+      ) : null}
     </>
   );
 }

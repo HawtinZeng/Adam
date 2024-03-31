@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
 import { BtnConfigs } from "../mainMenu/menu";
+import {
+  selectedKeyEffectAtom,
+  selectedKeyEffectAtomSubMenu,
+} from "src/state/uiState";
+import { useAtom } from "jotai";
 
 export const btn = stylex.create({
   btnArea: {
@@ -16,7 +21,7 @@ export const btn = stylex.create({
   selectedBtnArea: {
     backgroundColor: "#4b4f52",
   },
-  selectedBtnAreaBk: {
+  selectedBtnAreaGrey: {
     backgroundColor: "#eaeaeb",
   },
   verticalGap: {
@@ -43,8 +48,8 @@ export const btn = stylex.create({
     visibility: isShow ? "visible" : "hidden",
   }),
   redCircle: {
-    backgroundColor: 'red',
-    borderRadius: '50%',
+    backgroundColor: "red",
+    borderRadius: "50%",
   },
   center: {
     height: "100%",
@@ -61,23 +66,31 @@ export function Btn(
   setBtnsRef?: (node: HTMLDivElement[]) => void,
   setHoveredKey?: React.Dispatch<React.SetStateAction<number>>,
   needLeftArrow = false,
-  direction: 'vertical' | 'horizontal' = 'vertical',
-  selectedStyle: 'turnBlack' | 'trunGrey' = 'turnBlack',
+  direction: "vertical" | "horizontal" = "vertical",
+  isSubMenu: boolean = false //or menu
 ) {
   const btnsMark: JSX.Element[] = [];
   const nodes: HTMLDivElement[] = [];
+  const actuallySelectedEffect = isSubMenu
+    ? selectedKeyEffectAtomSubMenu
+    : selectedKeyEffectAtom;
+  useAtom(actuallySelectedEffect);
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
       <div
         {...stylex.props(
           btn.btnArea,
-          selectedKey === i ? (selectedStyle ==='turnBlack' ? btn.selectedBtnArea : btn.selectedBtnAreaBk) : null,
-          direction === "vertical" ? btn.verticalGap : btn.horizontalGap,
+          selectedKey === i
+            ? isSubMenu
+              ? btn.selectedBtnAreaGrey
+              : btn.selectedBtnArea
+            : null,
+          direction === "vertical" ? btn.verticalGap : btn.horizontalGap
         )}
         key={i}
         id="btn"
         onClick={() => {
-          if (selectedKey === i){
+          if (selectedKey === i) {
             setSelectedKey(-1);
           } else {
             setSelectedKey(i);
@@ -89,23 +102,29 @@ export function Btn(
         ref={(node) => node && nodes && nodes.push(node)}
       >
         <div {...stylex.props(btn.center)}>
-          {btnConfigs[i].svg !== undefined ? <ReactSVG
-            src={btnConfigs[i].svg}
-            useRequestCache={true}
-            beforeInjection={(svg) => {
-              if (selectedKey === i && selectedStyle === "turnBlack") {
-                svg
-                .getElementsByTagName("path")[0]
-                .setAttribute("fill", "#ffffff");
-              }
-            }} /> : <div {...stylex.props(btn.redCircle)} />}
+          {btnConfigs[i].svg !== undefined ? (
+            <ReactSVG
+              src={btnConfigs[i].svg}
+              useRequestCache={true}
+              beforeInjection={(svg) => {
+                if (selectedKey === i && !isSubMenu) {
+                  svg
+                    .getElementsByTagName("path")[0]
+                    .setAttribute("fill", "#ffffff");
+                }
+              }}
+            />
+          ) : (
+            <div {...stylex.props(btn.redCircle)} />
+          )}
           {needLeftArrow ? (
             <span
               {...stylex.props(
                 btn.selectedArrow(btnConfigs[i].subMenu !== undefined)
               )}
               id="selectedArrow"
-            ></span>) : null}
+            ></span>
+          ) : null}
         </div>
       </div>
     );
