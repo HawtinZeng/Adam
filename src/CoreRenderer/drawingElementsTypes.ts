@@ -9,3 +9,26 @@ export interface FreeDrawing extends DrawingElement {
 export enum DrawingType {
   freeDraw = "freeDraw",
 }
+
+export const newFreeDrawingElement: FreeDrawing = {
+  type: DrawingType.freeDraw,
+  points: [] as Point[],
+  pressures: [] as number[],
+  needSimulate: true,
+
+  id: "1",
+  strokeColor: "red",
+  strokeWidth: 40,
+  strokeStyle: "solid",
+  fillStyle: "solid",
+  opacity: 40,
+
+  belongedFrame: "defaultFrameId",
+  belongedGroup: "defaultGrp",
+
+  status: "notLocked",
+  isDeleted: false,
+
+  position: { x: 0, y: 0 },
+  rotation: 0,
+};

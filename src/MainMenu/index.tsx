@@ -32,7 +32,6 @@ import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { SettingsPanel } from "src/settingsPanel";
 import { selectedKeyAtom, selectedKeyEffectAtom } from "src/state/uiState";
 import { useAtom } from "jotai";
-import { freedrawContl } from "src/drawingElements/controllers/freedrawContl";
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
@@ -53,25 +52,21 @@ export const penConfigs: BtnConfigs = [
     label: "铅笔",
     svg: pen,
     key: "pen",
-    controller: freedrawContl,
   },
   {
     label: "高光笔",
     svg: highlighterPen,
     key: "highlighterPen",
-    controller: freedrawContl,
   },
   {
     label: "笔刷",
     svg: brush,
     key: "brush",
-    controller: freedrawContl,
   },
   {
     label: "激光笔",
     svg: laser,
     key: "laser",
-    controller: freedrawContl,
   },
 ];
 export const menuConfigs: BtnConfigs = [

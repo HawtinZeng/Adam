@@ -25,6 +25,7 @@
     "react-scripts": "5.0.1",
     "react-svg": "^16.1.33",
     "typescript": "^5.4.2",
+    "use-deep-compare-effect": "^1.8.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

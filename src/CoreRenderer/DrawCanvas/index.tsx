@@ -1,8 +1,20 @@
-import React, { useEffect, useRef } from "react";
+import React, {
+  ForwardedRef,
+  Ref,
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from "react";
+
+import useDeepCompareEffect from "use-deep-compare-effect";
 import stylex from "@stylexjs/stylex";
 import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
 import { Scene } from "src/drawingElements/data/scene";
-import { ControllersManager } from "src/drawingElements/controllers/controllersManager";
+import { canvasAtom } from "src/state/uiState";
+import { useAtom } from "jotai";
+import { sceneAtom } from "src/state/sceneState";
+import { atomEffect } from "jotai-effect";
 const staticCvsSte = stylex.create({
   container: {
     width: "100%",
@@ -11,20 +23,17 @@ const staticCvsSte = stylex.create({
   },
 });
 
-const isExcuted = false;
-export function DrawCanvas(props: { sceneData: Scene }) {
-  const sceneData = props.sceneData;
-  const cvsRef = useRef<HTMLCanvasElement>(null);
+export function DrawCanvas() {
+  const innerCvsRef = useRef<HTMLCanvasElement>(null);
+  const [, setCvsAtom] = useAtom(canvasAtom);
+  const [sceneData] = useAtom(sceneAtom);
+  // initialize canvas
   useEffect(() => {
-    if (!isExcuted) {
-      ControllersManager.singleInstance = new ControllersManager(
-        cvsRef.current!
-      );
-    }
+    setCvsAtom(innerCvsRef.current);
 
-    cvsRef.current!.height = cvsRef.current!.offsetHeight;
-    cvsRef.current!.width = cvsRef.current!.offsetWidth;
-    renderDrawCanvas(sceneData, cvsRef.current!);
+    innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
+    innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
+    renderDrawCanvas(sceneData, innerCvsRef.current!);
   });
-  return <canvas ref={cvsRef} {...stylex.props(staticCvsSte.container)} />;
+  return <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />;
 }

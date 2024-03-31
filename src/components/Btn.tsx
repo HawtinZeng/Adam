@@ -3,6 +3,8 @@ import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
 import { BtnConfigs } from "../mainMenu/menu";
 import {
+  selectedKeyAtom,
+  selectedKeyAtomSueMenu,
   selectedKeyEffectAtom,
   selectedKeyEffectAtomSubMenu,
 } from "src/state/uiState";
@@ -75,6 +77,7 @@ export function Btn(
     ? selectedKeyEffectAtomSubMenu
     : selectedKeyEffectAtom;
   useAtom(actuallySelectedEffect);
+  const [selectedSueMenuState] = useAtom(selectedKeyAtomSueMenu);
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
       <div
@@ -103,8 +106,15 @@ export function Btn(
       >
         <div {...stylex.props(btn.center)}>
           {btnConfigs[i].svg !== undefined ? (
+            // feature: submenu => submenu icon
+            // menu => have submenu, use submenu icon, have no submenu icon, use its icon.
             <ReactSVG
-              src={btnConfigs[i].svg}
+              src={
+                isSubMenu
+                  ? btnConfigs[i].svg
+                  : btnConfigs[i].btnConfigs?.[selectedSueMenuState]?.svg ??
+                    btnConfigs[i].svg
+              }
               useRequestCache={true}
               beforeInjection={(svg) => {
                 if (selectedKey === i && !isSubMenu) {

@@ -45,7 +45,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
         }
       );
       const path = new Path2D();
-      path.moveTo(0, 0);
+      path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
       outlinePoints.forEach((pt) => {
         path.lineTo(pt[0], pt[1]);
       });
