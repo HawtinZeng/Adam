@@ -1,17 +1,18 @@
-import { atom, useAtom } from "jotai";
+import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
-import { menuConfigs } from "src/mainMenu";
-import { sceneAtom } from "src/state/sceneState";
+import { setTransparentOption, unsetTransparent } from "src/commonUtils";
 export const selectedKeyAtom = atom(-1);
-export const selectedKeyAtomSueMenu = atom(0);
+export const selectedKeyAtomSubMenu = atom(0);
 
-export const selectedKeyEffectAtom = atomEffect((get, set) => {
+export const selectedSubEffectAtom = atomEffect((get, set) => {
   // runs on mount or whenever someAtom changes
-  // const value = get(selectedKeyAtom);
+  const value = get(selectedKeyAtomSubMenu);
+  if (value !== -1) {
+    setTransparentOption.enabled = false;
+    unsetTransparent();
+  } else {
+    setTransparentOption.enabled = true;
+  }
 });
 
-export const selectedKeyEffectAtomSubMenu = atomEffect((get, set) => {
-  // runs on mount or whenever someAtom changes
-  const value = get(selectedKeyAtomSueMenu);
-});
 export const canvasAtom = atom<HTMLCanvasElement | null>(null);

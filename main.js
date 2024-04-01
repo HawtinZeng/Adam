@@ -11,10 +11,8 @@ const isDev = import("electron-is-dev");
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({
-    width: 500,
-    height: 700,
-    x: width - 500,
-    y: 600,
+    width,
+    height,
     frame: false,
     titleBarStyle: "hidden",
     transparent: true,

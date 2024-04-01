@@ -1,13 +1,8 @@
-import React, { useEffect } from "react";
+import React from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
 import { BtnConfigs } from "../mainMenu/menu";
-import {
-  selectedKeyAtom,
-  selectedKeyAtomSueMenu,
-  selectedKeyEffectAtom,
-  selectedKeyEffectAtomSubMenu,
-} from "src/state/uiState";
+import { selectedKeyAtomSubMenu } from "src/state/uiState";
 import { useAtom } from "jotai";
 
 export const btn = stylex.create({
@@ -73,11 +68,7 @@ export function Btn(
 ) {
   const btnsMark: JSX.Element[] = [];
   const nodes: HTMLDivElement[] = [];
-  const actuallySelectedEffect = isSubMenu
-    ? selectedKeyEffectAtomSubMenu
-    : selectedKeyEffectAtom;
-  useAtom(actuallySelectedEffect);
-  const [selectedSueMenuState] = useAtom(selectedKeyAtomSueMenu);
+  const [selectedSueMenuState] = useAtom(selectedKeyAtomSubMenu);
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
       <div

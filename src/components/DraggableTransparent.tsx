@@ -4,6 +4,8 @@ import stylex from "@stylexjs/stylex";
 import Draggable from "react-draggable";
 import { penPanelStyles } from "../penPanel/index";
 import { Point } from "../utils/data/geometry";
+import { useAtom } from "jotai";
+import { selectedSubEffectAtom } from "src/state/uiState";
 const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
@@ -32,6 +34,7 @@ export const DraggableTransparent = forwardRef(
     const isHorizontal = props.horizontal;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
     const onDrag = props.onDrag;
+    useAtom(selectedSubEffectAtom);
 
     return (
       <Draggable

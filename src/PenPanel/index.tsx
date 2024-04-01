@@ -9,11 +9,7 @@ import highlighterPen from "../images/svgs/highlighterPen.svg";
 import brush from "../images/svgs/brush.svg";
 import laser from "../images/svgs/laser.svg";
 import { useAtom } from "jotai";
-import {
-  canvasAtom,
-  selectedKeyAtomSueMenu,
-  selectedKeyEffectAtomSubMenu,
-} from "src/state/uiState";
+import { canvasAtom, selectedKeyAtomSubMenu } from "src/state/uiState";
 import { menuConfigs, penConfigs } from "src/mainMenu";
 import { sceneAtom } from "src/state/sceneState";
 import {
@@ -37,7 +33,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     null
   );
   // 全局状态
-  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSueMenu);
+  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
   const [cvsEle] = useAtom(canvasAtom);
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
 
