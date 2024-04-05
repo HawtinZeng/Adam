@@ -7,23 +7,11 @@ import {
 import { Point, Vector } from "@flatten-js/core";
 import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
-import {
-  add,
-  dist2,
-  div,
-  dpr,
-  len,
-  len2,
-  mul,
-  per,
-  sub,
-} from "src/coreRenderer/drawCanvas/vec";
 export function renderDrawCanvas(
   sceneData: Scene,
   appCanvas: HTMLCanvasElement,
   strokeOptions?: StrokeOptions
 ) {
-  // set scale.
   const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
   elements.forEach((ele) => {
@@ -40,7 +28,8 @@ export function renderDrawCanvas(
 function createDrawingCvs(
   ele: DrawingElement,
   targetCvs: HTMLCanvasElement,
-  strokeOptions?: StrokeOptions
+  strokeOptions?: StrokeOptions,
+  cb?: () => void
 ) {
   switch (ele.type) {
     case DrawingType.freeDraw:
@@ -50,14 +39,10 @@ function createDrawingCvs(
       canvas.height = targetCvs.offsetHeight;
       const ctx = canvas.getContext("2d")!;
       const { points, strokeColor } = freeDrawing;
-      ctx.save();
       ctx.fillStyle = strokeColor;
       ctx.lineCap = "round";
       let outlinePoints: number[][];
       if (strokeOptions?.isCustom) {
-        // check
-        if (points.length < 2) return;
-
         const { size } = strokeOptions;
         let vx = 0,
           vy = 0,
@@ -71,7 +56,8 @@ function createDrawingCvs(
           r = 0,
           oldR,
           oldX,
-          oldY;
+          oldY,
+          dR;
 
         points.forEach((pt, idx) => {
           if (idx === 0) {
@@ -86,7 +72,7 @@ function createDrawingCvs(
           v *= 0.6;
 
           oldR = r;
-          r = size! - v;
+          dR = size! - v - r;
 
           oldX = x;
           oldY = y;
@@ -95,20 +81,20 @@ function createDrawingCvs(
           y += vy;
 
           for (let i = 0; i < splitNum; i++) {
-            x = oldX + (i / splitNum) * vx;
-            y = oldY + (i / splitNum) * vy;
+            const ratio = i / splitNum;
+            x = oldX + ratio * vx;
+            y = oldY + ratio * vy;
 
-            oldR += (r - oldR) / splitNum;
-            oldR = Math.max(oldR, 1);
+            r = Math.max(oldR + ratio * dR, 1);
 
-            drawStrokeLine(ctx, oldX, oldY, x, y, oldR + diff);
+            drawStrokeLine(ctx, oldX, oldY, x, y, r + diff);
             drawStrokeLine(
               ctx,
               oldX + diff * 2,
               oldY + diff * 2,
               x + diff * 1.5,
               y + diff * 2,
-              oldR
+              r
             );
             drawStrokeLine(
               ctx,
@@ -116,7 +102,7 @@ function createDrawingCvs(
               oldY - diff,
               x - diff,
               y - diff,
-              oldR
+              r
             );
           }
         });
@@ -130,7 +116,8 @@ function createDrawingCvs(
               .rotate(freeDrawing.rotation);
 
             return { x: ptObj.x, y: ptObj.y };
-          })
+          }),
+          strokeOptions as StrokeOptions
         );
 
         const path = new Path2D();
@@ -141,6 +128,18 @@ function createDrawingCvs(
         ctx.fill(path);
       }
 
+      // TODO
+      if (strokeOptions?.needFadeOut === true) {
+        const timer = setInterval(() => {
+          canvas.style.opacity = (
+            Number(canvas.style.opacity) - 0.2
+          ).toString();
+          if (canvas.style.opacity === "0") {
+            clearInterval(timer);
+            cb?.();
+          }
+        }, 300);
+      }
       return canvas;
     default:
       return document.createElement("canvas");

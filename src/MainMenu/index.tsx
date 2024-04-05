@@ -54,7 +54,6 @@ export const penConfigs: BtnConfigs = [
     key: "pen",
     strokeOptions: {
       size: 20,
-      smoothing: 0.1,
       thinning: 0.7,
       start: {
         taper: 49,
@@ -65,6 +64,8 @@ export const penConfigs: BtnConfigs = [
         cap: true,
       },
       isCustom: false,
+      smoothing: 0.9,
+      streamline: 0.9,
     },
   },
   {
@@ -73,15 +74,18 @@ export const penConfigs: BtnConfigs = [
     key: "highlighterPen",
     strokeOptions: {
       size: 20,
-      smoothing: 1,
       simulatePressure: false,
       start: {
-        cap: false,
+        cap: true,
+        easing: () => 1,
       },
       end: {
-        cap: false,
+        cap: true,
+        easing: () => 1,
       },
       isCustom: false,
+      smoothing: 0.9,
+      streamline: 0.9,
     },
   },
   {
@@ -91,13 +95,20 @@ export const penConfigs: BtnConfigs = [
     strokeOptions: {
       size: 20,
       isCustom: true,
-      smoothing: 0.5,
+      smoothing: 0.9,
+      streamline: 0.9,
     },
   },
   {
     label: "激光笔",
     svg: laser,
     key: "laser",
+    strokeOptions: {
+      size: 20,
+      smoothing: 0.9,
+      streamline: 0.9,
+      needFadeOut: true,
+    },
   },
 ];
 export const menuConfigs: BtnConfigs = [

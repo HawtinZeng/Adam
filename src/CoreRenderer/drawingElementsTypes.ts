@@ -1,3 +1,4 @@
+import { StrokeOptions } from "perfect-freehand";
 import { DrawingElement, Point } from "src/coreRenderer/basicTypes";
 
 export interface FreeDrawing extends DrawingElement {
@@ -5,6 +6,7 @@ export interface FreeDrawing extends DrawingElement {
   readonly points: Point[];
   readonly pressures: number[];
   needSimulate: boolean;
+  strokeOptions?: StrokeOptions;
 }
 export enum DrawingType {
   freeDraw = "freeDraw",

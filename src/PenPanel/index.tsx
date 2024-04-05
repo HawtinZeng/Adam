@@ -70,6 +70,19 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const stopCurrentDrawing = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
+      if (
+        (sceneState.updatingElements[0] as FreeDrawing).strokeOptions
+          ?.needFadeOut === true
+      ) {
+        setTimeout(() => {
+          const fadeOutEleIdx = sceneState.elements.findIndex(
+            (ele) => ele === sceneState.updatingElements[0]
+          );
+          sceneState.elements.splice(fadeOutEleIdx, 1);
+          setSceneAtom({ ...sceneState });
+        }, 2000);
+      }
+
       sceneState.updatingElements.length = 0;
     }
   };

@@ -1,16 +1,7 @@
-import React, {
-  ForwardedRef,
-  Ref,
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-} from "react";
+import React, { useEffect, useRef } from "react";
 
-import useDeepCompareEffect from "use-deep-compare-effect";
 import stylex from "@stylexjs/stylex";
 import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
-import { Scene } from "src/drawingElements/data/scene";
 import {
   canvasAtom,
   selectedKeyAtom,
@@ -18,8 +9,6 @@ import {
 } from "src/state/uiState";
 import { useAtom } from "jotai";
 import { sceneAtom } from "src/state/sceneState";
-import { atomEffect } from "jotai-effect";
-import { StrokeOptions, getStroke } from "perfect-freehand";
 import { menuConfigs } from "src/mainMenu";
 
 const staticCvsSte = stylex.create({
