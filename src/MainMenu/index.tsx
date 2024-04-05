@@ -52,16 +52,47 @@ export const penConfigs: BtnConfigs = [
     label: "铅笔",
     svg: pen,
     key: "pen",
+    strokeOptions: {
+      size: 20,
+      smoothing: 0.1,
+      thinning: 0.7,
+      start: {
+        taper: 49,
+        cap: true,
+      },
+      end: {
+        taper: 55,
+        cap: true,
+      },
+      isCustom: false,
+    },
   },
   {
     label: "高光笔",
     svg: highlighterPen,
     key: "highlighterPen",
+    strokeOptions: {
+      size: 20,
+      smoothing: 1,
+      simulatePressure: false,
+      start: {
+        cap: false,
+      },
+      end: {
+        cap: false,
+      },
+      isCustom: false,
+    },
   },
   {
-    label: "笔刷",
+    label: "毛笔",
     svg: brush,
     key: "brush",
+    strokeOptions: {
+      size: 20,
+      isCustom: true,
+      smoothing: 0.5,
+    },
   },
   {
     label: "激光笔",

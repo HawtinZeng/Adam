@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Btn } from "../components/Btn";
 import { DraggableTransparent } from "../components/DraggableTransparent";
 import { Point } from "../utils/data/geometry";
+import { StrokeOptions } from "perfect-freehand";
 
 export type BtnConfigs = Array<{
   label: string;
@@ -9,6 +10,7 @@ export type BtnConfigs = Array<{
   key: string;
   subMenu?: JSX.Element | null;
   btnConfigs?: BtnConfigs;
+  strokeOptions?: StrokeOptions;
 }>;
 export function Menu(props: {
   btnConfigs: BtnConfigs;

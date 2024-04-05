@@ -28,10 +28,6 @@ export const penPanelStyles = stylex.create({
   },
 });
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
-  // 当前正在新增的对象
-  const [drawingElement, setDrawingElement] = useState<FreeDrawing | null>(
-    null
-  );
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
   const [cvsEle] = useAtom(canvasAtom);
@@ -55,22 +51,26 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       position: { x: 0, y: 0 },
       points: [{ x: evt.clientX, y: evt.clientY }],
     } as FreeDrawing);
-    setDrawingElement(newFreeElement);
+
     // trigger DrawCanvas re-render
     sceneState.elements.push(newFreeElement);
+    sceneState.updatingElements.push(newFreeElement);
     setSceneAtom({ ...sceneState });
   }, []);
 
   const penPanelMousemove = (evt: MouseEvent) => {
-    if (drawingElement) {
-      drawingElement.points.push({ x: evt.clientX, y: evt.clientY });
+    if (sceneState.updatingElements[0]) {
+      sceneState.updatingElements[0].points.push({
+        x: evt.clientX,
+        y: evt.clientY,
+      });
       setSceneAtom({ ...sceneState });
     }
   };
 
   const stopCurrentDrawing = (evt: MouseEvent) => {
-    if (drawingElement) {
-      setDrawingElement(null);
+    if (sceneState.updatingElements[0]) {
+      sceneState.updatingElements.length = 0;
     }
   };
 

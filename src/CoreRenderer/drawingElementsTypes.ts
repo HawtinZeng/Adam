@@ -17,8 +17,8 @@ export const newFreeDrawingElement: FreeDrawing = {
   needSimulate: true,
 
   id: "1",
-  strokeColor: "red",
-  strokeWidth: 40,
+  strokeColor: "black",
+  strokeWidth: 20,
   strokeStyle: "solid",
   fillStyle: "solid",
   opacity: 40,
