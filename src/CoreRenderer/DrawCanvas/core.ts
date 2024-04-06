@@ -7,6 +7,7 @@ import {
 import { Point, Vector } from "@flatten-js/core";
 import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
+import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
 export function renderDrawCanvas(
   sceneData: Scene,
   appCanvas: HTMLCanvasElement,
@@ -15,8 +16,14 @@ export function renderDrawCanvas(
   const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
   elements.forEach((ele) => {
+    if (ele.points.length === 0) return;
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
-    if (cachedCvs === undefined || sceneData.updatingElements.includes(ele)) {
+    // 渐变的画笔需要实时更新
+    if (
+      cachedCvs === undefined ||
+      sceneData.updatingElements.includes(ele) ||
+      (ele as FreeDrawing).strokeOptions?.needFadeOut
+    ) {
       cachedCvs = createDrawingCvs(ele, appCanvas, strokeOptions);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
@@ -28,8 +35,7 @@ export function renderDrawCanvas(
 function createDrawingCvs(
   ele: DrawingElement,
   targetCvs: HTMLCanvasElement,
-  strokeOptions?: StrokeOptions,
-  cb?: () => void
+  strokeOptions?: StrokeOptions
 ) {
   switch (ele.type) {
     case DrawingType.freeDraw:
@@ -125,20 +131,9 @@ function createDrawingCvs(
         outlinePoints.forEach((pt) => {
           path.lineTo(pt[0], pt[1]);
         });
+        const rgbValues = hexToRgb(ele.strokeColor);
+        ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
-      }
-
-      // TODO
-      if (strokeOptions?.needFadeOut === true) {
-        const timer = setInterval(() => {
-          canvas.style.opacity = (
-            Number(canvas.style.opacity) - 0.2
-          ).toString();
-          if (canvas.style.opacity === "0") {
-            clearInterval(timer);
-            cb?.();
-          }
-        }, 300);
       }
       return canvas;
     default:

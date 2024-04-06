@@ -77,11 +77,9 @@ export const penConfigs: BtnConfigs = [
       simulatePressure: false,
       start: {
         cap: true,
-        easing: () => 1,
       },
       end: {
         cap: true,
-        easing: () => 1,
       },
       isCustom: false,
       smoothing: 0.9,
@@ -105,8 +103,8 @@ export const penConfigs: BtnConfigs = [
     key: "laser",
     strokeOptions: {
       size: 20,
-      smoothing: 0.9,
-      streamline: 0.9,
+      smoothing: 0.8,
+      streamline: 0.6,
       needFadeOut: true,
     },
   },

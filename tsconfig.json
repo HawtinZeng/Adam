@@ -15,8 +15,15 @@
     "strict": true /* Enable all strict type-checking options. */,
     "noImplicitAny": false,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "outDir": "."
+    "outDir": ".",
+    "module": "ESNext"
   },
-  "include": ["src/**/*.ts", "src/**/*", "src/images/svgs/svg.d.ts", "src/test/*", "src/test/points.ts"],
-  "exclude": ["node_modules", "**/node_modules/*"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*",
+    "src/images/svgs/svg.d.ts",
+    "src/test/*",
+    "src/test/points.ts"
+  ],
+  "exclude": ["node_modules", "**/node_modules/*"]
 }

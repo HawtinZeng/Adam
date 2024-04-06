@@ -19,11 +19,11 @@ export const newFreeDrawingElement: FreeDrawing = {
   needSimulate: true,
 
   id: "1",
-  strokeColor: "black",
+  strokeColor: "#000000",
   strokeWidth: 20,
   strokeStyle: "solid",
   fillStyle: "solid",
-  opacity: 40,
+  opacity: 1,
 
   belongedFrame: "defaultFrameId",
   belongedGroup: "defaultGrp",
