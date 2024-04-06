@@ -10,14 +10,18 @@ const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
     borderRadius: "32px",
-    border: "2px solid #898989",
-    padding: "9px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
     width: "min-content",
     position: "absolute",
+  },
+  subMenuBorder: {
+    border: "2px solid #898989",
+  },
+  menuPadding: {
+    padding: "9px",
   },
 });
 export const DraggableTransparent = forwardRef(
@@ -27,11 +31,15 @@ export const DraggableTransparent = forwardRef(
       onDrag?: () => void;
       children?: ReactNode;
       horizontal?: boolean;
+      needBorder?: boolean;
+      needPadding?: boolean;
     },
     ref: Ref<HTMLElement>
   ) => {
     let isDragging = false;
     const isHorizontal = props.horizontal;
+    const needBorder = props.needBorder ?? true;
+    const needPadding = props.needPadding ?? true;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
     const onDrag = props.onDrag;
     useAtom(selectedSubEffectAtom);
@@ -58,6 +66,12 @@ export const DraggableTransparent = forwardRef(
             isHorizontal && {
               ...penPanelStyles.horizontalPanel,
               ...penPanelStyles.corner,
+            },
+            needBorder && {
+              ...menuContainer.subMenuBorder,
+            },
+            needPadding && {
+              ...menuContainer.menuPadding,
             }
           )}
           ref={ref as Ref<HTMLDivElement>}

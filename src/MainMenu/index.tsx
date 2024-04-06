@@ -122,6 +122,8 @@ export const menuConfigs: BtnConfigs = [
     svg: eraser,
     key: "eraser",
     subMenu: <SizeSlider />,
+    needBorder: false,
+    needPadding: false,
   },
   {
     label: "选择",
@@ -210,6 +212,8 @@ export function MainMenu() {
           horizontal={true}
           ref={subMenuRef}
           key={subMenuDragCtrl}
+          needBorder={menuConfigs[selectedKey].needBorder ?? true}
+          needPadding={menuConfigs[selectedKey].needPadding ?? true}
         >
           {menuConfigs[selectedKey].subMenu}
         </DraggableTransparent>

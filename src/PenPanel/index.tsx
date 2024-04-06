@@ -22,8 +22,7 @@ import {
 } from "src/coreRenderer/drawingElementsTypes";
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
-import { DrawingElement } from "src/coreRenderer/basicTypes";
-import { dist2, len2 } from "src/coreRenderer/drawCanvas/vec";
+import { dist2 } from "src/coreRenderer/drawCanvas/vec";
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {

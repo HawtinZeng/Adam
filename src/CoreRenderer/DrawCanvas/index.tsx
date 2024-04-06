@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import stylex from "@stylexjs/stylex";
 import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
 import {
+  brushRadius,
   canvasAtom,
   selectedKeyAtom,
   selectedKeyAtomSubMenu,
@@ -24,12 +25,19 @@ export function DrawCanvas() {
   const [sceneData] = useAtom(sceneAtom);
   const [menuKey] = useAtom(selectedKeyAtom);
   const [subMenuKey] = useAtom(selectedKeyAtomSubMenu);
+  const [size] = useAtom(brushRadius);
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
 
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
+
+    const strokeOptions =
+      menuConfigs[menuKey]?.btnConfigs?.[subMenuKey]?.strokeOptions;
+    if (!strokeOptions) return;
+    strokeOptions.size = size / 3;
+
     renderDrawCanvas(
       sceneData,
       innerCvsRef.current!,

@@ -11,6 +11,8 @@ export type BtnConfigs = Array<{
   subMenu?: JSX.Element | null;
   btnConfigs?: BtnConfigs;
   strokeOptions?: StrokeOptions;
+  needBorder?: boolean;
+  needPadding?: boolean;
 }>;
 export function Menu(props: {
   btnConfigs: BtnConfigs;
