@@ -27,7 +27,6 @@ export function renderDrawCanvas(
       cachedCvs = createDrawingCvs(ele, appCanvas, strokeOptions);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
-
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 }

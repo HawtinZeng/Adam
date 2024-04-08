@@ -56,7 +56,7 @@ export const penConfigs: BtnConfigs = [
       size: 20,
       thinning: 0.7,
       start: {
-        taper: 49,
+        taper: 55,
         cap: true,
       },
       end: {

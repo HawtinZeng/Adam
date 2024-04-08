@@ -42,7 +42,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const [menuKey] = useAtom(selectedKeyAtom);
   useEffect(() => {
-    cvsEle?.addEventListener("mousedown", penPanelMousedown);
+    cvsEle?.addEventListener("mousedown", penPanelMousedown); // TODO: penPanelMousemove, penPanelMousedown会导致这个useEffect会被反复调用
     cvsEle?.addEventListener("mousemove", penPanelMousemove);
     cvsEle?.addEventListener("mouseup", stopCurrentDrawing);
     cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
@@ -51,8 +51,11 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       cvsEle?.removeEventListener("mousemove", penPanelMousemove);
       cvsEle?.removeEventListener("mouseup", stopCurrentDrawing);
       cvsEle?.removeEventListener("mouseleave", stopCurrentDrawing);
+      console.log("return");
     };
   });
+  console.log("return");
+
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
@@ -73,22 +76,27 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           fadeoutInterval(sceneState.elements.length - 1)
         );
       }
-      setSceneAtom({ ...sceneState });
     },
-    [selectedKey]
+    [menuKey, selectedKey]
   );
 
-  useEffect(() => {
-    intervalTimers.current.forEach((intervalId) => {
-      clearInterval(intervalId);
-    });
-    // console.log("clearInterval");
-    intervalTimers.current.length = 0;
-    sceneState.elements = sceneState.elements.filter(
-      (val) => !(val as FreeDrawing).strokeOptions?.needFadeOut
-    );
-    setSceneAtom({ ...sceneState });
-  }, [menuKey, selectedKey]);
+  // setSceneAtom改变会导致整个canvas重绘
+  // useEffect(() => {
+  //   console.log("------------------");
+  //   intervalTimers.current.forEach((intervalId) => {
+  //     clearInterval(intervalId);
+  //   });
+  //   if (intervalTimers.current) intervalTimers.current.length = 0;
+  //   console.log("------------------");
+  //   console.log(sceneState.elements);
+  //   sceneState.elements = sceneState.elements.filter(
+  //     (val) => !(val as FreeDrawing).strokeOptions?.needFadeOut
+  //   );
+  //   console.log(sceneState.elements);
+  //   console.log("---------93---------");
+  //   setSceneAtom({ ...sceneState });
+  //   return
+  // }, [menuKey]);
 
   const fadeoutInterval = (currentEleIdx) => {
     const elePoints = sceneState.elements[currentEleIdx]?.points;
