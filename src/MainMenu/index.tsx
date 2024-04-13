@@ -23,18 +23,31 @@ import brush from "../images/svgs/brush.svg";
 import laser from "../images/svgs/laser.svg";
 import { nanoid } from "nanoid";
 import { SizeSlider } from "src/sizeSlider/index";
-import { PenPanel } from "src/penPanel/index";
 import { Menu } from "src/mainMenu/menu";
 import { NotePanel } from "src/notePanel/index";
 import { ShapePanel } from "src/shapePanel/index";
 import { ScreenShotPanel } from "src/screenShotPanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { SettingsPanel } from "src/settingsPanel";
-import { selectedKeyAtom } from "src/state/uiState";
+import { brushRadius, selectedKeyAtom } from "src/state/uiState";
 import { useAtom } from "jotai";
+import { PenPanelComposal } from "src/mainMenu/penPanelCompose";
+
 export const mainMenu = stylex.create({
   subMenu: {
     position: "absolute",
+  },
+  multilineLayout: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  brushRadiusSlider: {
+    position: "absolute",
+    right: "0",
+    top: "-40%",
+  },
+  onelineFlex: {
+    display: "flex",
   },
   selectedArrow: (isShow) => ({
     position: "absolute",
@@ -47,6 +60,34 @@ export const mainMenu = stylex.create({
     visibility: isShow ? "visible" : "hidden",
   }),
 });
+
+export const colorConfigs: BtnConfigs = [
+  {
+    label: "黑色",
+    key: "#3c4043",
+  },
+  {
+    label: "青色",
+    key: "#238e9d",
+  },
+  {
+    label: "绿色",
+    key: "#699e3e",
+  },
+  {
+    label: "橙色",
+    key: "#f3b32a",
+  },
+  {
+    label: "红色",
+    key: "#d9453c",
+  },
+  {
+    label: "灰色",
+    key: "#646972",
+  },
+];
+
 export const penConfigs: BtnConfigs = [
   {
     label: "铅笔",
@@ -66,6 +107,7 @@ export const penConfigs: BtnConfigs = [
       isCustom: false,
       smoothing: 0.9,
       streamline: 0.9,
+      strokeColor: "#000000",
     },
   },
   {
@@ -84,6 +126,7 @@ export const penConfigs: BtnConfigs = [
       isCustom: false,
       smoothing: 0.9,
       streamline: 0.9,
+      strokeColor: "#000000",
     },
   },
   {
@@ -95,6 +138,7 @@ export const penConfigs: BtnConfigs = [
       isCustom: true,
       smoothing: 0.9,
       streamline: 0.9,
+      strokeColor: "#000000",
     },
   },
   {
@@ -106,6 +150,7 @@ export const penConfigs: BtnConfigs = [
       smoothing: 0.8,
       streamline: 0.6,
       needFadeOut: true,
+      strokeColor: "#000000",
     },
   },
 ];
@@ -114,14 +159,14 @@ export const menuConfigs: BtnConfigs = [
     label: "画笔",
     svg: pen,
     key: "pen",
-    subMenu: <PenPanel btnConfigs={penConfigs} />,
+    subMenu: <PenPanelComposal />,
     btnConfigs: penConfigs,
   },
   {
     label: "橡皮",
     svg: eraser,
     key: "eraser",
-    subMenu: <SizeSlider />,
+    subMenu: <SizeSlider controledAtom={brushRadius} />,
     needBorder: false,
     needPadding: false,
   },

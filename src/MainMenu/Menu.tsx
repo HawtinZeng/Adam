@@ -3,14 +3,15 @@ import { Btn } from "../components/Btn";
 import { DraggableTransparent } from "../components/DraggableTransparent";
 import { Point } from "../utils/data/geometry";
 import { StrokeOptions } from "perfect-freehand";
+import { AStrokeOptions } from "src/coreRenderer/basicTypes";
 
 export type BtnConfigs = Array<{
   label: string;
-  svg: any;
+  svg?: any;
   key: string;
-  subMenu?: JSX.Element | null;
+  subMenu?: JSX.Element;
   btnConfigs?: BtnConfigs;
-  strokeOptions?: StrokeOptions;
+  strokeOptions?: AStrokeOptions;
   needBorder?: boolean;
   needPadding?: boolean;
 }>;

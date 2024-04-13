@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
-import { useAtom } from "jotai";
+import { PrimitiveAtom, useAtom } from "jotai";
 import { brushRadius } from "src/state/uiState";
 
 export const sizeSliderStyles = stylex.create({
@@ -22,10 +22,11 @@ export const sizeSliderStyles = stylex.create({
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "50%",
-    backgroundColor: "#00a82f",
+    backgroundColor: "#a7cbc1",
     transform: `translate(${size / 2}px, calc(-50% + 7px))`,
-    boxShadow:
-      "rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px",
+    boxShadow: {
+      ":hover": "0 0 3px 2px rgba(255,0,0,0.5)",
+    },
   }),
   symbol: {
     userSelect: "none",
@@ -34,9 +35,10 @@ export const sizeSliderStyles = stylex.create({
     marginTop: "-1px",
   },
 });
-export function SizeSlider() {
+export function SizeSlider(props: { controledAtom: PrimitiveAtom<number> }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
-  const [size, setSize] = useAtom(brushRadius);
+  const { controledAtom } = props;
+  const [size, setSize] = useAtom(controledAtom);
 
   return (
     <div

@@ -14,6 +14,7 @@ export const btn = stylex.create({
       default: "#ffffff",
       ":hover": "#eaeaeb",
     },
+    margin: "2px 0",
   },
   selectedBtnArea: {
     backgroundColor: "#4b4f52",
@@ -44,10 +45,12 @@ export const btn = stylex.create({
     borderRight: "5px solid #80868b",
     visibility: isShow ? "visible" : "hidden",
   }),
-  redCircle: {
-    backgroundColor: "red",
+  circleStyle: (hexColor: string) => ({
+    height: "60%",
+    width: "60%",
     borderRadius: "50%",
-  },
+    backgroundColor: hexColor,
+  }),
   center: {
     height: "100%",
     display: "flex",
@@ -116,7 +119,7 @@ export function Btn(
               }}
             />
           ) : (
-            <div {...stylex.props(btn.redCircle)} />
+            <div {...stylex.props(btn.circleStyle(btnConfigs[i].key))} />
           )}
           {needLeftArrow ? (
             <span

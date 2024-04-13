@@ -1,12 +1,16 @@
 import { StrokeOptions } from "perfect-freehand";
-import { DrawingElement, Point } from "src/coreRenderer/basicTypes";
+import {
+  DrawingElement,
+  Point,
+  AStrokeOptions,
+} from "src/coreRenderer/basicTypes";
 
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
   readonly points: Point[];
   readonly pressures: number[];
   needSimulate: boolean;
-  strokeOptions?: StrokeOptions;
+  strokeOptions: AStrokeOptions;
 }
 export enum DrawingType {
   freeDraw = "freeDraw",
@@ -20,7 +24,6 @@ export const newFreeDrawingElement: FreeDrawing = {
 
   id: "1",
   strokeColor: "#000000",
-  strokeWidth: 20,
   strokeStyle: "solid",
   fillStyle: "solid",
   opacity: 1,
@@ -33,4 +36,5 @@ export const newFreeDrawingElement: FreeDrawing = {
 
   position: { x: 0, y: 0 },
   rotation: 0,
+  strokeOptions: {} as AStrokeOptions,
 };

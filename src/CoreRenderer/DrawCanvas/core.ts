@@ -10,8 +10,7 @@ import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
 export function renderDrawCanvas(
   sceneData: Scene,
-  appCanvas: HTMLCanvasElement,
-  strokeOptions?: StrokeOptions
+  appCanvas: HTMLCanvasElement
 ) {
   const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
@@ -24,27 +23,25 @@ export function renderDrawCanvas(
       sceneData.updatingElements.includes(ele) ||
       (ele as FreeDrawing).strokeOptions?.needFadeOut
     ) {
-      cachedCvs = createDrawingCvs(ele, appCanvas, strokeOptions);
+      cachedCvs = createDrawingCvs(ele, appCanvas);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 }
 
-function createDrawingCvs(
-  ele: DrawingElement,
-  targetCvs: HTMLCanvasElement,
-  strokeOptions?: StrokeOptions
-) {
+function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
   switch (ele.type) {
     case DrawingType.freeDraw:
       const freeDrawing = ele as FreeDrawing;
+      const strokeOptions = freeDrawing.strokeOptions;
       const canvas = document.createElement("canvas");
       canvas.width = targetCvs.offsetWidth;
       canvas.height = targetCvs.offsetHeight;
       const ctx = canvas.getContext("2d")!;
-      const { points, strokeColor } = freeDrawing;
-      ctx.fillStyle = strokeColor;
+      const { strokeColor } = strokeOptions;
+      const { points } = freeDrawing;
+      ctx.strokeStyle = strokeColor;
       ctx.lineCap = "round";
       let outlinePoints: number[][];
       if (strokeOptions?.isCustom) {
@@ -130,7 +127,8 @@ function createDrawingCvs(
         outlinePoints.forEach((pt) => {
           path.lineTo(pt[0], pt[1]);
         });
-        const rgbValues = hexToRgb(ele.strokeColor);
+        const rgbValues = hexToRgb(strokeColor);
+        console.log(strokeColor);
         ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
       }

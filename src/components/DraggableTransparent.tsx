@@ -6,7 +6,7 @@ import { penPanelStyles } from "../penPanel/index";
 import { Point } from "../utils/data/geometry";
 import { useAtom } from "jotai";
 import { selectedSubEffectAtom } from "src/state/uiState";
-const menuContainer = stylex.create({
+export const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
     borderRadius: "32px",
@@ -17,7 +17,7 @@ const menuContainer = stylex.create({
     width: "min-content",
     position: "absolute",
   },
-  subMenuBorder: {
+  areaBorder: {
     border: "2px solid #898989",
   },
   menuPadding: {
@@ -68,7 +68,7 @@ export const DraggableTransparent = forwardRef(
               ...penPanelStyles.corner,
             },
             needBorder && {
-              ...menuContainer.subMenuBorder,
+              ...menuContainer.areaBorder,
             },
             needPadding && {
               ...menuContainer.menuPadding,

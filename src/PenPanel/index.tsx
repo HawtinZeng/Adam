@@ -1,20 +1,17 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import Draggable from "react-draggable";
-import { setTransparent, unsetTransparent } from "../commonUtils";
+import { useCallback, useEffect } from "react";
 import { BtnConfigs } from "../mainMenu/menu";
 import stylex from "@stylexjs/stylex";
 import { Btn } from "../components/Btn";
-import pen from "../images/svgs/pen.svg";
-import highlighterPen from "../images/svgs/highlighterPen.svg";
-import brush from "../images/svgs/brush.svg";
-import laser from "../images/svgs/laser.svg";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
+  brushRadius,
   canvasAtom,
+  colorAtom,
+  customColor,
   selectedKeyAtom,
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
-import { menuConfigs, penConfigs } from "src/mainMenu";
+import { colorConfigs, menuConfigs } from "src/mainMenu";
 import { sceneAtom } from "src/state/sceneState";
 import {
   FreeDrawing,
@@ -23,6 +20,7 @@ import {
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
 import { dist2 } from "src/coreRenderer/drawCanvas/vec";
+import { useAtomCallback } from "jotai/utils";
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -34,27 +32,19 @@ export const penPanelStyles = stylex.create({
 });
 
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
+  const { btnConfigs } = props;
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
   const [cvsEle] = useAtom(canvasAtom);
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
-  const intervalTimers = useRef<Array<NodeJS.Timeout>>([]);
+
+  // useAtomCallback to retrive new atom value, but don't trigger re-excution of component function.
+  const size = useAtomValue(brushRadius);
+  console.log("size change...");
+  const color = useAtomValue(customColor);
+  const colorIdx = useAtomValue(colorAtom);
 
   const [menuKey] = useAtom(selectedKeyAtom);
-  useEffect(() => {
-    cvsEle?.addEventListener("mousedown", penPanelMousedown); // TODO: penPanelMousemove, penPanelMousedown会导致这个useEffect会被反复调用
-    cvsEle?.addEventListener("mousemove", penPanelMousemove);
-    cvsEle?.addEventListener("mouseup", stopCurrentDrawing);
-    cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
-    return () => {
-      cvsEle?.removeEventListener("mousedown", penPanelMousedown);
-      cvsEle?.removeEventListener("mousemove", penPanelMousemove);
-      cvsEle?.removeEventListener("mouseup", stopCurrentDrawing);
-      cvsEle?.removeEventListener("mouseleave", stopCurrentDrawing);
-      console.log("return");
-    };
-  });
-  console.log("return");
 
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
@@ -63,40 +53,36 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         position: { x: 0, y: 0 },
         points: [{ x: evt.clientX, y: evt.clientY }],
       } as FreeDrawing);
-
+      // default property
       const subMenuStrokeOption =
         menuConfigs[menuKey]?.btnConfigs?.[selectedKey]?.strokeOptions;
-      newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption);
+      newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
+      // updated property, size是ui控件的直径
+      newFreeElement.strokeOptions.size = size / 4;
+      newFreeElement.strokeOptions.strokeColor =
+        colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
       sceneState.updatingElements.push(newFreeElement);
-
       if ((newFreeElement as FreeDrawing).strokeOptions?.needFadeOut) {
-        intervalTimers.current.push(
-          fadeoutInterval(sceneState.elements.length - 1)
-        );
+        fadeoutInterval(sceneState.elements.length - 1);
       }
     },
-    [menuKey, selectedKey]
+    [selectedKey, colorIdx, color, size]
   );
 
-  // setSceneAtom改变会导致整个canvas重绘
-  // useEffect(() => {
-  //   console.log("------------------");
-  //   intervalTimers.current.forEach((intervalId) => {
-  //     clearInterval(intervalId);
-  //   });
-  //   if (intervalTimers.current) intervalTimers.current.length = 0;
-  //   console.log("------------------");
-  //   console.log(sceneState.elements);
-  //   sceneState.elements = sceneState.elements.filter(
-  //     (val) => !(val as FreeDrawing).strokeOptions?.needFadeOut
-  //   );
-  //   console.log(sceneState.elements);
-  //   console.log("---------93---------");
-  //   setSceneAtom({ ...sceneState });
-  //   return
-  // }, [menuKey]);
+  useEffect(() => {
+    cvsEle?.addEventListener("mousedown", penPanelMousedown);
+    cvsEle?.addEventListener("mousemove", penPanelMousemove);
+    cvsEle?.addEventListener("mouseup", stopCurrentDrawing);
+    cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
+    return () => {
+      cvsEle?.removeEventListener("mousedown", penPanelMousedown);
+      cvsEle?.removeEventListener("mousemove", penPanelMousemove);
+      cvsEle?.removeEventListener("mouseup", stopCurrentDrawing);
+      cvsEle?.removeEventListener("mouseleave", stopCurrentDrawing);
+    };
+  }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
   const fadeoutInterval = (currentEleIdx) => {
     const elePoints = sceneState.elements[currentEleIdx]?.points;
@@ -143,7 +129,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   return Btn(
     setSelectedKey,
     selectedKey,
-    props.btnConfigs,
+    btnConfigs,
     undefined,
     undefined,
     undefined,

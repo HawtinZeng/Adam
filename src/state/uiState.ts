@@ -18,3 +18,7 @@ export const selectedSubEffectAtom = atomEffect((get, set) => {
 export const canvasAtom = atom<HTMLCanvasElement | null>(null);
 
 export const brushRadius = atom<number>(20);
+
+export const colorAtom = atom<number>(0);
+
+export const customColor = atom<string>("");
