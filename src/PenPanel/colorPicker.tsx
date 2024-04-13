@@ -53,7 +53,7 @@ export function ColorPicker() {
   useClickOutside(popover, close);
   const chooseCustomColor = () => {
     setColorIdx(-1);
-    setColor("#000000");
+    if (color === "") setColor("#000000");
     toggle(true);
   };
 

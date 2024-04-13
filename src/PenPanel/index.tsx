@@ -40,7 +40,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   // useAtomCallback to retrive new atom value, but don't trigger re-excution of component function.
   const size = useAtomValue(brushRadius);
-  console.log("size change...");
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
 
