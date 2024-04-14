@@ -111,7 +111,7 @@ function createDrawingCvs(
             r = Math.max(oldR + ratio * dR, 1);
 
             drawStrokeLine(ctx, oldX, oldY, x, y, r + diff);
-            refreshSimulatePressureSize?.(r + diff);
+
             drawStrokeLine(
               ctx,
               oldX + diff * 2,

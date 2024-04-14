@@ -53,7 +53,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const [cvsEle] = useAtom(canvasAtom);
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
 
-  // useAtomCallback to retrive new atom value, but don't trigger re-excution of component function.
   const size = useAtomValue(brushRadius);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);

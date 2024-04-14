@@ -1,4 +1,3 @@
-import { StrokeOptions } from "perfect-freehand";
 import {
   DrawingElement,
   Point,

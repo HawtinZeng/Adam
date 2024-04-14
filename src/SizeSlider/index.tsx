@@ -21,9 +21,11 @@ export const sizeSliderStyles = stylex.create({
     width: `${size}px`,
     height: `${size}px`,
     borderRadius: "50%",
-    backgroundColor: "#a7cbc1",
+    backgroundColor: "rgb(234, 234, 235)",
     transform: `translate(${size / 2}px, calc(-50% + 7px))`,
     boxShadow: {
+      default:
+        "rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px",
       ":hover": "0 0 3px 2px rgba(255,0,0,0.5)",
     },
   }),
