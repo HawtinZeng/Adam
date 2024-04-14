@@ -128,7 +128,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           path.lineTo(pt[0], pt[1]);
         });
         const rgbValues = hexToRgb(strokeColor);
-        console.log(strokeColor);
         ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
       }

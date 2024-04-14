@@ -1,9 +1,3 @@
-// import cancel from "../images/svgs/cancel.svg";
-// import copy from "../images/svgs/copy.svg";
-// import highlighterPen from "../images/svgs/copy.svg";
-// import laser from "../images/svgs/laser.svg";
-// import save from "../images/svgs/save.svg";
-// import { setTransparent, unsetTransparent } from "../commonUtils";
 import { computePosition, flip } from "@floating-ui/dom";
 import React, { useEffect, useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
@@ -16,14 +10,11 @@ import note from "../images/svgs/note.svg";
 import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
-import { setTransparent, unsetTransparent } from "../commonUtils";
-import { BtnConfigs } from "../mainMenu/menu";
 import highlighterPen from "../images/svgs/highlighterPen.svg";
 import brush from "../images/svgs/brush.svg";
 import laser from "../images/svgs/laser.svg";
 import { nanoid } from "nanoid";
 import { SizeSlider } from "src/sizeSlider/index";
-import { Menu } from "src/mainMenu/menu";
 import { NotePanel } from "src/notePanel/index";
 import { ShapePanel } from "src/shapePanel/index";
 import { ScreenShotPanel } from "src/screenShotPanel/index";
@@ -32,6 +23,7 @@ import { SettingsPanel } from "src/settingsPanel";
 import { brushRadius, selectedKeyAtom } from "src/state/uiState";
 import { useAtom } from "jotai";
 import { PenPanelComposal } from "src/mainMenu/penPanelCompose";
+import { BtnConfigs, Menu } from "src/mainMenu/menu";
 
 export const mainMenu = stylex.create({
   subMenu: {

@@ -1,8 +1,7 @@
-import { useCallback, useEffect } from "react";
-import { BtnConfigs } from "../mainMenu/menu";
+import { useCallback, useEffect, useRef } from "react";
 import stylex from "@stylexjs/stylex";
 import { Btn } from "../components/Btn";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import {
   brushRadius,
   canvasAtom,
@@ -20,7 +19,7 @@ import {
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
 import { dist2 } from "src/coreRenderer/drawCanvas/vec";
-import { useAtomCallback } from "jotai/utils";
+import { BtnConfigs } from "src/mainMenu/menu";
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -30,6 +29,22 @@ export const penPanelStyles = stylex.create({
     borderRadius: "5px",
   },
 });
+
+async function* nextFrame(fps) {
+  let then = performance.now();
+  const interval = 1000 / fps;
+  let delta = 0;
+
+  while (true) {
+    let now = await new Promise(requestAnimationFrame);
+
+    if (now - then < interval - delta) continue;
+    delta = Math.min(interval, delta + now - then - interval);
+    then = now;
+
+    yield now;
+  }
+}
 
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
@@ -45,6 +60,9 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const [menuKey] = useAtom(selectedKeyAtom);
 
+  const animationTasks = useRef<Function[]>([]);
+  const isStop = useRef<boolean>(true);
+
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
@@ -52,22 +70,65 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         position: { x: 0, y: 0 },
         points: [{ x: evt.clientX, y: evt.clientY }],
       } as FreeDrawing);
+
       // default property
       const subMenuStrokeOption =
         menuConfigs[menuKey]?.btnConfigs?.[selectedKey]?.strokeOptions;
       newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
+
       // updated property, size是ui控件的直径
       newFreeElement.strokeOptions.size = size / 4;
       newFreeElement.strokeOptions.strokeColor =
         colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
       sceneState.updatingElements.push(newFreeElement);
-      if ((newFreeElement as FreeDrawing).strokeOptions?.needFadeOut) {
-        fadeoutInterval(sceneState.elements.length - 1);
+      if (
+        (sceneState.updatingElements[0] as FreeDrawing)?.strokeOptions
+          ?.needFadeOut
+      ) {
+        const fadeoutEle = sceneState.elements.length - 1;
+        let timer: NodeJS.Timeout | null = setTimeout(() => {
+          animationTasks.current.push(fadeout.bind(undefined, fadeoutEle));
+          if (isStop.current) {
+            isStop.current = false;
+            startAnimationLoop();
+          }
+          clearTimeout(timer!);
+          timer = null;
+        }, 500);
       }
     },
     [selectedKey, colorIdx, color, size]
+  );
+  const fadeout = useCallback(
+    (lastIdx: number) => {
+      const elePoints = sceneState.elements[lastIdx]?.points;
+      if (elePoints === undefined || elePoints.length === 0) {
+        return "terminated";
+      }
+
+      if (sceneState.elements[lastIdx].opacity < 0.05) {
+        setSceneAtom({ ...sceneState });
+        elePoints.length = 0;
+        return "terminated";
+      }
+      let distance = 0,
+        cutPointIdx = 0;
+      while (distance < 100 && cutPointIdx + 1 < elePoints.length) {
+        distance += dist2(
+          [elePoints[cutPointIdx].x, elePoints[cutPointIdx].y],
+          [elePoints[cutPointIdx + 1].x, elePoints[cutPointIdx + 1].y]
+        );
+        cutPointIdx++;
+      }
+      if (cutPointIdx + 1 >= elePoints.length) elePoints.length = 0;
+      else elePoints.splice(0, cutPointIdx);
+      setSceneAtom({ ...sceneState });
+      sceneState.elements[lastIdx].opacity *= 0.9;
+    },
+    [sceneState]
   );
 
   useEffect(() => {
@@ -83,30 +144,39 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     };
   }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
-  const fadeoutInterval = (currentEleIdx) => {
-    const elePoints = sceneState.elements[currentEleIdx]?.points;
-    const intervalTimer = setInterval(() => {
-      if (elePoints === undefined || elePoints.length === 0) {
-        clearInterval(intervalTimer);
-        return;
-      }
-
-      let distance = 0,
-        cutPointIdx = 0;
-      while (distance < 1500 && cutPointIdx + 1 < elePoints.length) {
-        distance += dist2(
-          [elePoints[cutPointIdx].x, elePoints[cutPointIdx].y],
-          [elePoints[cutPointIdx + 1].x, elePoints[cutPointIdx + 1].y]
-        );
-        cutPointIdx++;
-      }
-      if (cutPointIdx + 1 >= elePoints.length) elePoints.length = 0;
-      else elePoints.splice(0, cutPointIdx);
+  useEffect(() => {
+    if (selectedKey !== 3) {
+      isStop.current = true;
+      animationTasks.current.length = 0;
+      sceneState.elements = sceneState.elements.filter(
+        (ele) => !(ele as FreeDrawing).strokeOptions.needFadeOut
+      );
       setSceneAtom({ ...sceneState });
-      sceneState.elements[currentEleIdx].opacity *= 0.9;
-    }, 200);
+    }
+  }, [selectedKey]);
 
-    return intervalTimer;
+  const startAnimationLoop = async () => {
+    for await (const _ of nextFrame(8 /* fps */)) {
+      if (isStop.current) {
+        break;
+      }
+      const terminatedIndices: number[] = [];
+      animationTasks.current.forEach((task, idx) => {
+        const res = task();
+
+        if (res === "terminated") {
+          terminatedIndices.push(idx);
+        }
+      });
+
+      if (terminatedIndices.length > 0) {
+        animationTasks.current = animationTasks.current.filter(
+          (_, idx) => !terminatedIndices.includes(idx)
+        );
+      }
+
+      if (animationTasks.current.length === 0) isStop.current = true;
+    }
   };
 
   const penPanelMousemove = (evt: MouseEvent) => {

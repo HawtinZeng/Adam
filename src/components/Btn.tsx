@@ -1,9 +1,9 @@
 import React from "react";
 import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
-import { BtnConfigs } from "../mainMenu/menu";
 import { selectedKeyAtomSubMenu } from "src/state/uiState";
 import { useAtom } from "jotai";
+import { BtnConfigs } from "src/mainMenu/menu";
 
 export const btn = stylex.create({
   btnArea: {
@@ -87,6 +87,7 @@ export function Btn(
         key={i}
         id="btn"
         onClick={() => {
+          console.log("clicked...");
           if (selectedKey === i) {
             setSelectedKey(-1);
           } else {

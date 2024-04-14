@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Btn } from "../components/Btn";
-import { DraggableTransparent } from "../components/DraggableTransparent";
-import { Point } from "../utils/data/geometry";
-import { StrokeOptions } from "perfect-freehand";
+import { Btn } from "src/components/Btn";
+import { DraggableTransparent } from "src/components/DraggableTransparent";
+import { Point } from "src/utils/data/geometry";
 import { AStrokeOptions } from "src/coreRenderer/basicTypes";
 
 export type BtnConfigs = Array<{
