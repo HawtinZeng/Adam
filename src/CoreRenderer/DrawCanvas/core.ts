@@ -4,18 +4,24 @@ import {
   FreeDrawing,
   DrawingType,
 } from "src/coreRenderer/drawingElementsTypes";
-import { Point, Vector } from "@flatten-js/core";
+import { Point, Vector, point } from "@flatten-js/core";
 import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
 import { cloneDeep } from "lodash";
-function getStrokeRadius(
-  size: number,
-  thinning: number,
-  pressure: number,
-  easing: (t: number) => number = (t) => t
-) {
-  return size * easing(0.5 - thinning * (0.5 - pressure));
+import { getBoundsFromPoints } from "src/common/utils";
+function getBoundingSphere(points: Point[]) {
+  const bounds = getBoundsFromPoints(points);
+  const sphereCenter = new Point(
+    (bounds[0].x + bounds[1].x) / 2,
+    (bounds[0].y + bounds[1].y) / 2
+  );
+  let maxRadius = -Infinity;
+  points.forEach((pt) => {
+    maxRadius = Math.max(maxRadius, sphereCenter.distanceTo(pt)[0]);
+  });
+
+  return { sphereCenter, radius: maxRadius };
 }
 
 export function renderDrawCanvas(
@@ -141,26 +147,22 @@ function createDrawingCvs(
         const path = new Path2D();
         path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
 
+        // pass simulate size back to canvas component.
         const arroundEndPtIdx = Math.floor(outlinePoints.length / 2);
-        const endPoints = cloneDeep(
+        const endPoints: Point[] = cloneDeep(
           outlinePoints.slice(
-            Math.max(arroundEndPtIdx - 5, 0),
-            arroundEndPtIdx + 5
+            Math.max(arroundEndPtIdx - 2, 0),
+            arroundEndPtIdx + 2
+          )
+        ).map((pt: number[]) => new Point(pt[0], pt[1]));
+        const bounds = getBoundsFromPoints(endPoints);
+        refreshSimulatePressureSize?.(
+          Math.min(
+            Math.abs(bounds[0].x - bounds[1].x),
+            Math.abs(bounds[0].y - bounds[1].y)
           )
         );
-        ctx.strokeStyle = "yellow";
-        endPoints.forEach((pt, idx) => {
-          if (idx < endPoints.length)
-            drawStrokeLine(
-              ctx,
-              pt[0],
-              pt[1],
-              endPoints[idx + 1][0],
-              endPoints[idx + 1][1],
-              20
-            );
-        });
-        // refreshSimulatePressureSize(outlinePoints[arroundEndPtIdx]);
+
         outlinePoints.forEach((pt) => {
           path.lineTo(pt[0], pt[1]);
         });

@@ -1,10 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import stylex from "@stylexjs/stylex";
 import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
-import { canvasAtom, simulatePressureSize } from "src/state/uiState";
-import { useAtom, useSetAtom } from "jotai";
+import {
+  canvasAtom,
+  colorAtom,
+  customColor,
+  simulatePressureSize,
+} from "src/state/uiState";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { sceneAtom } from "src/state/sceneState";
+import AnimatedCursor from "react-animated-cursor";
+import { colorConfigs } from "src/mainMenu";
+import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
 
 const staticCvsSte = stylex.create({
   container: {
@@ -19,6 +33,10 @@ export function DrawCanvas() {
   const [sceneData] = useAtom(sceneAtom);
   const [size, setSize] = useAtom(simulatePressureSize);
 
+  const colorIdx = useAtomValue(colorAtom);
+  const color = useAtomValue(customColor);
+  const [rgbColor, setRgbColor] = useState("");
+
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
@@ -29,8 +47,24 @@ export function DrawCanvas() {
   }, [sceneData]);
 
   useEffect(() => {
-    console.log(size);
-  }, [size]);
+    const rgbArr = hexToRgb(
+      colorIdx !== -1 ? colorConfigs[colorIdx].key : color
+    );
+    setRgbColor(`${rgbArr[0]},${rgbArr[1]},${rgbArr[2]}`);
+    console.log(`${rgbArr[0]},${rgbArr[1]},${rgbArr[2]}`);
+  }, [colorIdx, color]);
 
-  return <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />;
+  return (
+    <div>
+      <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
+      <AnimatedCursor
+        innerSize={0}
+        outerSize={8}
+        color="193, 11, 111"
+        outerAlpha={1}
+        outerScale={1.4}
+        trailingSpeed={1}
+      />
+    </div>
+  );
 }

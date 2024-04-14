@@ -1,7 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import stylex from "@stylexjs/stylex";
 import { PrimitiveAtom, useAtom } from "jotai";
-import { brushRadius } from "src/state/uiState";
 
 export const sizeSliderStyles = stylex.create({
   container: {
