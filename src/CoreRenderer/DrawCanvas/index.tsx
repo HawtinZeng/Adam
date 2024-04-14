@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 
 import stylex from "@stylexjs/stylex";
 import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
-import { canvasAtom } from "src/state/uiState";
+import { canvasAtom, simulatePressureSize } from "src/state/uiState";
 import { useAtom, useSetAtom } from "jotai";
 import { sceneAtom } from "src/state/sceneState";
 
@@ -17,6 +17,7 @@ export function DrawCanvas() {
   const innerCvsRef = useRef<HTMLCanvasElement>(null);
   const setCvsAtom = useSetAtom(canvasAtom);
   const [sceneData] = useAtom(sceneAtom);
+  const [size, setSize] = useAtom(simulatePressureSize);
 
   // initialize canvas
   useEffect(() => {
@@ -24,8 +25,12 @@ export function DrawCanvas() {
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
-    renderDrawCanvas(sceneData, innerCvsRef.current!);
-  });
+    renderDrawCanvas(sceneData, innerCvsRef.current!, setSize);
+  }, [sceneData]);
+
+  useEffect(() => {
+    console.log(size);
+  }, [size]);
 
   return <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />;
 }

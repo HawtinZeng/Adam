@@ -208,7 +208,6 @@ export function MainMenu() {
   const subMenuRef = useRef<HTMLElement>(null);
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
-
   const [hoveredKey, setHoveredKey] = useState(-1);
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");

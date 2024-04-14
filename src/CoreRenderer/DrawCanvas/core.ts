@@ -8,9 +8,20 @@ import { Point, Vector } from "@flatten-js/core";
 import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
+import { cloneDeep } from "lodash";
+function getStrokeRadius(
+  size: number,
+  thinning: number,
+  pressure: number,
+  easing: (t: number) => number = (t) => t
+) {
+  return size * easing(0.5 - thinning * (0.5 - pressure));
+}
+
 export function renderDrawCanvas(
   sceneData: Scene,
-  appCanvas: HTMLCanvasElement
+  appCanvas: HTMLCanvasElement,
+  refreshSimulatePressureSize?: (size: number) => void
 ) {
   const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
@@ -23,14 +34,18 @@ export function renderDrawCanvas(
       sceneData.updatingElements.includes(ele) ||
       (ele as FreeDrawing).strokeOptions?.needFadeOut
     ) {
-      cachedCvs = createDrawingCvs(ele, appCanvas);
+      cachedCvs = createDrawingCvs(ele, appCanvas, refreshSimulatePressureSize);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 }
 
-function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
+function createDrawingCvs(
+  ele: DrawingElement,
+  targetCvs: HTMLCanvasElement,
+  refreshSimulatePressureSize?: (size: number) => void
+) {
   switch (ele.type) {
     case DrawingType.freeDraw:
       const freeDrawing = ele as FreeDrawing;
@@ -90,6 +105,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
             r = Math.max(oldR + ratio * dR, 1);
 
             drawStrokeLine(ctx, oldX, oldY, x, y, r + diff);
+            refreshSimulatePressureSize?.(r + diff);
             drawStrokeLine(
               ctx,
               oldX + diff * 2,
@@ -124,6 +140,27 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
 
         const path = new Path2D();
         path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
+
+        const arroundEndPtIdx = Math.floor(outlinePoints.length / 2);
+        const endPoints = cloneDeep(
+          outlinePoints.slice(
+            Math.max(arroundEndPtIdx - 5, 0),
+            arroundEndPtIdx + 5
+          )
+        );
+        ctx.strokeStyle = "yellow";
+        endPoints.forEach((pt, idx) => {
+          if (idx < endPoints.length)
+            drawStrokeLine(
+              ctx,
+              pt[0],
+              pt[1],
+              endPoints[idx + 1][0],
+              endPoints[idx + 1][1],
+              20
+            );
+        });
+        // refreshSimulatePressureSize(outlinePoints[arroundEndPtIdx]);
         outlinePoints.forEach((pt) => {
           path.lineTo(pt[0], pt[1]);
         });
