@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import stylex from "@stylexjs/stylex";
 import { PrimitiveAtom, useAtom } from "jotai";
 
@@ -36,6 +36,7 @@ export const sizeSliderStyles = stylex.create({
     marginTop: "-1px",
   },
 });
+
 export function SizeSlider(props: { controledAtom: PrimitiveAtom<number> }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const { controledAtom } = props;
