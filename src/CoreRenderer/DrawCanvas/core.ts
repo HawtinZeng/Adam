@@ -5,6 +5,7 @@ import {
   DrawingType,
 } from "src/coreRenderer/drawingElementsTypes";
 import { Point, Vector, point } from "@flatten-js/core";
+import roughjs from "roughjs";
 import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
@@ -22,6 +23,38 @@ function getBoundingSphere(points: Point[]) {
   });
 
   return { sphereCenter, radius: maxRadius };
+}
+// Trim SVG path data so number are each two decimal points. This
+// improves SVG exports, and prevents rendering errors on points
+// with long decimals.
+const TO_FIXED_PRECISION = /(\s?[A-Z]?,?-?[0-9]*\.[0-9]{0,2})(([0-9]|e|-)*)/g;
+
+function med(A: number[], B: number[]) {
+  return [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+}
+
+// generate quatric Bézier Curves
+function getSvgPathFromStroke(points: number[][]): string {
+  if (!points.length) {
+    return "";
+  }
+
+  const max = points.length - 1;
+
+  return points
+    .reduce(
+      (acc, point, i, arr) => {
+        if (i === max) {
+          acc.push(point, med(point, arr[0]), "L", arr[0], "Z");
+        } else {
+          acc.push(point, med(point, arr[i + 1]));
+        }
+        return acc;
+      },
+      ["M", points[0], "Q"]
+    )
+    .join(" ")
+    .replace(TO_FIXED_PRECISION, "$1");
 }
 
 export function renderDrawCanvas(
@@ -144,28 +177,25 @@ function createDrawingCvs(
           strokeOptions as StrokeOptions
         );
 
-        const path = new Path2D();
+        const path = new Path2D(getSvgPathFromStroke(outlinePoints));
         path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
 
         // pass simulate size back to canvas component.
-        const arroundEndPtIdx = Math.floor(outlinePoints.length / 2);
-        const endPoints: Point[] = cloneDeep(
-          outlinePoints.slice(
-            Math.max(arroundEndPtIdx - 2, 0),
-            arroundEndPtIdx + 2
-          )
-        ).map((pt: number[]) => new Point(pt[0], pt[1]));
-        const bounds = getBoundsFromPoints(endPoints);
-        refreshSimulatePressureSize?.(
-          Math.min(
-            Math.abs(bounds[0].x - bounds[1].x),
-            Math.abs(bounds[0].y - bounds[1].y)
-          )
-        );
+        // const arroundEndPtIdx = Math.floor(outlinePoints.length / 2);
+        // const endPoints: Point[] = cloneDeep(
+        //   outlinePoints.slice(
+        //     Math.max(arroundEndPtIdx - 2, 0),
+        //     arroundEndPtIdx + 2
+        //   )
+        // ).map((pt: number[]) => new Point(pt[0], pt[1]));
+        // const bounds = getBoundsFromPoints(endPoints);
+        // refreshSimulatePressureSize?.(
+        //   Math.min(
+        //     Math.abs(bounds[0].x - bounds[1].x),
+        //     Math.abs(bounds[0].y - bounds[1].y)
+        //   )
+        // );
 
-        outlinePoints.forEach((pt) => {
-          path.lineTo(pt[0], pt[1]);
-        });
         const rgbValues = hexToRgb(strokeColor);
         ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
