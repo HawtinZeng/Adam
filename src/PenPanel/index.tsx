@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import stylex from "@stylexjs/stylex";
 import { Btn } from "../components/Btn";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomCallback } from "jotai/utils";
 import {
   brushRadius,
   canvasAtom,
@@ -51,12 +52,19 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
   const [cvsEle] = useAtom(canvasAtom);
-  const [sceneState, setSceneAtom] = useAtom(sceneAtom);
 
+  const setSceneAtom = useSetAtom(sceneAtom);
   const size = useAtomValue(brushRadius);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
 
+  const sceneState = useAtomCallback(
+    useCallback((get) => {
+      const scene = get(sceneAtom);
+
+      return scene;
+    }, [])
+  )();
   const [menuKey] = useAtom(selectedKeyAtom);
 
   const animationTasks = useRef<Function[]>([]);
@@ -101,34 +109,25 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     },
     [selectedKey, colorIdx, color, size]
   );
-  const fadeout = useCallback(
-    (lastIdx: number) => {
-      const elePoints = sceneState.elements[lastIdx]?.points;
-      if (elePoints === undefined || elePoints.length === 0) {
-        return "terminated";
-      }
-
-      if (sceneState.elements[lastIdx].opacity < 0.05) {
-        setSceneAtom({ ...sceneState });
-        elePoints.length = 0;
-        return "terminated";
-      }
-      let distance = 0,
-        cutPointIdx = 0;
-      while (distance < 100 && cutPointIdx + 1 < elePoints.length) {
-        distance += dist2(
-          [elePoints[cutPointIdx].x, elePoints[cutPointIdx].y],
-          [elePoints[cutPointIdx + 1].x, elePoints[cutPointIdx + 1].y]
-        );
-        cutPointIdx++;
-      }
-      if (cutPointIdx + 1 >= elePoints.length) elePoints.length = 0;
-      else elePoints.splice(0, cutPointIdx);
-      setSceneAtom({ ...sceneState });
-      sceneState.elements[lastIdx].opacity *= 0.9;
-    },
-    [sceneState]
-  );
+  const fadeout = (lastIdx: number) => {
+    const elePoints = sceneState.elements[lastIdx]?.points;
+    if (elePoints === undefined || elePoints.length === 0) {
+      return "terminated";
+    }
+    let distance = 0,
+      cutPointIdx = 0;
+    while (distance < 50 && cutPointIdx + 1 < elePoints.length) {
+      distance += dist2(
+        [elePoints[cutPointIdx].x, elePoints[cutPointIdx].y],
+        [elePoints[cutPointIdx + 1].x, elePoints[cutPointIdx + 1].y]
+      );
+      cutPointIdx++;
+    }
+    if (cutPointIdx + 1 >= elePoints.length) elePoints.length = 0;
+    else elePoints.splice(0, cutPointIdx);
+    setSceneAtom({ ...sceneState });
+    sceneState.elements[lastIdx].opacity *= 0.9;
+  };
 
   useEffect(() => {
     cvsEle?.addEventListener("mousedown", penPanelMousedown);
@@ -143,22 +142,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     };
   }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
-  useEffect(() => {
-    if (selectedKey !== 3) {
-      isStop.current = true;
-      animationTasks.current.length = 0;
-      sceneState.elements = sceneState.elements.filter(
-        (ele) => !(ele as FreeDrawing).strokeOptions.needFadeOut
-      );
-      setSceneAtom({ ...sceneState });
-    }
-  }, [selectedKey]);
-
   const startAnimationLoop = async () => {
-    for await (const _ of nextFrame(8 /* fps */)) {
+    for await (const _ of nextFrame(60 /* fps */)) {
       if (isStop.current) {
         break;
       }
+
       const terminatedIndices: number[] = [];
       animationTasks.current.forEach((task, idx) => {
         const res = task();

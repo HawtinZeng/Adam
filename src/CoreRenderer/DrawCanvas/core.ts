@@ -7,23 +7,11 @@ import {
 import { Point, Vector, point } from "@flatten-js/core";
 import roughjs from "roughjs";
 import { Scene } from "src/drawingElements/data/scene";
-import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/DrawingCanvas";
+import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/drawingCanvas";
 import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
 import { cloneDeep } from "lodash";
 import { getBoundsFromPoints } from "src/common/utils";
-function getBoundingSphere(points: Point[]) {
-  const bounds = getBoundsFromPoints(points);
-  const sphereCenter = new Point(
-    (bounds[0].x + bounds[1].x) / 2,
-    (bounds[0].y + bounds[1].y) / 2
-  );
-  let maxRadius = -Infinity;
-  points.forEach((pt) => {
-    maxRadius = Math.max(maxRadius, sphereCenter.distanceTo(pt)[0]);
-  });
-
-  return { sphereCenter, radius: maxRadius };
-}
+import { throttleRAF } from "src/animations/requestAniThrottle";
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -56,6 +44,10 @@ function getSvgPathFromStroke(points: number[][]): string {
     .join(" ")
     .replace(TO_FIXED_PRECISION, "$1");
 }
+
+export const throttledRenderDC = throttleRAF(renderDrawCanvas, {
+  trailing: true,
+});
 
 export function renderDrawCanvas(
   sceneData: Scene,

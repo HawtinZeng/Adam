@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import stylex from "@stylexjs/stylex";
-import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
+import { throttledRenderDC } from "src/coreRenderer/drawCanvas/core";
 import {
   brushRadius,
   canvasAtom,
@@ -37,10 +37,11 @@ export function DrawCanvas() {
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
+
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
-    renderDrawCanvas(sceneData, innerCvsRef.current!);
+    throttledRenderDC(sceneData, innerCvsRef.current!);
   }, [sceneData]);
 
   useEffect(() => {
@@ -52,7 +53,11 @@ export function DrawCanvas() {
 
   return (
     <div>
-      <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
+      <canvas
+        ref={innerCvsRef}
+        {...stylex.props(staticCvsSte.container)}
+        onMouseDown={() => console.log("mouse down...")}
+      />
       (
       <AnimatedCursor
         innerSize={0}
