@@ -141,7 +141,7 @@ export const penConfigs: BtnConfigs = [
       size: 20,
       smoothing: 0.8,
       streamline: 0.6,
-      needFadeOut: true,
+      haveTrailling: true,
       strokeColor: "#000000",
     },
   },

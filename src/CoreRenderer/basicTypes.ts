@@ -3,6 +3,8 @@ import { StrokeOptions } from "perfect-freehand";
 export type Point = {
   x: number;
   y: number;
+  pressure?: number; // 0 - 1
+  timestamp?: number;
 };
 export type Degree = number;
 export type DrawingElement = {
@@ -44,6 +46,6 @@ export type AStrokeOptions = StrokeOptions & {
   last?: boolean;
   // 放的是比较私有的配置
   isCustom?: boolean;
-  needFadeOut?: boolean;
+  haveTrailling?: boolean;
   strokeColor: string;
 };

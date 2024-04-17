@@ -53,12 +53,7 @@ export function DrawCanvas() {
 
   return (
     <div>
-      <canvas
-        ref={innerCvsRef}
-        {...stylex.props(staticCvsSte.container)}
-        onMouseDown={() => console.log("mouse down...")}
-      />
-      (
+      <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
       <AnimatedCursor
         innerSize={0}
         outerSize={size / 4}
@@ -68,7 +63,6 @@ export function DrawCanvas() {
         trailingSpeed={1}
         key={rgbColor + size}
       />
-      );
     </div>
   );
 }

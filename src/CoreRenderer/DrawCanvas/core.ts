@@ -1,4 +1,9 @@
-import { StrokeOptions, getStroke } from "perfect-freehand";
+import {
+  StrokeOptions,
+  getStroke,
+  getStrokeOutlinePoints,
+  getStrokePoints,
+} from "perfect-freehand";
 import { DrawingElement } from "src/coreRenderer/basicTypes";
 import {
   FreeDrawing,
@@ -63,7 +68,7 @@ export function renderDrawCanvas(
     if (
       cachedCvs === undefined ||
       sceneData.updatingElements.includes(ele) ||
-      (ele as FreeDrawing).strokeOptions?.needFadeOut
+      (ele as FreeDrawing).strokeOptions?.haveTrailling
     ) {
       cachedCvs = createDrawingCvs(ele, appCanvas, refreshSimulatePressureSize);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
@@ -156,7 +161,7 @@ function createDrawingCvs(
           }
         });
       } else {
-        outlinePoints = getStroke(
+        const strokePoints = getStrokePoints(
           points.map((pt) => {
             const ptObj = new Point(pt.x, pt.y)
               .translate(
@@ -164,8 +169,13 @@ function createDrawingCvs(
               )
               .rotate(freeDrawing.rotation);
 
-            return { x: ptObj.x, y: ptObj.y };
+            return { x: ptObj.x, y: ptObj.y, pressure: pt.pressure };
           }),
+          strokeOptions as StrokeOptions
+        );
+
+        const outlinePoints = getStrokeOutlinePoints(
+          strokePoints,
           strokeOptions as StrokeOptions
         );
 

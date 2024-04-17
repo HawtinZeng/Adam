@@ -7,7 +7,6 @@ import {
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
   readonly points: Point[];
-  readonly pressures: number[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 }
@@ -18,7 +17,6 @@ export enum DrawingType {
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [] as Point[],
-  pressures: [] as number[],
   needSimulate: true,
 
   id: "1",

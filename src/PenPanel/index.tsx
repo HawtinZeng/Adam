@@ -21,6 +21,8 @@ import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
 import { dist2 } from "src/coreRenderer/drawCanvas/vec";
 import { BtnConfigs } from "src/mainMenu/menu";
+import { debug } from "debug";
+var log = debug("comp:startAnimationLoop");
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -69,9 +71,9 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const animationTasks = useRef<Function[]>([]);
   const isStop = useRef<boolean>(true);
-
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
+      console.log("penPanelMousedown");
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
         id: nanoid(),
         position: { x: 0, y: 0 },
@@ -93,40 +95,74 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       sceneState.updatingElements.push(newFreeElement);
       if (
         (sceneState.updatingElements[0] as FreeDrawing)?.strokeOptions
-          ?.needFadeOut
+          ?.haveTrailling
       ) {
-        const fadeoutEle = sceneState.elements.length - 1;
-        let timer: NodeJS.Timeout | null = setTimeout(() => {
-          animationTasks.current.push(fadeout.bind(undefined, fadeoutEle));
-          if (isStop.current) {
-            isStop.current = false;
-            startAnimationLoop();
-          }
-          clearTimeout(timer!);
-          timer = null;
-        }, 500);
+        // with pressure in point
+        newFreeElement.strokeOptions.simulatePressure = false;
+        openAnimation();
+      }
+
+      // after mouseClick, draw a point immediately.
+      if (sceneState.updatingElements[0]) {
+        sceneState.updatingElements[0].points[0] = {
+          x: evt.clientX,
+          y: evt.clientY,
+          pressure: 1,
+          timestamp: new Date().getTime(),
+        };
+        setSceneAtom({ ...sceneState });
       }
     },
     [selectedKey, colorIdx, color, size]
   );
-  const fadeout = (lastIdx: number) => {
-    const elePoints = sceneState.elements[lastIdx]?.points;
-    if (elePoints === undefined || elePoints.length === 0) {
+  const traillingEffect = (lastIdx: number) => {
+    const currentTime = new Date().getTime();
+    let elePoints = sceneState.elements[lastIdx]?.points;
+
+    let accumulatedDis = 0,
+      len = elePoints.length,
+      i = len - 1,
+      stage = "body";
+    for (; i >= 0; i--) {
+      accumulatedDis += Math.sqrt(
+        dist2(
+          [
+            elePoints[i + 1]?.x ?? elePoints[i].x,
+            elePoints[i + 1]?.y ?? elePoints[i].y,
+          ],
+          [elePoints[i].x, elePoints[i].y]
+        )
+      );
+      if (stage === "body") {
+        elePoints[i].pressure! = Math.max(
+          elePoints[i].pressure! -
+            0.0001 * (currentTime - elePoints[i].timestamp!),
+          0
+        );
+        if (accumulatedDis > 50) {
+          accumulatedDis = 0;
+          stage = "trailling";
+        }
+      } else if (stage === "trailling") {
+        elePoints[i].pressure = Math.max(
+          Math.min(
+            1 - accumulatedDis / 500,
+            elePoints[i].pressure! -
+              0.0001 * (currentTime - elePoints[i].timestamp!)
+          ),
+          0
+        );
+      }
+    }
+    if (elePoints.length === 1) elePoints = [];
+    elePoints = elePoints.filter((pt) => pt.pressure! > 0);
+
+    sceneState.elements[lastIdx]!.points = [...elePoints];
+    setSceneAtom({ ...sceneState });
+
+    if (sceneState.elements[lastIdx]!.points.length === 0) {
       return "terminated";
     }
-    let distance = 0,
-      cutPointIdx = 0;
-    while (distance < 50 && cutPointIdx + 1 < elePoints.length) {
-      distance += dist2(
-        [elePoints[cutPointIdx].x, elePoints[cutPointIdx].y],
-        [elePoints[cutPointIdx + 1].x, elePoints[cutPointIdx + 1].y]
-      );
-      cutPointIdx++;
-    }
-    if (cutPointIdx + 1 >= elePoints.length) elePoints.length = 0;
-    else elePoints.splice(0, cutPointIdx);
-    setSceneAtom({ ...sceneState });
-    sceneState.elements[lastIdx].opacity *= 0.9;
   };
 
   useEffect(() => {
@@ -147,7 +183,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       if (isStop.current) {
         break;
       }
-
       const terminatedIndices: number[] = [];
       animationTasks.current.forEach((task, idx) => {
         const res = task();
@@ -167,17 +202,35 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     }
   };
 
+  const openAnimation = () => {
+    const traillingEle = sceneState.elements.length - 1;
+    animationTasks.current.push(traillingEffect.bind(undefined, traillingEle));
+    isStop.current = false;
+    startAnimationLoop();
+  };
+
   const penPanelMousemove = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
       sceneState.updatingElements[0].points.push({
         x: evt.clientX,
         y: evt.clientY,
+        pressure: 1,
+        timestamp: new Date().getTime(),
       });
+      if (
+        (sceneState.updatingElements[0] as FreeDrawing)?.strokeOptions
+          ?.haveTrailling &&
+        sceneState.updatingElements[0].points.length === 1 // 重新打开动画，防止点击之后，动画自动停止，再移动的话，需要重新打开动画
+      ) {
+        openAnimation();
+      }
+
       setSceneAtom({ ...sceneState });
     }
   };
 
   const stopCurrentDrawing = (evt: MouseEvent) => {
+    console.log("stopCurrentDrawing");
     if (sceneState.updatingElements.length > 0) {
       sceneState.updatingElements.length = 0;
     }

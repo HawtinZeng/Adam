@@ -69,7 +69,6 @@ export function Btn(
   direction: "vertical" | "horizontal" = "vertical",
   isSubMenu: boolean = false //or menu
 ) {
-  console.log("btn re-render...");
   const btnsMark: JSX.Element[] = [];
   const nodes: HTMLDivElement[] = [];
   const [selectedSueMenuState] = useAtom(selectedKeyAtomSubMenu);
