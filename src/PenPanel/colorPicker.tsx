@@ -12,7 +12,7 @@ import useClickOutside from "src/hooks/useClickOutside";
 import { btn } from "src/components/Btn";
 import customColorIcon from "src/images/svgs/customColorIcon.svg";
 
-const colorPickerStyles = styleX.create({
+export const colorPickerStyles = styleX.create({
   container: {
     width: "40px",
     height: "90px",

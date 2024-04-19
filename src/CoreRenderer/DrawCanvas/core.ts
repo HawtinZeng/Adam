@@ -94,7 +94,6 @@ function createDrawingCvs(
       const { points } = freeDrawing;
       ctx.strokeStyle = strokeColor;
       ctx.lineCap = "round";
-      let outlinePoints: number[][];
       if (strokeOptions?.isCustom) {
         const { size } = strokeOptions;
         let vx = 0,

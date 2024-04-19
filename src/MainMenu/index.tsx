@@ -36,7 +36,7 @@ export const mainMenu = stylex.create({
   brushRadiusSlider: {
     position: "absolute",
     right: "0",
-    top: "-40%",
+    top: "-25%",
   },
   onelineFlex: {
     display: "flex",

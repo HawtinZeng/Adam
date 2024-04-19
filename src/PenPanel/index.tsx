@@ -21,8 +21,6 @@ import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
 import { dist2 } from "src/coreRenderer/drawCanvas/vec";
 import { BtnConfigs } from "src/mainMenu/menu";
-import { debug } from "debug";
-var log = debug("comp:startAnimationLoop");
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -73,7 +71,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const isStop = useRef<boolean>(true);
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
-      console.log("penPanelMousedown");
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
         id: nanoid(),
         position: { x: 0, y: 0 },
@@ -230,7 +227,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   const stopCurrentDrawing = (evt: MouseEvent) => {
-    console.log("stopCurrentDrawing");
     if (sceneState.updatingElements.length > 0) {
       sceneState.updatingElements.length = 0;
     }

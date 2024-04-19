@@ -1,7 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import stylex from "@stylexjs/stylex";
-import { throttledRenderDC } from "src/coreRenderer/drawCanvas/core";
+import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
 import {
   brushRadius,
   canvasAtom,
@@ -20,6 +26,7 @@ const staticCvsSte = stylex.create({
     height: "100%",
   },
 });
+
 export function DrawCanvas() {
   const innerCvsRef = useRef<HTMLCanvasElement>(null);
   const setCvsAtom = useSetAtom(canvasAtom);
@@ -37,11 +44,10 @@ export function DrawCanvas() {
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
-
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
-    throttledRenderDC(sceneData, innerCvsRef.current!);
+    renderDrawCanvas(sceneData, innerCvsRef.current!);
   }, [sceneData]);
 
   useEffect(() => {
