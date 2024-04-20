@@ -82,6 +82,7 @@ export function DrawCanvas() {
           outerScale={1.1}
           trailingSpeed={1}
           controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
+          type="pointer"
         />
       )}
     </div>

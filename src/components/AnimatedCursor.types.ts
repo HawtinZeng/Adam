@@ -22,6 +22,7 @@ export interface AnimatedCursorProps extends AnimatedCursorOptions {
   showSystemCursor?: boolean;
   trailingSpeed?: number;
   controledAtom: PrimitiveAtom<number>;
+  type: "circle" | "cross" | "pointer";
 }
 
 export interface AnimatedCursorCoordinates {

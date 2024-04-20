@@ -20,6 +20,10 @@ import React from "react";
 import { useAtom, useAtomValue } from "jotai";
 import { brushRadius, colorAtom } from "src/state/uiState";
 import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
+import { ReactSVG } from "react-svg";
+
+import crossSvg from "src/images/svgs/mouse/cross.svg";
+import pointerSvg from "src/images/svgs/mouse/pointer.svg";
 /**
  * Cursor Core
  * Replaces the native cursor with a custom animated cursor, consisting
@@ -65,6 +69,7 @@ function CursorCore({
   showSystemCursor = false,
   trailingSpeed = 8,
   controledAtom,
+  type,
 }: AnimatedCursorProps) {
   const [outSizeOri] = useAtom(controledAtom);
   const outSize = controledAtom === brushRadius ? outSizeOri / 4 : outSizeOri;
@@ -290,10 +295,7 @@ function CursorCore({
     });
 
     return () => {
-      console.log("before unmount...");
-      console.log(clickableEls);
       clickableEls.forEach((el) => {
-        el.style.cursor = "auto";
         const clickableOptions =
           typeof clickables === "object"
             ? findInArray(
@@ -348,7 +350,6 @@ function CursorCore({
     position: "fixed",
     borderRadius: "50%",
     pointerEvents: "none",
-    transform: "translate(-50%, -50%)",
     transition:
       "opacity 0.15s ease-in-out, height 0.2s ease-in-out, width 0.2s ease-in-out",
   };
@@ -368,10 +369,23 @@ function CursorCore({
       height: outSize,
       backgroundColor: `rgba(${defaultOptions.color}, ${options.outerAlpha})`,
       ...coreStyles,
-      ...(options.outerStyle && options.outerStyle),
+      ...options.outerStyle,
     },
   };
 
+  if (type === "cross") {
+    return (
+      <div ref={cursorOuterRef} style={coreStyles}>
+        <ReactSVG src={crossSvg} />
+      </div>
+    );
+  } else if (type === "pointer") {
+    return (
+      <div ref={cursorOuterRef} style={coreStyles}>
+        <ReactSVG src={pointerSvg} />
+      </div>
+    );
+  }
   return (
     <>
       <div ref={cursorOuterRef} style={styles.cursorOuter} />
@@ -405,6 +419,7 @@ function AnimatedCursor({
   showSystemCursor,
   trailingSpeed,
   controledAtom,
+  type,
 }: AnimatedCursorProps) {
   return (
     <CursorCore
@@ -418,6 +433,7 @@ function AnimatedCursor({
       showSystemCursor={showSystemCursor}
       trailingSpeed={trailingSpeed}
       controledAtom={controledAtom}
+      type={type}
     >
       {children}
     </CursorCore>
