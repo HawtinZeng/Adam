@@ -1,6 +1,6 @@
 const ipcRenderer = (window as any).ipcRenderer;
 export const setTransparentOption = {
-  enabled: false,
+  enabled: true,
 };
 export const setTransparent = () => {
   ipcRenderer &&

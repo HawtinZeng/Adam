@@ -8,16 +8,16 @@ const client = new net.Socket();
 let startedElectron = false;
 const tryConnection = () => {
   client.connect({ port: port }, () => {
-    console.log('try to connect to ' + port)
+    console.log("try to connect to " + port);
     client.end();
     if (!startedElectron) {
       console.log("starting electron");
       startedElectron = true;
       const exec = require("child_process").exec;
-      exec("npm run start:electron");
+      exec("pnpm run start:electron");
     }
   });
-}
+};
 
 tryConnection();
 

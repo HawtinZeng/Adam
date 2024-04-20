@@ -42,7 +42,7 @@ export function DrawCanvas() {
   );
 
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const selectedKey = useAtomValue(selectedKeyAtom);
+  const [selectedKey] = useAtom(selectedKeyAtom);
 
   const size = useAtomValue(brushRadius);
 
@@ -74,15 +74,16 @@ export function DrawCanvas() {
   return (
     <div>
       <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
-      <AnimatedCursor
-        innerSize={5}
-        outerSize={size}
-        color={rgbColor}
-        outerAlpha={0.6}
-        outerScale={1.6}
-        trailingSpeed={1}
-        controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
-      />
+      {selectedKey !== -1 && (
+        <AnimatedCursor
+          innerSize={5}
+          color={rgbColor}
+          outerAlpha={0.6}
+          outerScale={1.1}
+          trailingSpeed={1}
+          controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
+        />
+      )}
     </div>
   );
 }

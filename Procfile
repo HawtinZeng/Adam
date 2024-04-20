@@ -1,2 +1,2 @@
-react: npm run start:react
-electron: npm run waitStartElectron
+react: pnpm run start:react
+electron: pnpm run waitStartElectron

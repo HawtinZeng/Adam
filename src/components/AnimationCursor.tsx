@@ -56,7 +56,6 @@ function CursorCore({
     ".link",
   ],
   children,
-  color = "220, 90, 90",
   innerScale = 0.6,
   innerSize = 8,
   innerStyle,
@@ -66,20 +65,28 @@ function CursorCore({
   showSystemCursor = false,
   trailingSpeed = 8,
   controledAtom,
-  outerSize,
 }: AnimatedCursorProps) {
+  const [outSizeOri] = useAtom(controledAtom);
+  const outSize = controledAtom === brushRadius ? outSizeOri / 4 : outSizeOri;
+
+  const [cursorColor] = useAtom(colorAtom);
+  const curColorRgb = (hexToRgb(colorConfigs[cursorColor].key) as number[])
+    .map((n) => n.toString())
+    .join(", ");
+
+  const color = controledAtom === brushRadius ? curColorRgb : "220, 90, 90";
+
   const defaultOptions = {
     children,
-    color,
     innerScale,
     innerSize,
     innerStyle,
     outerAlpha,
     outerScale,
     outerStyle,
+    color,
   };
-  const [outSizeOri] = useAtom(controledAtom);
-  const outSize = controledAtom === brushRadius ? outSizeOri / 4 : outSizeOri;
+
   const cursorOuterRef = useRef<HTMLDivElement>(null);
   const cursorInnerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number | null>(null);
@@ -223,7 +230,6 @@ function CursorCore({
   useEffect(() => {
     if (cursorInnerRef.current == null || cursorOuterRef.current == null)
       return;
-
     if (isVisible) {
       cursorInnerRef.current.style.opacity = "1";
       cursorOuterRef.current.style.opacity = "1";
@@ -244,7 +250,7 @@ function CursorCore({
         )
         .join(",")
     );
-
+    console.log(clickableEls);
     clickableEls.forEach((el) => {
       if (!showSystemCursor) el.style.cursor = "none";
 
@@ -284,7 +290,10 @@ function CursorCore({
     });
 
     return () => {
+      console.log("before unmount...");
+      console.log(clickableEls);
       clickableEls.forEach((el) => {
+        el.style.cursor = "auto";
         const clickableOptions =
           typeof clickables === "object"
             ? findInArray(
@@ -326,8 +335,11 @@ function CursorCore({
     if (typeof window === "object" && !showSystemCursor) {
       document.body.style.cursor = "none";
     }
-  }, [showSystemCursor]);
 
+    return () => {
+      document.body.style.cursor = "auto";
+    };
+  }, [showSystemCursor]);
   const coreStyles: CSSProperties = {
     zIndex: 999,
     display: "flex",
@@ -340,7 +352,6 @@ function CursorCore({
     transition:
       "opacity 0.15s ease-in-out, height 0.2s ease-in-out, width 0.2s ease-in-out",
   };
-  console.log(outSize);
   // Cursor Styles
   const styles = {
     cursorInner: {
@@ -390,27 +401,19 @@ function AnimatedCursor({
   innerStyle,
   outerAlpha,
   outerScale,
-  outerSize,
   outerStyle,
   showSystemCursor,
   trailingSpeed,
   controledAtom,
 }: AnimatedCursorProps) {
-  const [cursorColor] = useAtom(colorAtom);
-  const curColorRgb = (hexToRgb(colorConfigs[cursorColor].key) as number[])
-    .map((n) => n.toString())
-    .join(", ");
-
   return (
     <CursorCore
       clickables={clickables}
-      color={controledAtom === brushRadius ? curColorRgb : undefined}
       innerScale={innerScale}
       innerSize={innerSize}
       innerStyle={innerStyle}
       outerAlpha={outerAlpha}
       outerScale={outerScale}
-      outerSize={outerSize}
       outerStyle={outerStyle}
       showSystemCursor={showSystemCursor}
       trailingSpeed={trailingSpeed}

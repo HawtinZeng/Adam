@@ -6,7 +6,7 @@ export const selectedKeyAtomSubMenu = atom(0);
 
 export const selectedSubEffectAtom = atomEffect((get, set) => {
   // runs on mount or whenever someAtom changes
-  const value = get(selectedKeyAtomSubMenu);
+  const value = get(selectedKeyAtom);
   if (value !== -1) {
     setTransparentOption.enabled = false;
     unsetTransparent();
