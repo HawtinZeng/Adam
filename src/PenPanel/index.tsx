@@ -16,11 +16,11 @@ import { sceneAtom } from "src/state/sceneState";
 import {
   FreeDrawing,
   newFreeDrawingElement,
-} from "src/coreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTypes";
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
-import { dist2 } from "src/coreRenderer/drawCanvas/vec";
 import { BtnConfigs } from "src/mainMenu/menu";
+import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {

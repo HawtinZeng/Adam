@@ -1,10 +1,10 @@
 import stylex from "@stylexjs/stylex";
 import { useAtom } from "jotai";
 import React, { useState } from "react";
+import { ColorsSubPanel } from "src/PenPanel/color";
+import { ColorPicker } from "src/PenPanel/colorPicker";
 import { mainMenu, penConfigs } from "src/mainMenu";
 import { PenPanel } from "src/penPanel";
-import { ColorsSubPanel } from "src/penPanel/color";
-import { ColorPicker } from "src/penPanel/colorPicker";
 import { SizeSlider } from "src/sizeSlider";
 import { brushRadius } from "src/state/uiState";
 export function PenPanelComposal() {

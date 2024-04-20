@@ -14,15 +14,15 @@ import highlighterPen from "../images/svgs/highlighterPen.svg";
 import brush from "../images/svgs/brush.svg";
 import laser from "../images/svgs/laser.svg";
 import { nanoid } from "nanoid";
-import { SizeSlider } from "src/sizeSlider/index";
-import { NotePanel } from "src/notePanel/index";
-import { ShapePanel } from "src/shapePanel/index";
-import { ScreenShotPanel } from "src/screenShotPanel/index";
+import { SizeSlider } from "src/SizeSlider/index";
+import { NotePanel } from "src/NotePanel/index";
+import { ShapePanel } from "src/ShapePanel/index";
+import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { SettingsPanel } from "src/settingsPanel";
+import { SettingsPanel } from "src/SettingsPanel";
 import { brushRadius, selectedKeyAtom } from "src/state/uiState";
 import { useAtom } from "jotai";
-import { PenPanelComposal } from "src/mainMenu/penPanelCompose";
+import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { BtnConfigs, Menu } from "src/mainMenu/menu";
 
 export const mainMenu = stylex.create({

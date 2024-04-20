@@ -3,7 +3,6 @@ import React, { useCallback, useRef, useState } from "react";
 import { HexAlphaColorPicker, RgbaColorPicker } from "react-colorful";
 import { useAtom, useSetAtom } from "jotai";
 import { colorAtom, customColor } from "src/state/uiState";
-import { colord } from "colord";
 import styleX from "@stylexjs/stylex";
 import { menuContainer } from "src/components/DraggableTransparent";
 import colorPanel from "src/images/svgs/colorPanel.svg";

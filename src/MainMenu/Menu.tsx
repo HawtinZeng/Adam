@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import { AStrokeOptions } from "src/CoreRenderer/basicTypes";
 import { Btn } from "src/components/Btn";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { Point } from "src/utils/data/geometry";
-import { AStrokeOptions } from "src/coreRenderer/basicTypes";
 
 export type BtnConfigs = Array<{
   label: string;
