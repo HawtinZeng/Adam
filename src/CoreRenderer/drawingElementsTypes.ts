@@ -2,7 +2,7 @@ import {
   DrawingElement,
   Point,
   AStrokeOptions,
-} from "src/coreRenderer/basicTypes";
+} from "src/CoreRenderer/basicTypes";
 
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;

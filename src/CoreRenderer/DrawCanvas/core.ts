@@ -4,16 +4,16 @@ import {
   getStrokeOutlinePoints,
   getStrokePoints,
 } from "perfect-freehand";
-import { DrawingElement } from "src/coreRenderer/basicTypes";
+import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   FreeDrawing,
   DrawingType,
-} from "src/coreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTypes";
 import { Point, Vector, point } from "@flatten-js/core";
 import roughjs from "roughjs";
 import { Scene } from "src/drawingElements/data/scene";
-import { drawingCanvasCache } from "src/coreRenderer/drawCanvas/drawingCanvas";
-import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
+import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
+import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
 import { cloneDeep } from "lodash";
 import { getBoundsFromPoints } from "src/common/utils";
 import { throttleRAF } from "src/animations/requestAniThrottle";
@@ -100,7 +100,7 @@ function createDrawingCvs(
           vy = 0,
           spring = 0.5,
           splitNum = 10,
-          diff = size / 5,
+          diff = size! / 5,
           friction = 0.45,
           x = points[0].x,
           y = points[0].y,

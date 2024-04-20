@@ -20,10 +20,10 @@ import { ShapePanel } from "src/ShapePanel/index";
 import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { SettingsPanel } from "src/SettingsPanel";
-import { brushRadius, selectedKeyAtom } from "src/state/uiState";
+import { brushRadius, eraserRadius, selectedKeyAtom } from "src/state/uiState";
 import { useAtom } from "jotai";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
-import { BtnConfigs, Menu } from "src/mainMenu/menu";
+import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 
 export const mainMenu = stylex.create({
   subMenu: {
@@ -158,7 +158,7 @@ export const menuConfigs: BtnConfigs = [
     label: "橡皮",
     svg: eraser,
     key: "eraser",
-    subMenu: <SizeSlider controledAtom={brushRadius} />,
+    subMenu: <SizeSlider controledAtom={eraserRadius} />,
     needBorder: false,
     needPadding: false,
   },

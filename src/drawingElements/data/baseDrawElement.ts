@@ -1,4 +1,4 @@
-import { Point } from "src/coreRenderer/basicTypes";
+import { Point } from "src/CoreRenderer/basicTypes";
 export type FillStyle = "hachure" | "cross-hatch" | "solid" | "zigzag";
 export type StrokeStyle = "solid" | "dashed";
 export type BaseDrawComp = {

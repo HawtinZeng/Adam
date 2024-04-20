@@ -11,7 +11,7 @@ import {
   selectedKeyAtom,
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
-import { colorConfigs, menuConfigs } from "src/mainMenu";
+import { colorConfigs, menuConfigs } from "src/MainMenu";
 import { sceneAtom } from "src/state/sceneState";
 import {
   FreeDrawing,
@@ -19,7 +19,7 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
-import { BtnConfigs } from "src/mainMenu/menu";
+import { BtnConfigs } from "src/MainMenu/Menu";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 
 export const penPanelStyles = stylex.create({

@@ -3,7 +3,7 @@ import {
   DrawingElement,
   FrameData,
   SceneOptions,
-} from "src/coreRenderer/basicTypes";
+} from "src/CoreRenderer/basicTypes";
 export class Scene {
   elements: DrawingElement[] = [];
   frames: FrameData[] = [];

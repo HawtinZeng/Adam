@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 import React from "react";
 import { Btn } from "src/components/Btn";
-import { colorConfigs, mainMenu } from "src/mainMenu";
+import { colorConfigs, mainMenu } from "src/MainMenu";
 import { colorAtom } from "src/state/uiState";
 import stylex from "@stylexjs/stylex";
 

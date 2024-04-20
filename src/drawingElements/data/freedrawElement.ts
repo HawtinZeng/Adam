@@ -1,7 +1,7 @@
-import { Point } from "../../utils/data/geometry"
+import { Point } from "src/Utils/Data/geometry";
 import { BaseDrawComp } from "./baseDrawElement";
 export interface FreedrawComp extends BaseDrawComp {
-  type: 'freedraw';
+  type: "freedraw";
   points: Point[];
   pressures: number[];
   simulatePressure: boolean;

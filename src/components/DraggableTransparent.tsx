@@ -1,9 +1,9 @@
-import React, { ReactNode, Ref, forwardRef, useEffect } from "react";
+import React, { ReactNode, Ref, forwardRef } from "react";
 import { setTransparent, unsetTransparent } from "../commonUtils";
 import stylex from "@stylexjs/stylex";
 import Draggable from "react-draggable";
-import { penPanelStyles } from "../penPanel/index";
-import { Point } from "../utils/data/geometry";
+import { penPanelStyles } from "src/PenPanel/index";
+import { Point } from "src/Utils/Data/geometry";
 import { useAtom } from "jotai";
 import { selectedSubEffectAtom } from "src/state/uiState";
 export const menuContainer = stylex.create({

@@ -1,4 +1,4 @@
-import { Bounds, Point } from "src/coreRenderer/basicTypes";
+import { Bounds, Point } from "src/CoreRenderer/basicTypes";
 import { FreedrawComp } from "src/drawingElements/data/freedrawElement";
 
 import { Matrix } from "@flatten-js/core";

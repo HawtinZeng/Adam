@@ -1,7 +1,9 @@
 import React from "react";
-import { Point } from "src/CoreRenderer/basicTypes";
-export const useMousePosition = () => {
-  const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+const useMousePosition = () => {
+  const [mousePosition, setMousePosition] = React.useState({
+    x: null,
+    y: null,
+  });
   React.useEffect(() => {
     const updateMousePosition = (ev) => {
       setMousePosition({ x: ev.clientX, y: ev.clientY });
@@ -11,5 +13,6 @@ export const useMousePosition = () => {
       window.removeEventListener("mousemove", updateMousePosition);
     };
   }, []);
-  return mousePosition as Point;
+  return mousePosition;
 };
+export default useMousePosition;

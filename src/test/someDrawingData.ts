@@ -1,6 +1,5 @@
 import { getBoundsFromPoints } from "src/common/utils";
-import { DrawingElement, FrameData } from "src/coreRenderer/basicTypes";
-import { DrawingType } from "src/coreRenderer/drawingElementsTypes";
+import { DrawingElement, FrameData } from "src/CoreRenderer/basicTypes";
 import { testedPoints } from "src/test/points";
 
 const boundingMinPt = getBoundsFromPoints(

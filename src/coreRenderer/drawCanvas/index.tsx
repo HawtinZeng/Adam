@@ -7,18 +7,20 @@ import React, {
 } from "react";
 
 import stylex from "@stylexjs/stylex";
-import { renderDrawCanvas } from "src/coreRenderer/drawCanvas/core";
+import { renderDrawCanvas } from "src/CoreRenderer/DrawCanvas/core";
 import {
   brushRadius,
   canvasAtom,
   colorAtom,
   customColor,
+  eraserRadius,
+  selectedKeyAtom,
 } from "src/state/uiState";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { sceneAtom } from "src/state/sceneState";
-import AnimatedCursor from "react-animated-cursor";
-import { colorConfigs } from "src/mainMenu";
-import { hexToRgb } from "src/coreRenderer/drawCanvas/colorUtils";
+import { colorConfigs } from "src/MainMenu";
+import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
+import AnimatedCursor from "src/components/AnimationCursor";
 
 const staticCvsSte = stylex.create({
   container: {
@@ -39,6 +41,9 @@ export function DrawCanvas() {
     `${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`
   );
 
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const selectedKey = useAtomValue(selectedKeyAtom);
+
   const size = useAtomValue(brushRadius);
 
   // initialize canvas
@@ -56,18 +61,27 @@ export function DrawCanvas() {
     );
     setRgbColor(`${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`);
   }, [colorIdx, color]);
+  const setMousePosWrapper = (e) => {
+    setMousePos({ x: e.clientX, y: e.clientY });
+  };
+  useEffect(() => {
+    window.addEventListener("mousemove", setMousePosWrapper);
+    return () => {
+      window.removeEventListener("mousemove", setMousePosWrapper);
+    };
+  }, []);
 
   return (
     <div>
       <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
       <AnimatedCursor
-        innerSize={0}
-        outerSize={size / 4}
+        innerSize={5}
+        outerSize={size}
         color={rgbColor}
         outerAlpha={0.6}
         outerScale={1.6}
         trailingSpeed={1}
-        key={rgbColor + size}
+        controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
       />
     </div>
   );

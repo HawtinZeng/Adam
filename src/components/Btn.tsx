@@ -3,7 +3,7 @@ import stylex from "@stylexjs/stylex";
 import { ReactSVG } from "react-svg";
 import { selectedKeyAtomSubMenu } from "src/state/uiState";
 import { useAtom } from "jotai";
-import { BtnConfigs } from "src/mainMenu/menu";
+import { BtnConfigs } from "src/MainMenu/Menu";
 
 export const btn = stylex.create({
   btnArea: {
