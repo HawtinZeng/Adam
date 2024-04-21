@@ -1,22 +1,20 @@
+import { Point, Vector } from "@flatten-js/core";
+import { cloneDeep } from "lodash";
 import {
   StrokeOptions,
-  getStroke,
   getStrokeOutlinePoints,
   getStrokePoints,
 } from "perfect-freehand";
-import { DrawingElement } from "src/CoreRenderer/basicTypes";
-import {
-  FreeDrawing,
-  DrawingType,
-} from "src/CoreRenderer/drawingElementsTypes";
-import { Point, Vector, point } from "@flatten-js/core";
-import roughjs from "roughjs";
-import { Scene } from "src/drawingElements/data/scene";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
-import { cloneDeep } from "lodash";
-import { getBoundsFromPoints } from "src/common/utils";
+import { DrawingElement } from "src/CoreRenderer/basicTypes";
+import {
+  DrawingType,
+  FreeDrawing,
+} from "src/CoreRenderer/drawingElementsTypes";
+import { potrace } from "src/Utils/portrace";
 import { throttleRAF } from "src/animations/requestAniThrottle";
+import { Scene } from "src/drawingElements/data/scene";
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -56,39 +54,34 @@ export const throttledRenderDC = throttleRAF(renderDrawCanvas, {
 
 export function renderDrawCanvas(
   sceneData: Scene,
-  appCanvas: HTMLCanvasElement,
-  refreshSimulatePressureSize?: (size: number) => void
+  appCanvas: HTMLCanvasElement
 ) {
   const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
   elements.forEach((ele) => {
-    if (ele.points.length === 0) return;
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
     // 渐变的画笔需要实时更新
     if (
       cachedCvs === undefined ||
-      sceneData.updatingElements.includes(ele) ||
+      sceneData.updatingElements[0]?.ele === ele ||
       (ele as FreeDrawing).strokeOptions?.haveTrailling
     ) {
-      cachedCvs = createDrawingCvs(ele, appCanvas, refreshSimulatePressureSize);
+      cachedCvs = createDrawingCvs(ele, appCanvas);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 }
 
-function createDrawingCvs(
-  ele: DrawingElement,
-  targetCvs: HTMLCanvasElement,
-  refreshSimulatePressureSize?: (size: number) => void
-) {
+// 在该过程中会将ele上的points转换成outline
+function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
+  if (ele.points.length === 0) return;
   switch (ele.type) {
     case DrawingType.freeDraw:
       const freeDrawing = ele as FreeDrawing;
       const strokeOptions = freeDrawing.strokeOptions;
       const canvas = document.createElement("canvas");
-      canvas.width = targetCvs.offsetWidth;
-      canvas.height = targetCvs.offsetHeight;
+      const _canvas = cloneDeep(canvas);
       const ctx = canvas.getContext("2d")!;
       const { strokeColor } = strokeOptions;
       const { points } = freeDrawing;
@@ -159,6 +152,18 @@ function createDrawingCvs(
             );
           }
         });
+
+        const { process, getPath } = potrace(_canvas);
+        process();
+        const paths = getPath();
+        console.log(paths);
+        // freeDrawing.outline = paths[0];
+        // const ptsArray = freeDrawing.outline.map((pt) => [pt.x, pt.y]);
+        // const path = new Path2D(getSvgPathFromStroke(ptsArray));
+        // path.moveTo(ptsArray[0][0], ptsArray[0][1]);
+        // const rgbValues = hexToRgb(strokeColor);
+        // ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
+        // ctx.fill(path);
       } else {
         const strokePoints = getStrokePoints(
           points.map((pt) => {
@@ -178,29 +183,18 @@ function createDrawingCvs(
           strokeOptions as StrokeOptions
         );
 
+        freeDrawing.outline = outlinePoints.map(
+          (pt) => new Point(pt[0], pt[1])
+        );
+
         const path = new Path2D(getSvgPathFromStroke(outlinePoints));
         path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
-
-        // pass simulate size back to canvas component.
-        // const arroundEndPtIdx = Math.floor(outlinePoints.length / 2);
-        // const endPoints: Point[] = cloneDeep(
-        //   outlinePoints.slice(
-        //     Math.max(arroundEndPtIdx - 2, 0),
-        //     arroundEndPtIdx + 2
-        //   )
-        // ).map((pt: number[]) => new Point(pt[0], pt[1]));
-        // const bounds = getBoundsFromPoints(endPoints);
-        // refreshSimulatePressureSize?.(
-        //   Math.min(
-        //     Math.abs(bounds[0].x - bounds[1].x),
-        //     Math.abs(bounds[0].y - bounds[1].y)
-        //   )
-        // );
 
         const rgbValues = hexToRgb(strokeColor);
         ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
       }
+
       return canvas;
     default:
       return document.createElement("canvas");

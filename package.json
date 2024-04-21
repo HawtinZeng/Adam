@@ -36,8 +36,10 @@
     "re": "nvm use 21.5.0 && nf start",
     "start:react": "cross-env BROWSER=none PORT=5000 craco start",
     "start:electron": "cross-env PORT=5000 electron ./main.js",
-    "preinstall": "npx only-allow pnpm",
-    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js"
+    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "eslintConfig": {
     "extends": [
@@ -80,13 +82,13 @@
   "devDependencies": {
     "@craco/craco": "^7.1.0",
     "@craco/types": "^7.1.0",
+    "@electron-forge/cli": "^7.4.0",
     "@stylexjs/babel-plugin": "^0.5.1",
     "@stylexjs/eslint-plugin": "^0.5.1",
     "@stylexjs/webpack-plugin": "^0.5.1",
     "@types/lodash": "^4.17.0",
     "cross-env": "^7.0.3",
     "electron": "^29.1.4",
-    "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",
     "electron-is-dev": "^3.0.1",
     "foreman": "^3.0.1"

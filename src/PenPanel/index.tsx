@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
 import stylex from "@stylexjs/stylex";
-import { Btn } from "../components/Btn";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomCallback } from "jotai/utils";
+import { cloneDeep, merge } from "lodash";
+import { nanoid } from "nanoid";
+import { useCallback, useEffect, useRef } from "react";
+import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
+import {
+  FreeDrawing,
+  newFreeDrawingElement,
+} from "src/CoreRenderer/drawingElementsTypes";
+import { colorConfigs, menuConfigs } from "src/MainMenu";
+import { BtnConfigs } from "src/MainMenu/Menu";
+import { UpdatingElement } from "src/drawingElements/data/scene";
+import { sceneAtom } from "src/state/sceneState";
 import {
   brushRadius,
   canvasAtom,
@@ -11,16 +21,7 @@ import {
   selectedKeyAtom,
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
-import { colorConfigs, menuConfigs } from "src/MainMenu";
-import { sceneAtom } from "src/state/sceneState";
-import {
-  FreeDrawing,
-  newFreeDrawingElement,
-} from "src/CoreRenderer/drawingElementsTypes";
-import { cloneDeep, merge } from "lodash";
-import { nanoid } from "nanoid";
-import { BtnConfigs } from "src/MainMenu/Menu";
-import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
+import { Btn } from "../components/Btn";
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -89,9 +90,15 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
-      sceneState.updatingElements.push(newFreeElement);
+
+      const newEleUpdating: UpdatingElement = {
+        ele: newFreeElement,
+        type: "addPoints",
+      };
+
+      sceneState.updatingElements.push(newEleUpdating);
       if (
-        (sceneState.updatingElements[0] as FreeDrawing)?.strokeOptions
+        (sceneState.updatingElements[0].ele as FreeDrawing)?.strokeOptions
           ?.haveTrailling
       ) {
         // with pressure in point
@@ -101,7 +108,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       // after mouseClick, draw a point immediately.
       if (sceneState.updatingElements[0]) {
-        sceneState.updatingElements[0].points[0] = {
+        sceneState.updatingElements[0].ele.points[0] = {
           x: evt.clientX,
           y: evt.clientY,
           pressure: 1,
@@ -208,16 +215,16 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const penPanelMousemove = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
-      sceneState.updatingElements[0].points.push({
+      sceneState.updatingElements[0].ele.points.push({
         x: evt.clientX,
         y: evt.clientY,
         pressure: 1,
         timestamp: new Date().getTime(),
       });
       if (
-        (sceneState.updatingElements[0] as FreeDrawing)?.strokeOptions
+        (sceneState.updatingElements[0].ele as FreeDrawing)?.strokeOptions
           ?.haveTrailling &&
-        sceneState.updatingElements[0].points.length === 1 // 重新打开动画，防止点击之后，动画自动停止，再移动的话，需要重新打开动画
+        sceneState.updatingElements[0].ele.points.length === 1 // 重新打开动画，防止点击之后，动画自动停止，再移动的话，需要重新打开动画
       ) {
         openAnimation();
       }
@@ -228,6 +235,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const stopCurrentDrawing = (evt: MouseEvent) => {
     if (sceneState.updatingElements.length > 0) {
+      if (
+        !(sceneState.updatingElements[0].ele as FreeDrawing).strokeOptions
+          .haveTrailling
+      )
+        sceneState.updatingElements[0].ele.points = [];
+
       sceneState.updatingElements.length = 0;
     }
   };

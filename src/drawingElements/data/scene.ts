@@ -4,11 +4,16 @@ import {
   FrameData,
   SceneOptions,
 } from "src/CoreRenderer/basicTypes";
+export type ActionType = "addPoints" | "erase" | "transform";
+export type UpdatingElement = {
+  type: ActionType;
+  ele: DrawingElement;
+};
 export class Scene {
   elements: DrawingElement[] = [];
   frames: FrameData[] = [];
   options: SceneOptions = { scale: 1 };
-  updatingElements: DrawingElement[] = [];
+  updatingElements: UpdatingElement[] = [];
   constructor(
     elements: DrawingElement[],
     frames: FrameData[],

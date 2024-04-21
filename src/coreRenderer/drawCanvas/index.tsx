@@ -1,13 +1,12 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import stylex from "@stylexjs/stylex";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
 import { renderDrawCanvas } from "src/CoreRenderer/DrawCanvas/core";
+import { colorConfigs } from "src/MainMenu";
+import AnimatedCursor from "src/components/AnimationCursor";
+import { sceneAtom } from "src/state/sceneState";
 import {
   brushRadius,
   canvasAtom,
@@ -16,11 +15,6 @@ import {
   eraserRadius,
   selectedKeyAtom,
 } from "src/state/uiState";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { sceneAtom } from "src/state/sceneState";
-import { colorConfigs } from "src/MainMenu";
-import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
-import AnimatedCursor from "src/components/AnimationCursor";
 
 const staticCvsSte = stylex.create({
   container: {
@@ -41,10 +35,8 @@ export function DrawCanvas() {
     `${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`
   );
 
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [_, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedKey] = useAtom(selectedKeyAtom);
-
-  const size = useAtomValue(brushRadius);
 
   // initialize canvas
   useEffect(() => {

@@ -1,11 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  CSSProperties,
-  useMemo,
-} from "react";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import {
   AnimatedCursorCoordinates,
   AnimatedCursorOptions,
@@ -13,14 +6,14 @@ import {
   Clickable,
 } from "src/components/AnimatedCursor.types";
 
+import { useAtom, useAtomValue } from "jotai";
+import React from "react";
+import { ReactSVG } from "react-svg";
+import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
 import { colorConfigs } from "src/MainMenu";
 import findInArray from "src/components/helpers/find";
 import { useEventListener } from "src/components/hooks/useEventListener";
-import React from "react";
-import { useAtom, useAtomValue } from "jotai";
-import { brushRadius, colorAtom } from "src/state/uiState";
-import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
-import { ReactSVG } from "react-svg";
+import { brushRadius, colorAtom, customColor } from "src/state/uiState";
 
 import crossSvg from "src/images/svgs/mouse/cross.svg";
 import pointerSvg from "src/images/svgs/mouse/pointer.svg";
@@ -74,8 +67,13 @@ function CursorCore({
   const [outSizeOri] = useAtom(controledAtom);
   const outSize = controledAtom === brushRadius ? outSizeOri / 4 : outSizeOri;
 
-  const [cursorColor] = useAtom(colorAtom);
-  const curColorRgb = (hexToRgb(colorConfigs[cursorColor].key) as number[])
+  const colorIdx = useAtomValue(colorAtom);
+  const _customColor = useAtomValue(customColor);
+  const curColorRgb = (
+    hexToRgb(
+      colorIdx !== -1 ? colorConfigs[colorIdx].key : _customColor
+    ) as number[]
+  )
     .map((n) => n.toString())
     .join(", ");
 
@@ -124,7 +122,6 @@ function CursorCore({
     }
     endX.current = clientX;
     endY.current = clientY;
-    console.log(coords);
   }, []);
 
   // Outer Cursor Animation Delay
@@ -369,6 +366,7 @@ function CursorCore({
         : "transparent",
       ...coreStyles,
       ...(options.innerStyle && options.innerStyle),
+      transform: "translate(-50%, -50%)",
     },
     cursorOuter: {
       width: outSize,
@@ -376,6 +374,7 @@ function CursorCore({
       backgroundColor: `rgba(${defaultOptions.color}, ${options.outerAlpha})`,
       ...coreStyles,
       ...options.outerStyle,
+      transform: "translate(-50%, -50%)",
     },
   };
   if (type === "cross") {
