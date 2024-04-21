@@ -121,10 +121,10 @@ export const potrace = function (cvs) {
       opttolerance: 0.2,
     };
 
-  imgElement.onload = function () {
-    loadCanvas();
-    loadBm();
-  };
+  loadBm();
+  // imgElement.onload = function () {
+  //   loadCanvas();
+  // };
 
   function loadImageFromFile(file) {
     if (info.isReady) {
@@ -1366,7 +1366,7 @@ export const potrace = function (cvs) {
     }
     bmToPathlist();
     processPath();
-    callback();
+    callback?.();
     callback = null;
   }
 

@@ -1,5 +1,5 @@
 import { Point, Vector } from "@flatten-js/core";
-import { cloneDeep } from "lodash";
+import { imageTracer } from "imagetracer";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -12,9 +12,9 @@ import {
   DrawingType,
   FreeDrawing,
 } from "src/CoreRenderer/drawingElementsTypes";
-import { potrace } from "src/Utils/portrace";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
+
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -78,16 +78,24 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
   if (ele.points.length === 0) return;
   switch (ele.type) {
     case DrawingType.freeDraw:
+      const _canvas = document.createElement("canvas");
       const freeDrawing = ele as FreeDrawing;
       const strokeOptions = freeDrawing.strokeOptions;
       const canvas = document.createElement("canvas");
-      const _canvas = cloneDeep(canvas);
+      canvas.width = targetCvs.offsetWidth;
+      canvas.height = targetCvs.offsetHeight;
       const ctx = canvas.getContext("2d")!;
+
       const { strokeColor } = strokeOptions;
       const { points } = freeDrawing;
       ctx.strokeStyle = strokeColor;
       ctx.lineCap = "round";
       if (strokeOptions?.isCustom) {
+        _canvas.width = targetCvs.offsetWidth;
+        _canvas.height = targetCvs.offsetHeight;
+        const _ctx = _canvas.getContext("2d")!;
+        _ctx.strokeStyle = strokeColor;
+        _ctx.lineCap = "round";
         const { size } = strokeOptions;
         let vx = 0,
           vy = 0,
@@ -132,10 +140,10 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
 
             r = Math.max(oldR + ratio * dR, 1);
 
-            drawStrokeLine(ctx, oldX, oldY, x, y, r + diff);
+            drawStrokeLine(_ctx, oldX, oldY, x, y, r + diff);
 
             drawStrokeLine(
-              ctx,
+              _ctx,
               oldX + diff * 2,
               oldY + diff * 2,
               x + diff * 1.5,
@@ -143,7 +151,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
               r
             );
             drawStrokeLine(
-              ctx,
+              _ctx,
               oldX - diff,
               oldY - diff,
               x - diff,
@@ -153,10 +161,18 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           }
         });
 
-        const { process, getPath } = potrace(_canvas);
-        process();
-        const paths = getPath();
-        console.log(paths);
+        const traceData = imageTracer.imageDataToTracedata(
+          _ctx.getImageData(0, 0, _canvas.width, _canvas.height)
+        );
+        console.log(traceData);
+        // trace.loadImage(new Buffer(_canvas.toDataURL()), function (err) {
+        //   console.log(trace.getSVG());
+        // });
+
+        // const { process, getPath } = potrace(_canvas);
+        // process();
+        // const paths = getPath();
+        // console.log(paths);
         // freeDrawing.outline = paths[0];
         // const ptsArray = freeDrawing.outline.map((pt) => [pt.x, pt.y]);
         // const path = new Path2D(getSvgPathFromStroke(ptsArray));
@@ -195,7 +211,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
         ctx.fill(path);
       }
 
-      return canvas;
+      return _canvas;
     default:
       return document.createElement("canvas");
   }
