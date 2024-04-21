@@ -124,6 +124,7 @@ function CursorCore({
     }
     endX.current = clientX;
     endY.current = clientY;
+    console.log(coords);
   }, []);
 
   // Outer Cursor Animation Delay
@@ -233,14 +234,20 @@ function CursorCore({
 
   // Cursor Visibility Statea
   useEffect(() => {
-    if (cursorInnerRef.current == null || cursorOuterRef.current == null)
-      return;
-    if (isVisible) {
-      cursorInnerRef.current.style.opacity = "1";
-      cursorOuterRef.current.style.opacity = "1";
-    } else {
-      cursorInnerRef.current.style.opacity = "0";
-      cursorOuterRef.current.style.opacity = "0";
+    if (cursorInnerRef.current !== null) {
+      if (isVisible) {
+        cursorInnerRef.current.style.opacity = "1";
+      } else {
+        cursorInnerRef.current.style.opacity = "0";
+      }
+    }
+
+    if (cursorOuterRef.current !== null) {
+      if (isVisible) {
+        cursorOuterRef.current.style.opacity = "1";
+      } else {
+        cursorOuterRef.current.style.opacity = "0";
+      }
     }
   }, [isVisible]);
 
@@ -255,7 +262,6 @@ function CursorCore({
         )
         .join(",")
     );
-    console.log(clickableEls);
     clickableEls.forEach((el) => {
       if (!showSystemCursor) el.style.cursor = "none";
 
@@ -372,7 +378,6 @@ function CursorCore({
       ...options.outerStyle,
     },
   };
-
   if (type === "cross") {
     return (
       <div ref={cursorOuterRef} style={coreStyles}>
@@ -381,7 +386,10 @@ function CursorCore({
     );
   } else if (type === "pointer") {
     return (
-      <div ref={cursorOuterRef} style={coreStyles}>
+      <div
+        ref={cursorOuterRef}
+        style={{ ...coreStyles, ...{ display: "inline-block" } }}
+      >
         <ReactSVG src={pointerSvg} />
       </div>
     );
