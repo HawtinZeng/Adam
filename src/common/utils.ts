@@ -1,7 +1,5 @@
-import { Bounds, Point } from "src/CoreRenderer/basicTypes";
+import { Point } from "src/CoreRenderer/basicTypes";
 import { FreedrawComp } from "src/drawingElements/data/freedrawElement";
-
-import { Matrix } from "@flatten-js/core";
 
 const getFreeDrawElementAbsoluteCoords = (
   element: FreedrawComp

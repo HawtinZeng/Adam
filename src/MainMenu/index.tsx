@@ -1,29 +1,29 @@
 import { computePosition, flip } from "@floating-ui/dom";
-import React, { useEffect, useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
-import pen from "../images/svgs/pen.svg";
-import eraser from "../images/svgs/eraser.svg";
+import { useAtom } from "jotai";
+import { nanoid } from "nanoid";
+import React, { useEffect, useRef, useState } from "react";
+import { BtnConfigs, Menu } from "src/MainMenu/Menu";
+import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
+import { NotePanel } from "src/NotePanel/index";
+import { ScreenShotPanel } from "src/ScreenShotPanel/index";
+import { SettingsPanel } from "src/SettingsPanel";
+import { ShapePanel } from "src/ShapePanel/index";
+import { SizeSlider } from "src/SizeSlider/index";
+import { DraggableTransparent } from "src/components/DraggableTransparent";
+import { eraserRadius, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
+import brush from "../images/svgs/brush.svg";
 import circle from "../images/svgs/circle.svg";
+import eraser from "../images/svgs/eraser.svg";
+import highlighterPen from "../images/svgs/highlighterPen.svg";
 import image from "../images/svgs/iamge.svg";
+import laser from "../images/svgs/laser.svg";
 import note from "../images/svgs/note.svg";
+import pen from "../images/svgs/pen.svg";
 import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
 import textArea from "../images/svgs/textArea.svg";
-import highlighterPen from "../images/svgs/highlighterPen.svg";
-import brush from "../images/svgs/brush.svg";
-import laser from "../images/svgs/laser.svg";
-import { nanoid } from "nanoid";
-import { SizeSlider } from "src/SizeSlider/index";
-import { NotePanel } from "src/NotePanel/index";
-import { ShapePanel } from "src/ShapePanel/index";
-import { ScreenShotPanel } from "src/ScreenShotPanel/index";
-import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { SettingsPanel } from "src/SettingsPanel";
-import { brushRadius, eraserRadius, selectedKeyAtom } from "src/state/uiState";
-import { useAtom } from "jotai";
-import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
-import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 
 export const mainMenu = stylex.create({
   subMenu: {
@@ -96,7 +96,7 @@ export const penConfigs: BtnConfigs = [
         taper: 55,
         cap: true,
       },
-      isCustom: false,
+      isCtxStroke: false,
       smoothing: 0.9,
       streamline: 0.9,
       strokeColor: "#000000",
@@ -115,7 +115,7 @@ export const penConfigs: BtnConfigs = [
       end: {
         cap: true,
       },
-      isCustom: false,
+      isCtxStroke: false,
       smoothing: 0.9,
       streamline: 0.9,
       strokeColor: "#000000",
@@ -127,7 +127,7 @@ export const penConfigs: BtnConfigs = [
     key: "brush",
     strokeOptions: {
       size: 20,
-      isCustom: true,
+      isCtxStroke: true,
       smoothing: 0.9,
       streamline: 0.9,
       strokeColor: "#000000",

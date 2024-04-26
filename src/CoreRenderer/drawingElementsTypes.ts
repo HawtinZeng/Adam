@@ -8,6 +8,7 @@ export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
   readonly points: Point[];
   outline: Point[];
+  eraserOutline: Point[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 }
@@ -17,7 +18,9 @@ export enum DrawingType {
 
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
-  points: [] as Point[],
+  points: [],
+  outline: [],
+  eraserOutline: [],
   needSimulate: true,
 
   id: "1",
@@ -35,5 +38,4 @@ export const newFreeDrawingElement: FreeDrawing = {
   position: { x: 0, y: 0 },
   rotation: 0,
   strokeOptions: {} as AStrokeOptions,
-  outline: [],
 };

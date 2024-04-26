@@ -45,7 +45,7 @@ export type Bounds = [number, number, number, number]; // [minX, minY, maxX, max
 export type AStrokeOptions = StrokeOptions & {
   last?: boolean;
   // 放的是比较私有的配置
-  isCustom?: boolean;
+  isCtxStroke?: boolean;
   haveTrailling?: boolean;
   strokeColor: string;
 };

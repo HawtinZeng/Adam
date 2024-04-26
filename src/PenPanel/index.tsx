@@ -1,9 +1,10 @@
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useAtomCallback } from "jotai/utils";
+import { useAtomCallback } from "jotai/react/utils";
 import { cloneDeep, merge } from "lodash";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
+import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 import {
   FreeDrawing,
@@ -22,6 +23,9 @@ import {
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
 import { Btn } from "../components/Btn";
+import { getPoints } from "src/common/utils";
+// @ts-ignore
+const imageTrace = require("imagetracerjs");
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -172,7 +176,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   useEffect(() => {
     cvsEle?.addEventListener("mousedown", penPanelMousedown);
     cvsEle?.addEventListener("mousemove", penPanelMousemove);
-    cvsEle?.addEventListener("mouseup", stopCurrentDrawing);
+    cvsEle?.addEventListener("mouseup", convertToPolygonStopCurrentDrawing);
     cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
     return () => {
       cvsEle?.removeEventListener("mousedown", penPanelMousedown);
@@ -215,6 +219,13 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const penPanelMousemove = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
+      const lastPt =
+        sceneState.updatingElements[0].ele.points[
+          sceneState.updatingElements[0].ele.points.length - 1
+        ];
+      if (lastPt && dist2([lastPt.x, lastPt.y], [evt.clientX, evt.clientY]) < 5)
+        return;
+
       sceneState.updatingElements[0].ele.points.push({
         x: evt.clientX,
         y: evt.clientY,
@@ -243,6 +254,26 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       sceneState.updatingElements.length = 0;
     }
+  };
+
+  const convertToPolygonStopCurrentDrawing = (evt: MouseEvent) => {
+    if (sceneState.updatingElements.length === 0) return;
+    const ele = sceneState.updatingElements[0].ele as FreeDrawing;
+    if (ele.strokeOptions.isCtxStroke) {
+      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(ele)!;
+      const ctx = cvs.getContext("2d")!;
+      const imgData = ctx.getImageData(0, 0, cvs.width, cvs.height);
+      // console.log(imgData);
+      const svg = imageTrace.imagedataToSVG(imgData, { pathomit: 1 }) as string;
+      const regex = /.+d="(.+)"/;
+      const res = svg.match(regex);
+      const svgString = res?.[1];
+      if (svgString) {
+        const points = getPoints(svgString);
+        console.log(points);
+      }
+    }
+    stopCurrentDrawing(evt);
   };
 
   return Btn(
