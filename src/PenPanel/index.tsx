@@ -2,10 +2,12 @@ import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomCallback } from "jotai/react/utils";
 import { cloneDeep, merge } from "lodash";
+import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
+import { Point } from "src/CoreRenderer/basicTypes";
 import {
   FreeDrawing,
   newFreeDrawingElement,
@@ -23,9 +25,16 @@ import {
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
 import { Btn } from "../components/Btn";
-import { getPoints } from "src/common/utils";
+type ImageInfo = {
+  width: number;
+  height: number;
+  context: CanvasRenderingContext2D;
+  imageData: ImageData;
+};
+var getImageOutline = require("image-outline");
+// import { getPoints } from "src/common/utils";
 // @ts-ignore
-const imageTrace = require("imagetracerjs");
+const imageTracer = require("imagetracerjs");
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -176,12 +185,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   useEffect(() => {
     cvsEle?.addEventListener("mousedown", penPanelMousedown);
     cvsEle?.addEventListener("mousemove", penPanelMousemove);
-    cvsEle?.addEventListener("mouseup", convertToPolygonStopCurrentDrawing);
+    cvsEle?.addEventListener("mouseup", strokeOutlineStopCurrentDrawing);
     cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
     return () => {
       cvsEle?.removeEventListener("mousedown", penPanelMousedown);
       cvsEle?.removeEventListener("mousemove", penPanelMousemove);
-      cvsEle?.removeEventListener("mouseup", stopCurrentDrawing);
+      cvsEle?.removeEventListener("mouseup", strokeOutlineStopCurrentDrawing);
       cvsEle?.removeEventListener("mouseleave", stopCurrentDrawing);
     };
   }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
@@ -219,12 +228,10 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const penPanelMousemove = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
-      const lastPt =
-        sceneState.updatingElements[0].ele.points[
-          sceneState.updatingElements[0].ele.points.length - 1
-        ];
-      if (lastPt && dist2([lastPt.x, lastPt.y], [evt.clientX, evt.clientY]) < 5)
-        return;
+      // const lastPt =
+      //   sceneState.updatingElements[0].ele.points[
+      //     sceneState.updatingElements[0].ele.points.length - 1
+      //   ];
 
       sceneState.updatingElements[0].ele.points.push({
         x: evt.clientX,
@@ -244,7 +251,28 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     }
   };
 
-  const stopCurrentDrawing = (evt: MouseEvent) => {
+  const strokeOutlineStopCurrentDrawing = (evt: MouseEvent) => {
+    if (sceneState.updatingElements.length > 0) {
+      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(
+        sceneState.updatingElements[0].ele
+      )!;
+      console.time("start png conversion...");
+      const ctx = cvs.getContext("2d")!;
+      const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
+      const theSecondPt = sceneState.updatingElements[0].ele.points[1];
+
+      drawMask(theSecondPt.x, theSecondPt.y, {
+        width: cvs.width,
+        height: cvs.height,
+        context: ctx,
+        imageData: imgd,
+      });
+      console.timeEnd("start png conversion...");
+      stopCurrentDrawing();
+    }
+  };
+
+  const stopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
       if (
         !(sceneState.updatingElements[0].ele as FreeDrawing).strokeOptions
@@ -254,26 +282,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       sceneState.updatingElements.length = 0;
     }
-  };
-
-  const convertToPolygonStopCurrentDrawing = (evt: MouseEvent) => {
-    if (sceneState.updatingElements.length === 0) return;
-    const ele = sceneState.updatingElements[0].ele as FreeDrawing;
-    if (ele.strokeOptions.isCtxStroke) {
-      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(ele)!;
-      const ctx = cvs.getContext("2d")!;
-      const imgData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-      // console.log(imgData);
-      const svg = imageTrace.imagedataToSVG(imgData, { pathomit: 1 }) as string;
-      const regex = /.+d="(.+)"/;
-      const res = svg.match(regex);
-      const svgString = res?.[1];
-      if (svgString) {
-        const points = getPoints(svgString);
-        console.log(points);
-      }
-    }
-    stopCurrentDrawing(evt);
   };
 
   return Btn(
@@ -286,4 +294,98 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     "horizontal",
     true
   );
+}
+
+let cacheInd: Uint8Array | null = null,
+  hatchOffset = 0;
+
+function drawMask(x: number, y: number, imageInfo: ImageInfo) {
+  if (!imageInfo) return;
+
+  const image = {
+    data: imageInfo.imageData.data,
+    width: imageInfo.width,
+    height: imageInfo.height,
+    bytes: 4,
+  };
+
+  const mask = mw.floodFill(image, x, y, 8, null, true);
+  trace(mask);
+  // drawBorder(false, mask, imageInfo);
+}
+
+function drawBorder(useCache: boolean, mask: Uint8Array, imageInfo: ImageInfo) {
+  if (!mask) return;
+
+  var x,
+    y,
+    i,
+    j,
+    k,
+    w = imageInfo.width,
+    h = imageInfo.height,
+    ctx = imageInfo.context,
+    imgData = ctx.createImageData(w, h),
+    res = imgData.data;
+
+  if (!useCache) cacheInd = mw.getBorderIndices(mask);
+  if (!cacheInd) return;
+
+  ctx.clearRect(0, 0, w, h);
+
+  var len = cacheInd.length;
+  const pts: Point[] = [];
+  for (j = 0; j < len; j++) {
+    i = cacheInd[j];
+    x = i % w; // calc x by index
+    y = (i - x) / w; // calc y by index
+    pts.push({ x, y });
+    // k = (y * w + x) * 4;
+    // if ((x + y + hatchOffset) % (4 * 2) < 4) {
+    //   // detect hatch color
+    //   res[k + 3] = 255; // black, change only alpha
+    // } else {
+    //   res[k] = 255; // white
+    //   res[k + 1] = 255;
+    //   res[k + 2] = 255;
+    //   res[k + 3] = 255;
+    // }
+  }
+  console.log(pts);
+  ctx.putImageData(imgData, 0, 0);
+}
+
+function trace(mask: any) {
+  var cs = mw.traceContours(mask);
+  cs = mw.simplifyContours(cs, simplifyTolerant, simplifyCount);
+
+  mask = null;
+
+  // draw contours
+  var ctx = imageInfo.context;
+  ctx.clearRect(0, 0, imageInfo.width, imageInfo.height);
+  //inner
+  ctx.beginPath();
+  for (var i = 0; i < cs.length; i++) {
+    if (!cs[i].inner) continue;
+    var ps = cs[i].points;
+    ctx.moveTo(ps[0].x, ps[0].y);
+    for (var j = 1; j < ps.length; j++) {
+      ctx.lineTo(ps[j].x, ps[j].y);
+    }
+  }
+  ctx.strokeStyle = "red";
+  ctx.stroke();
+  //outer
+  ctx.beginPath();
+  for (var i = 0; i < cs.length; i++) {
+    if (cs[i].inner) continue;
+    var ps = cs[i].points;
+    ctx.moveTo(ps[0].x, ps[0].y);
+    for (var j = 1; j < ps.length; j++) {
+      ctx.lineTo(ps[j].x, ps[j].y);
+    }
+  }
+  ctx.strokeStyle = "blue";
+  ctx.stroke();
 }

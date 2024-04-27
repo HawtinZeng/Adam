@@ -65,7 +65,11 @@ export function DrawCanvas() {
 
   return (
     <div>
-      <canvas ref={innerCvsRef} {...stylex.props(staticCvsSte.container)} />
+      <canvas
+        id="drawingCvs"
+        ref={innerCvsRef}
+        {...stylex.props(staticCvsSte.container)}
+      />
       {selectedKey !== -1 && (
         <AnimatedCursor
           innerSize={5}

@@ -1,4 +1,4 @@
-import { Point, Vector } from "@flatten-js/core";
+import { Point as PointF, Vector } from "@flatten-js/core";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -6,7 +6,7 @@ import {
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
-import { DrawingElement } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
@@ -18,7 +18,6 @@ import { Scene } from "src/drawingElements/data/scene";
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
 const TO_FIXED_PRECISION = /(\s?[A-Z]?,?-?[0-9]*\.[0-9]{0,2})(([0-9]|e|-)*)/g;
-
 function med(A: number[], B: number[]) {
   return [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
 }
@@ -72,7 +71,6 @@ export function renderDrawCanvas(
   });
 }
 
-// 在该过程中会将ele上的points转换成outline
 function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
   if (ele.points.length === 0) return;
   switch (ele.type) {
@@ -96,7 +94,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
         let vx = 0,
           vy = 0,
           spring = 0.5,
-          splitNum = 10,
+          splitNum = 3,
           diff = size! / 5,
           friction = 0.45,
           x = points[0].x,
@@ -107,7 +105,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           oldX,
           oldY,
           dR;
-
         points.forEach((pt, idx) => {
           if (idx === 0) {
             return;
@@ -135,7 +132,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
             y = oldY + ratio * vy;
 
             r = Math.max(oldR + ratio * dR, 1);
-
             drawStrokeLine(ctx, oldX, oldY, x, y, r + diff);
 
             drawStrokeLine(
@@ -156,10 +152,11 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
             );
           }
         });
+        return canvas;
       } else {
         const strokePoints = getStrokePoints(
           points.map((pt) => {
-            const ptObj = new Point(pt.x, pt.y)
+            const ptObj = new PointF(pt.x, pt.y)
               .translate(
                 new Vector(freeDrawing.position.x, freeDrawing.position.y)
               )
@@ -176,7 +173,7 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
         );
 
         freeDrawing.outline = outlinePoints.map(
-          (pt) => new Point(pt[0], pt[1])
+          (pt) => new PointF(pt[0], pt[1])
         );
 
         const path = new Path2D(getSvgPathFromStroke(outlinePoints));
@@ -185,11 +182,22 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
         const rgbValues = hexToRgb(strokeColor);
         ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
         ctx.fill(path);
+        return canvas;
       }
 
-      return canvas;
     default:
       return document.createElement("canvas");
+  }
+}
+
+export function isPointInDrawingGraph(
+  ele: DrawingElement,
+  ctx: CanvasRenderingContext2D,
+  mousePt: Point
+) {
+  // console.log([mousePt.x, mousePt.y]);
+  if ((ele as FreeDrawing).strokeOptions?.isCtxStroke) {
+  } else {
   }
 }
 

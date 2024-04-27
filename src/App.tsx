@@ -1,16 +1,13 @@
-import React, { useEffect, useRef } from "react";
-import * as stylex from "@stylexjs/stylex";
-import {
-  setTransparent,
-  setTransparentOption,
-  unsetTransparent,
-} from "./commonUtils";
-import MainMenu from "src/MainMenu";
+import React from "react";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
-import { useAtom } from "jotai";
-import { sceneAtom } from "src/state/sceneState";
+import MainMenu from "src/MainMenu";
+import { useDrawingOperator } from "src/hooks/useDrawingOperator";
+import { setTransparent } from "./commonUtils";
+
 function App() {
+  console.log("rerender...");
   setTransparent();
+  useDrawingOperator();
   return (
     <>
       <MainMenu />
