@@ -1,3 +1,4 @@
+import Flatten from "@flatten-js/core";
 import {
   AStrokeOptions,
   DrawingElement,
@@ -7,7 +8,6 @@ import {
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
   readonly points: Point[];
-  outline: Point[];
   eraserOutline: Point[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
@@ -19,7 +19,6 @@ export enum DrawingType {
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [],
-  outline: [],
   eraserOutline: [],
   needSimulate: true,
 
@@ -38,4 +37,5 @@ export const newFreeDrawingElement: FreeDrawing = {
   position: { x: 0, y: 0 },
   rotation: 0,
   strokeOptions: {} as AStrokeOptions,
+  polygons: [] as Flatten.Polygon[],
 };

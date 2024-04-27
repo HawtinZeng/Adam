@@ -90,7 +90,8 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
       ctx.strokeStyle = strokeColor;
       ctx.lineCap = "round";
       if (strokeOptions?.isCtxStroke) {
-        const { size } = strokeOptions;
+        let { size } = strokeOptions;
+
         let vx = 0,
           vy = 0,
           spring = 0.5,
@@ -105,6 +106,11 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           oldX,
           oldY,
           dR;
+        if (points.length === 1) {
+          ctx.arc(points[0].x, points[0].y, size!, 0, Math.PI * 2, false);
+          ctx.fillStyle = strokeColor;
+          ctx.fill();
+        }
         points.forEach((pt, idx) => {
           if (idx === 0) {
             return;
@@ -172,10 +178,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           strokeOptions as StrokeOptions
         );
 
-        freeDrawing.outline = outlinePoints.map(
-          (pt) => new PointF(pt[0], pt[1])
-        );
-
         const path = new Path2D(getSvgPathFromStroke(outlinePoints));
         path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
 
@@ -195,7 +197,6 @@ export function isPointInDrawingGraph(
   ctx: CanvasRenderingContext2D,
   mousePt: Point
 ) {
-  // console.log([mousePt.x, mousePt.y]);
   if ((ele as FreeDrawing).strokeOptions?.isCtxStroke) {
   } else {
   }

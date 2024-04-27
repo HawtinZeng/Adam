@@ -1,3 +1,4 @@
+import Flatten from "@flatten-js/core";
 import { StrokeOptions } from "perfect-freehand";
 
 export type Point = {
@@ -25,7 +26,13 @@ export type DrawingElement = {
 
   position: Point;
   rotation: Degree;
+
+  polygons: Flatten.Polygon[]; // 用于点击鼠标之后，判断鼠标点击到哪个元素
 };
+
+export function isContained(polygons: Flatten.Polygon[], pt: Flatten.Point) {
+  return polygons.some((po) => po.contains(pt));
+}
 export type FrameData = {
   width: number;
   height: number;

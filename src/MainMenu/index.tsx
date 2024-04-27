@@ -1,8 +1,11 @@
+import Flatten from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
+import { useAtomCallback } from "jotai/react/utils";
 import { nanoid } from "nanoid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { isContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
@@ -11,7 +14,8 @@ import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanel } from "src/ShapePanel/index";
 import { SizeSlider } from "src/SizeSlider/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { eraserRadius, selectedKeyAtom } from "src/state/uiState";
+import { sceneAtom } from "src/state/sceneState";
+import { canvasAtom, eraserRadius, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
 import circle from "../images/svgs/circle.svg";
@@ -89,11 +93,9 @@ export const penConfigs: BtnConfigs = [
       size: 20,
       thinning: 0.7,
       start: {
-        taper: 55,
         cap: true,
       },
       end: {
-        taper: 55,
         cap: true,
       },
       isCtxStroke: false,
@@ -107,6 +109,7 @@ export const penConfigs: BtnConfigs = [
     svg: highlighterPen,
     key: "highlighterPen",
     strokeOptions: {
+      thinning: 0.7,
       size: 20,
       simulatePressure: false,
       start: {
@@ -126,6 +129,7 @@ export const penConfigs: BtnConfigs = [
     svg: brush,
     key: "brush",
     strokeOptions: {
+      thinning: 0.7,
       size: 20,
       isCtxStroke: true,
       smoothing: 0.9,
@@ -138,6 +142,7 @@ export const penConfigs: BtnConfigs = [
     svg: laser,
     key: "laser",
     strokeOptions: {
+      thinning: 0.7,
       size: 20,
       smoothing: 0.8,
       streamline: 0.6,
@@ -211,6 +216,15 @@ export function MainMenu() {
   const [hoveredKey, setHoveredKey] = useState(-1);
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
+  const canvas = useAtomValue(canvasAtom);
+  const sceneState = useAtomCallback(
+    useCallback((get) => {
+      const scene = get(sceneAtom);
+
+      return scene;
+    }, [])
+  )();
+
   function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];
@@ -226,9 +240,31 @@ export function MainMenu() {
       });
     });
   }
+
+  const detectEle = (e: MouseEvent) => {
+    console.log("detectEle");
+    sceneState.elements.forEach((ele) => {
+      const isHit = isContained(
+        ele.polygons,
+        new Flatten.Point(e.clientX, e.clientY)
+      );
+      if (isHit) console.log(`hit ${ele.id}`);
+    });
+  };
   useEffect(() => {
     setSubMenuDragCtrl(nanoid());
   }, [selectedKey]);
+
+  useEffect(() => {
+    if (selectedKey === 2) {
+      canvas?.addEventListener("mousedown", detectEle);
+    }
+
+    return () => {
+      canvas?.removeEventListener("mousedown", detectEle);
+    };
+  }, [selectedKey, sceneState]);
+
   useEffect(() => {
     updateSubMenuPosition();
   }, [subMenuDragCtrl]);

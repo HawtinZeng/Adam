@@ -1,3 +1,4 @@
+import Flatten, { Polygon } from "@flatten-js/core";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useAtomCallback } from "jotai/react/utils";
@@ -31,10 +32,6 @@ type ImageInfo = {
   context: CanvasRenderingContext2D;
   imageData: ImageData;
 };
-var getImageOutline = require("image-outline");
-// import { getPoints } from "src/common/utils";
-// @ts-ignore
-const imageTracer = require("imagetracerjs");
 
 export const penPanelStyles = stylex.create({
   horizontalPanel: {
@@ -228,11 +225,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const penPanelMousemove = (evt: MouseEvent) => {
     if (sceneState.updatingElements[0]) {
-      // const lastPt =
-      //   sceneState.updatingElements[0].ele.points[
-      //     sceneState.updatingElements[0].ele.points.length - 1
-      //   ];
-
       sceneState.updatingElements[0].ele.points.push({
         x: evt.clientX,
         y: evt.clientY,
@@ -253,27 +245,31 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const strokeOutlineStopCurrentDrawing = (evt: MouseEvent) => {
     if (sceneState.updatingElements.length > 0) {
-      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(
-        sceneState.updatingElements[0].ele
-      )!;
-      console.time("start png conversion...");
+      const drawingEle = sceneState.updatingElements[0].ele as FreeDrawing;
+      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
       const ctx = cvs.getContext("2d")!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
-      const theSecondPt = sceneState.updatingElements[0].ele.points[1];
+      const theSecondPt = drawingEle.points[0];
 
-      drawMask(theSecondPt.x, theSecondPt.y, {
-        width: cvs.width,
-        height: cvs.height,
-        context: ctx,
-        imageData: imgd,
-      });
-      console.timeEnd("start png conversion...");
+      drawMask(
+        theSecondPt.x,
+        theSecondPt.y,
+        {
+          width: cvs.width,
+          height: cvs.height,
+          context: ctx,
+          imageData: imgd,
+        },
+        drawingEle
+      );
+
       stopCurrentDrawing();
     }
   };
 
   const stopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
+      console.log("stopCurrentDrawing");
       if (
         !(sceneState.updatingElements[0].ele as FreeDrawing).strokeOptions
           .haveTrailling
@@ -296,12 +292,14 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   );
 }
 
-let cacheInd: Uint8Array | null = null,
-  hatchOffset = 0;
-
-function drawMask(x: number, y: number, imageInfo: ImageInfo) {
+function drawMask(
+  x: number,
+  y: number,
+  imageInfo: ImageInfo,
+  drawingEle: FreeDrawing
+) {
   if (!imageInfo) return;
-
+  console.log("draw mask");
   const image = {
     data: imageInfo.imageData.data,
     width: imageInfo.width,
@@ -310,57 +308,48 @@ function drawMask(x: number, y: number, imageInfo: ImageInfo) {
   };
 
   const mask = mw.floodFill(image, x, y, 8, null, true);
-  trace(mask);
-  // drawBorder(false, mask, imageInfo);
+  const ptsGrp = strokeTrace(mask, imageInfo, true) as Array<{
+    inner: boolean;
+    label: number;
+    points: Point[];
+    initialCount: number;
+  }>;
+
+  // const innerFaces: Face[] = [], // CCW
+  // outerFaces: Face[] = []; // CW
+  const polygons: Polygon[] = [];
+  ptsGrp.forEach((pts) => {
+    const poly = new Polygon(
+      pts.points.map((pt) => new Flatten.Point(pt.x, pt.y))
+    );
+
+    polygons.push(poly);
+  });
+  // ptsGrp.forEach((pts) => {
+  //   // @ts-ignore
+  //   const face = new Face(pts.points.map((pt) => [pt.x, pt.y]));
+  //   const ori = face.orientation();
+  //   if (pts.inner) {
+  //     if (ori === Flatten.ORIENTATION.CW) {
+  //       face.reverse();
+  //     }
+  //     innerFaces.push(face);
+  //   } else {
+  //     if (ori === Flatten.ORIENTATION.CCW) {
+  //       face.reverse();
+  //     }
+  //     outerFaces.push(face);
+  //   }
+  // });
+
+  drawingEle.polygons = polygons;
 }
 
-function drawBorder(useCache: boolean, mask: Uint8Array, imageInfo: ImageInfo) {
-  if (!mask) return;
-
-  var x,
-    y,
-    i,
-    j,
-    k,
-    w = imageInfo.width,
-    h = imageInfo.height,
-    ctx = imageInfo.context,
-    imgData = ctx.createImageData(w, h),
-    res = imgData.data;
-
-  if (!useCache) cacheInd = mw.getBorderIndices(mask);
-  if (!cacheInd) return;
-
-  ctx.clearRect(0, 0, w, h);
-
-  var len = cacheInd.length;
-  const pts: Point[] = [];
-  for (j = 0; j < len; j++) {
-    i = cacheInd[j];
-    x = i % w; // calc x by index
-    y = (i - x) / w; // calc y by index
-    pts.push({ x, y });
-    // k = (y * w + x) * 4;
-    // if ((x + y + hatchOffset) % (4 * 2) < 4) {
-    //   // detect hatch color
-    //   res[k + 3] = 255; // black, change only alpha
-    // } else {
-    //   res[k] = 255; // white
-    //   res[k + 1] = 255;
-    //   res[k + 2] = 255;
-    //   res[k + 3] = 255;
-    // }
-  }
-  console.log(pts);
-  ctx.putImageData(imgData, 0, 0);
-}
-
-function trace(mask: any) {
+function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   var cs = mw.traceContours(mask);
-  cs = mw.simplifyContours(cs, simplifyTolerant, simplifyCount);
-
+  cs = mw.simplifyContours(cs, 4, 8);
+  if (!needStroke) return cs;
   mask = null;
-
   // draw contours
   var ctx = imageInfo.context;
   ctx.clearRect(0, 0, imageInfo.width, imageInfo.height);
@@ -375,6 +364,7 @@ function trace(mask: any) {
     }
   }
   ctx.strokeStyle = "red";
+  ctx.lineWidth = 2;
   ctx.stroke();
   //outer
   ctx.beginPath();
@@ -388,4 +378,6 @@ function trace(mask: any) {
   }
   ctx.strokeStyle = "blue";
   ctx.stroke();
+
+  return cs;
 }
