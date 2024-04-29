@@ -1,4 +1,5 @@
-import Flatten from "@flatten-js/core";
+import Flatten, { Face } from "@flatten-js/core";
+import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
 
 export type Point = {
@@ -31,7 +32,23 @@ export type DrawingElement = {
 };
 
 export function isContained(polygons: Flatten.Polygon[], pt: Flatten.Point) {
-  return polygons.some((po) => po.contains(pt));
+  const solidsAndHoles = partition(polygons, (poly) => {
+    const f = [...poly.faces][0] as Face;
+
+    return f.orientation() === Flatten.ORIENTATION.CCW;
+  });
+
+  const outer = solidsAndHoles[0][0];
+  const holes = solidsAndHoles[1];
+
+  const inOuter = outer.contains(pt);
+  if (!inOuter) return false;
+
+  for (let i = 0; i < holes.length; i++) {
+    const h = holes[i];
+    if (h.contains(pt)) return false;
+  }
+  return true;
 }
 export type FrameData = {
   width: number;

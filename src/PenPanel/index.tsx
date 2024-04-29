@@ -250,7 +250,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const ctx = cvs.getContext("2d")!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theSecondPt = drawingEle.points[0];
-
       drawMask(
         theSecondPt.x,
         theSecondPt.y,
@@ -264,12 +263,13 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       );
 
       stopCurrentDrawing();
+      // 调试打开
+      setSceneAtom({ ...sceneState });
     }
   };
 
   const stopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
-      console.log("stopCurrentDrawing");
       if (
         !(sceneState.updatingElements[0].ele as FreeDrawing).strokeOptions
           .haveTrailling
@@ -299,7 +299,6 @@ function drawMask(
   drawingEle: FreeDrawing
 ) {
   if (!imageInfo) return;
-  console.log("draw mask");
   const image = {
     data: imageInfo.imageData.data,
     width: imageInfo.width,
@@ -308,39 +307,20 @@ function drawMask(
   };
 
   const mask = mw.floodFill(image, x, y, 8, null, true);
-  const ptsGrp = strokeTrace(mask, imageInfo, true) as Array<{
+  const ptsGrp = strokeTrace(mask, imageInfo, false) as Array<{
     inner: boolean;
     label: number;
     points: Point[];
     initialCount: number;
-  }>;
+  }>; // CCW是外轮廓，CW是洞
 
-  // const innerFaces: Face[] = [], // CCW
-  // outerFaces: Face[] = []; // CW
   const polygons: Polygon[] = [];
   ptsGrp.forEach((pts) => {
     const poly = new Polygon(
       pts.points.map((pt) => new Flatten.Point(pt.x, pt.y))
     );
-
     polygons.push(poly);
   });
-  // ptsGrp.forEach((pts) => {
-  //   // @ts-ignore
-  //   const face = new Face(pts.points.map((pt) => [pt.x, pt.y]));
-  //   const ori = face.orientation();
-  //   if (pts.inner) {
-  //     if (ori === Flatten.ORIENTATION.CW) {
-  //       face.reverse();
-  //     }
-  //     innerFaces.push(face);
-  //   } else {
-  //     if (ori === Flatten.ORIENTATION.CCW) {
-  //       face.reverse();
-  //     }
-  //     outerFaces.push(face);
-  //   }
-  // });
 
   drawingEle.polygons = polygons;
 }

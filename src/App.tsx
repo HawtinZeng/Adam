@@ -5,7 +5,6 @@ import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import { setTransparent } from "./commonUtils";
 
 function App() {
-  console.log("rerender...");
   setTransparent();
   useDrawingOperator();
   return (

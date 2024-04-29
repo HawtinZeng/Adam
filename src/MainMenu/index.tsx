@@ -242,7 +242,6 @@ export function MainMenu() {
   }
 
   const detectEle = (e: MouseEvent) => {
-    console.log("detectEle");
     sceneState.elements.forEach((ele) => {
       const isHit = isContained(
         ele.polygons,
