@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
-import { renderDrawCanvas } from "src/CoreRenderer/DrawCanvas/core";
+import { throttledRenderDC } from "src/CoreRenderer/DrawCanvas/core";
 import { colorConfigs } from "src/MainMenu";
 import AnimatedCursor from "src/components/AnimationCursor";
 import { sceneAtom } from "src/state/sceneState";
@@ -44,7 +44,7 @@ export function DrawCanvas() {
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
-    renderDrawCanvas(sceneData, innerCvsRef.current!);
+    throttledRenderDC(sceneData, innerCvsRef.current!);
   }, [sceneData]);
 
   useEffect(() => {
