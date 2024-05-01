@@ -1,21 +1,18 @@
-import Flatten from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue } from "jotai";
-import { useAtomCallback } from "jotai/react/utils";
 import { nanoid } from "nanoid";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { isContained } from "src/CoreRenderer/basicTypes";
+import React, { useEffect, useRef, useState } from "react";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
+import { Eraser } from "src/MainMenu/eraser";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
 import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanel } from "src/ShapePanel/index";
-import { SizeSlider } from "src/SizeSlider/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { sceneAtom } from "src/state/sceneState";
-import { canvasAtom, eraserRadius, selectedKeyAtom } from "src/state/uiState";
+import { canvasAtom, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
 import circle from "../images/svgs/circle.svg";
@@ -163,7 +160,7 @@ export const menuConfigs: BtnConfigs = [
     label: "橡皮",
     svg: eraser,
     key: "eraser",
-    subMenu: <SizeSlider controledAtom={eraserRadius} />,
+    subMenu: <Eraser />,
     needBorder: false,
     needPadding: false,
   },
@@ -210,6 +207,7 @@ export const menuConfigs: BtnConfigs = [
 
 export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
+
   const subMenuRef = useRef<HTMLElement>(null);
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
@@ -217,13 +215,8 @@ export function MainMenu() {
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
   const canvas = useAtomValue(canvasAtom);
-  const sceneState = useAtomCallback(
-    useCallback((get) => {
-      const scene = get(sceneAtom);
 
-      return scene;
-    }, [])
-  )();
+  const [scene, setScene] = useAtom(sceneAtom);
 
   function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
@@ -241,28 +234,22 @@ export function MainMenu() {
     });
   }
 
-  const detectEle = (e: MouseEvent) => {
-    sceneState.elements.forEach((ele) => {
-      const isHit = isContained(
-        ele.polygons,
-        new Flatten.Point(e.clientX, e.clientY)
-      );
-      if (isHit) console.log(`hit ${ele.id}`);
-    });
-  };
   useEffect(() => {
     setSubMenuDragCtrl(nanoid());
   }, [selectedKey]);
+  // 主菜单选择监听
+  // useEffect(() => {
+  //   if (selectedKey === 2) {
+  //     canvas?.addEventListener("mousedown", detectEle);
+  //   }
 
-  useEffect(() => {
-    if (selectedKey === 2) {
-      canvas?.addEventListener("mousedown", detectEle);
-    }
-
-    return () => {
-      canvas?.removeEventListener("mousedown", detectEle);
-    };
-  }, [selectedKey, sceneState]);
+  //   return () => {
+  //     canvas?.removeEventListener("mousedown", detectEle);
+  //     canvas?.removeEventListener("mousedown", eraseStart);
+  //     canvas?.removeEventListener("mousemove", eraseMoving);
+  //     canvas?.removeEventListener("mouseup", eraseEnd);
+  //   };
+  // }, [selectedKey, sceneState]);
 
   useEffect(() => {
     updateSubMenuPosition();

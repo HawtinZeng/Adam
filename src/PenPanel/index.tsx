@@ -105,7 +105,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         ele: newFreeElement,
         type: "addPoints",
       };
-
       sceneState.updatingElements.push(newEleUpdating);
       if (
         (sceneState.updatingElements[0].ele as FreeDrawing)?.strokeOptions
@@ -250,32 +249,22 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const ctx = cvs.getContext("2d")!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theSecondPt = drawingEle.points[0];
-      drawMask(
-        theSecondPt.x,
-        theSecondPt.y,
-        {
+
+      drawingEle.polygons =
+        getAntArea(theSecondPt.x, theSecondPt.y, {
           width: cvs.width,
           height: cvs.height,
           context: ctx,
           imageData: imgd,
-        },
-        drawingEle
-      );
+        }) ?? [];
 
       stopCurrentDrawing();
-      // 调试打开
       setSceneAtom({ ...sceneState });
     }
   };
 
   const stopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
-      if (
-        !(sceneState.updatingElements[0].ele as FreeDrawing).strokeOptions
-          .haveTrailling
-      )
-        sceneState.updatingElements[0].ele.points = [];
-
       sceneState.updatingElements.length = 0;
     }
   };
@@ -292,13 +281,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   );
 }
 
-function drawMask(
-  x: number,
-  y: number,
-  imageInfo: ImageInfo,
-  drawingEle: FreeDrawing
-) {
-  if (!imageInfo) return;
+export function getAntArea(x: number, y: number, imageInfo: ImageInfo) {
   const image = {
     data: imageInfo.imageData.data,
     width: imageInfo.width,
@@ -321,8 +304,7 @@ function drawMask(
     );
     polygons.push(poly);
   });
-
-  drawingEle.polygons = polygons;
+  return polygons;
 }
 
 function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {

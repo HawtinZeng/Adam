@@ -8,6 +8,7 @@ export type ActionType = "addPoints" | "erase" | "transform";
 export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;
+  eraserOutlineIdx?: number;
 };
 export class Scene {
   elements: DrawingElement[] = [];

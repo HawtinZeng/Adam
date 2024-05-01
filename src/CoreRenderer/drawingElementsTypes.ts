@@ -8,18 +8,18 @@ import {
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
   readonly points: Point[];
-  eraserOutline: Point[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 }
 export enum DrawingType {
   freeDraw = "freeDraw",
+  eraser = "eraser",
 }
 
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [],
-  eraserOutline: [],
+  eraserOutlines: [],
   needSimulate: true,
 
   id: "1",

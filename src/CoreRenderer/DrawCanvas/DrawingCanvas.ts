@@ -27,7 +27,6 @@ const options = {
 };
 class DrawingCanvasCache {
   ele2DrawingCanvas = new LRUCache<DrawingElement, HTMLCanvasElement>(options);
-  strokeEle2PathArray = new LRUCache(options);
 }
 
 export const drawingCanvasCache = new DrawingCanvasCache();

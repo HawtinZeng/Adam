@@ -5,7 +5,6 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -58,37 +57,48 @@ export function renderDrawCanvas(
   const appCtx = appCanvas.getContext("2d")!;
   elements.forEach((ele) => {
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
+
+    const checkUpdating = sceneData.updatingElements.find(
+      (up) => up.ele === ele
+    );
+
     // 渐变的画笔需要实时更新
     if (
       cachedCvs === undefined ||
-      sceneData.updatingElements[0]?.ele === ele ||
+      checkUpdating?.type === "addPoints" ||
       (ele as FreeDrawing).strokeOptions?.haveTrailling
     ) {
       cachedCvs = createDrawingCvs(ele, appCanvas);
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
+
+    // 将一个eraserOutline叠加至element canvas上
+    if (checkUpdating?.type === "erase") {
+      drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
+    }
+
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 }
 
 function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
   if (ele.points.length === 0) return;
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d")!;
+
   switch (ele.type) {
     case DrawingType.freeDraw:
-      // const _canvas = document.createElement("canvas");
       const freeDrawing = ele as FreeDrawing;
       const strokeOptions = freeDrawing.strokeOptions;
-      const canvas = document.createElement("canvas");
-
       canvas.width = targetCvs.width;
       canvas.height = targetCvs.height;
 
-      const ctx = canvas.getContext("2d")!;
-
       const { strokeColor } = strokeOptions;
       const { points } = freeDrawing;
-      ctx.strokeStyle = strokeColor;
+      ctx.strokeStyle = strokeColor!;
       ctx.lineCap = "round";
+      ctx.fillStyle = strokeColor!;
       if (strokeOptions?.isCtxStroke) {
         let { size } = strokeOptions;
 
@@ -108,7 +118,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           dR;
         if (points.length === 1) {
           ctx.arc(points[0].x, points[0].y, size!, 0, Math.PI * 2, false);
-          ctx.fillStyle = strokeColor;
           ctx.fill();
         }
         points.forEach((pt, idx) => {
@@ -158,7 +167,6 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
             );
           }
         });
-        return canvas;
       } else {
         const strokePoints = getStrokePoints(
           points.map((pt) => {
@@ -177,19 +185,45 @@ function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
           strokePoints,
           strokeOptions as StrokeOptions
         );
-
-        const path = new Path2D(getSvgPathFromStroke(outlinePoints));
-        path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
-
-        const rgbValues = hexToRgb(strokeColor);
-        ctx.fillStyle = `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${ele.opacity})`;
-        ctx.fill(path);
-        return canvas;
+        fillPolygon(outlinePoints, strokeColor!, ctx);
       }
-
-    default:
-      return document.createElement("canvas");
   }
+
+  return canvas;
+}
+
+function drawEraserOutline(
+  ele: DrawingElement,
+  updatingEraser: number,
+  canvas: HTMLCanvasElement
+) {
+  const eraserOutlinePoints = ele.eraserOutlines;
+  const ctx = canvas.getContext("2d")!;
+
+  ctx.globalCompositeOperation = "destination-out";
+  if (updatingEraser !== undefined)
+    fillPolygon(
+      eraserOutlinePoints[updatingEraser].map((pt) => {
+        return [pt.x, pt.y];
+      }),
+      "rgb(100 0 0 / 100%)",
+      ctx
+    );
+  ctx.globalCompositeOperation = "source-over";
+}
+
+function fillPolygon(
+  outlinePoints: number[][],
+  color: string | CanvasGradient,
+  ctx: CanvasRenderingContext2D
+) {
+  if (outlinePoints.length === 0) return;
+  const p = getSvgPathFromStroke(outlinePoints);
+  const path = new Path2D(p);
+  path.moveTo(outlinePoints[0][0], outlinePoints[0][1]);
+
+  ctx.fillStyle = color;
+  ctx.fill(path);
 }
 
 export function isPointInDrawingGraph(
@@ -216,4 +250,11 @@ function drawStrokeLine(
   ctx.lineWidth = width;
 
   ctx.stroke();
+}
+
+function createCvsWH(cvs: HTMLCanvasElement) {
+  const resCvs = document.createElement("canvas");
+  resCvs.height = cvs.height;
+  resCvs.width = cvs.width;
+  return resCvs;
 }
