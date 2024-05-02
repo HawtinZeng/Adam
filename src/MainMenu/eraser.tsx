@@ -1,14 +1,18 @@
-import Flatten, { Circle, Relations } from "@flatten-js/core";
+import Flatten from "@flatten-js/core";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
 import React, { useEffect, useRef } from "react";
-import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
-import { getAntArea } from "src/PenPanel";
+import { throttledRenderDC } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  DrawingElement,
+  Point,
+  isContained,
+} from "src/CoreRenderer/basicTypes";
 import { SizeSlider } from "src/SizeSlider";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
 import { canvasAtom, eraserRadius } from "src/state/uiState";
+let i = 0;
 const defaultEraserStrokeOptions = {
   size: 20,
   thinning: 0,
@@ -29,6 +33,8 @@ export function Eraser() {
   const mousePressed = useRef<boolean>(false);
 
   useEffect(() => {
+    throttledRenderDC(sceneState, canvas!);
+
     canvas?.addEventListener("mousedown", eraseStart);
     canvas?.addEventListener("mousemove", eraseMoving);
     canvas?.addEventListener("mouseup", eraseEnd);
@@ -40,17 +46,24 @@ export function Eraser() {
   }, [sceneState]);
 
   const detectEle = (e: MouseEvent) => {
-    const detectedEles: DrawingElement[] = [];
+    const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
-      if (ele.polygons.length > 0) {
-        const isHit = Relations.intersect(
-          ele.polygons[0],
-          new Circle(new Flatten.Point(e.clientX, e.clientY), eraserSize)
-        );
-        if (isHit) detectedEles.push(ele);
+      console.time("detect collision..." + i);
+      const isHit = isContained(
+        ele.polygons,
+        new Flatten.Circle(
+          new Flatten.Point(e.clientX, e.clientY),
+          eraserSize * 1.1
+        ), // 1.1是橡皮点击之后扩大的比例
+        true
+      );
+      if (isHit) {
+        hitedEles.push(ele);
       }
+      console.timeEnd("detect collision..." + i);
+      i++;
     });
-    return detectedEles;
+    return hitedEles;
   };
 
   const eraseStart = (e: MouseEvent) => {
@@ -94,9 +107,7 @@ export function Eraser() {
   };
 
   const eraseMoving = (e: MouseEvent) => {
-    console.time("detect collision...");
     collectUpdatingElements(e);
-    console.timeEnd("detect collision...");
 
     if (!mousePressed.current) return;
     if (sceneState.updatingElements.length === 0) return;
@@ -106,27 +117,9 @@ export function Eraser() {
   };
 
   const eraseEnd = (e: MouseEvent) => {
-    // cleanupEles(new Flatten.Point(e.clientX, e.clientY));
-
     mousePressed.current = false;
     eraserPts.current.length = 0;
     sceneState.updatingElements.length = 0;
-    setSceneAtom({ ...sceneState });
-  };
-
-  const cleanupEles = (pt: Flatten.Point) => {
-    for (let [ele, cvs] of drawingCanvasCache.ele2DrawingCanvas) {
-      const ctx = cvs.getContext("2d")!;
-      const polys = getAntArea(pt.x, pt.y, {
-        width: cvs.width,
-        height: cvs.height,
-        context: ctx,
-        imageData: ctx.getImageData(0, 0, cvs.width, cvs.height),
-      });
-      if (polys.length > 0) {
-        console.log((polys[0].area() as number) - cvs.width * cvs.height);
-      }
-    }
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;

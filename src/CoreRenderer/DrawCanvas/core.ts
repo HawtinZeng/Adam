@@ -201,7 +201,7 @@ function drawEraserOutline(
   const ctx = canvas.getContext("2d")!;
 
   ctx.globalCompositeOperation = "destination-out";
-  if (updatingEraser !== undefined)
+  if (updatingEraser !== undefined && eraserOutlinePoints[updatingEraser])
     fillPolygon(
       eraserOutlinePoints[updatingEraser].map((pt) => {
         return [pt.x, pt.y];

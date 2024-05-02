@@ -1,4 +1,5 @@
 import Flatten from "@flatten-js/core";
+import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
 
 export type Point = {
@@ -54,3 +55,31 @@ export type AStrokeOptions = StrokeOptions & {
   haveTrailling?: boolean;
   strokeColor?: string;
 };
+export function isContained(
+  polygons: Flatten.Polygon[],
+  eraserCircle: Flatten.Circle,
+  excludeHoles: boolean = false
+) {
+  const solidsAndHoles = partition(polygons, (poly) => {
+    const f = [...poly.faces][0] as Flatten.Face;
+
+    return f.orientation() === Flatten.ORIENTATION.CCW;
+  });
+
+  const outer = solidsAndHoles[0][0];
+  const holes = solidsAndHoles[1];
+  if (!outer) return;
+  const intOuter = eraserCircle.intersect(outer);
+  if (!intOuter) return false;
+  if (excludeHoles) return true;
+  for (let i = 0; i < holes.length; i++) {
+    const h = holes[i];
+    try {
+      const isInter = h.contains(eraserCircle);
+      if (isInter) return false;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+  return true;
+}

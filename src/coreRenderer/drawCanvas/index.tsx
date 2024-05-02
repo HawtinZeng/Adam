@@ -41,6 +41,7 @@ export function DrawCanvas() {
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
+
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
