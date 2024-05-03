@@ -5,7 +5,7 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
+import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
@@ -74,19 +74,6 @@ export function renderDrawCanvas(
         drawEraserOutline(ele, idx, cachedCvs!);
       });
 
-      // getAntArea(
-      //   ele.points[0].x,
-      //   ele.points[0].y,
-      //   {
-      //     width: cachedCvs!.width,
-      //     height: cachedCvs!.height,
-      //     context: cachedCvs!.getContext("2d")!,
-      //     imageData: cachedCvs!
-      //       .getContext("2d")!
-      //       .getImageData(0, 0, cachedCvs!.width, cachedCvs!.height),
-      //   },
-      //   true
-      // );
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
 
@@ -247,16 +234,6 @@ export function fillPolygon(
   ctx.fill(path);
 }
 
-export function isPointInDrawingGraph(
-  ele: DrawingElement,
-  ctx: CanvasRenderingContext2D,
-  mousePt: Point
-) {
-  if ((ele as FreeDrawing).strokeOptions?.isCtxStroke) {
-  } else {
-  }
-}
-
 function drawStrokeLine(
   ctx: CanvasRenderingContext2D,
   x1: number,
@@ -271,11 +248,4 @@ function drawStrokeLine(
   ctx.lineWidth = width;
 
   ctx.stroke();
-}
-
-function createCvsWH(cvs: HTMLCanvasElement) {
-  const resCvs = document.createElement("canvas");
-  resCvs.height = cvs.height;
-  resCvs.width = cvs.width;
-  return resCvs;
 }

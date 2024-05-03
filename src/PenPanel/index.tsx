@@ -20,6 +20,7 @@ import { sceneAtom } from "src/state/sceneState";
 import {
   brushRadius,
   canvasAtom,
+  canvasEventTriggerAtom,
   colorAtom,
   customColor,
   selectedKeyAtom,
@@ -68,6 +69,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const size = useAtomValue(brushRadius);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
+  const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
 
   const [menuKey] = useAtom(selectedKeyAtom);
 
@@ -172,15 +174,18 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   useEffect(() => {
-    cvsEle?.addEventListener("mousedown", penPanelMousedown);
-    cvsEle?.addEventListener("mousemove", penPanelMousemove);
-    cvsEle?.addEventListener("mouseup", strokeOutlineStopCurrentDrawing);
-    cvsEle?.addEventListener("mouseleave", strokeOutlineStopCurrentDrawing);
+    cvsTrigger?.addEventListener("mousedown", penPanelMousedown);
+    cvsTrigger?.addEventListener("mousemove", penPanelMousemove);
+    cvsTrigger?.addEventListener("mouseup", strokeOutlineStopCurrentDrawing);
+    cvsTrigger?.addEventListener("mouseleave", strokeOutlineStopCurrentDrawing);
     return () => {
-      cvsEle?.removeEventListener("mousedown", penPanelMousedown);
-      cvsEle?.removeEventListener("mousemove", penPanelMousemove);
-      cvsEle?.removeEventListener("mouseup", strokeOutlineStopCurrentDrawing);
-      cvsEle?.removeEventListener(
+      cvsTrigger?.removeEventListener("mousedown", penPanelMousedown);
+      cvsTrigger?.removeEventListener("mousemove", penPanelMousemove);
+      cvsTrigger?.removeEventListener(
+        "mouseup",
+        strokeOutlineStopCurrentDrawing
+      );
+      cvsTrigger?.removeEventListener(
         "mouseleave",
         strokeOutlineStopCurrentDrawing
       );

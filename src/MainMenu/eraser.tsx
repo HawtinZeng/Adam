@@ -11,7 +11,11 @@ import {
 import { SizeSlider } from "src/SizeSlider";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
-import { canvasAtom, eraserRadius } from "src/state/uiState";
+import {
+  canvasAtom,
+  canvasEventTriggerAtom,
+  eraserRadius,
+} from "src/state/uiState";
 let i = 0;
 const defaultEraserStrokeOptions = {
   size: 20,
@@ -31,17 +35,18 @@ export function Eraser() {
   const canvas = useAtomValue(canvasAtom);
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
   const mousePressed = useRef<boolean>(false);
+  const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
 
   useEffect(() => {
     throttledRenderDC(sceneState, canvas!);
 
-    canvas?.addEventListener("mousedown", eraseStart);
-    canvas?.addEventListener("mousemove", eraseMoving);
-    canvas?.addEventListener("mouseup", eraseEnd);
+    cvsTrigger?.addEventListener("mousedown", eraseStart);
+    cvsTrigger?.addEventListener("mousemove", eraseMoving);
+    cvsTrigger?.addEventListener("mouseup", eraseEnd);
     return () => {
-      canvas?.removeEventListener("mousedown", eraseStart);
-      canvas?.removeEventListener("mousemove", eraseMoving);
-      canvas?.removeEventListener("mouseup", eraseEnd);
+      cvsTrigger?.removeEventListener("mousedown", eraseStart);
+      cvsTrigger?.removeEventListener("mousemove", eraseMoving);
+      cvsTrigger?.removeEventListener("mouseup", eraseEnd);
     };
   }, [sceneState, eraserSize]);
 

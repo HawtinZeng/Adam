@@ -20,6 +20,8 @@ const staticCvsSte = stylex.create({
   container: {
     width: "100%",
     height: "100%",
+    position: "fixed",
+    top: "0",
   },
 });
 
@@ -65,7 +67,7 @@ export function DrawCanvas() {
   }, []);
 
   return (
-    <div>
+    <>
       <canvas
         id="drawingCvs"
         ref={innerCvsRef}
@@ -82,6 +84,6 @@ export function DrawCanvas() {
           type={selectedKey === 0 || selectedKey === 1 ? "circle" : "pointer"}
         />
       )}
-    </div>
+    </>
   );
 }
