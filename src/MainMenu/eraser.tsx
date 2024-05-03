@@ -1,4 +1,4 @@
-import Flatten from "@flatten-js/core";
+import Flatten, { Polygon } from "@flatten-js/core";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
 import React, { useEffect, useRef } from "react";
@@ -16,7 +16,7 @@ import {
   canvasEventTriggerAtom,
   eraserRadius,
 } from "src/state/uiState";
-let i = 0;
+
 const defaultEraserStrokeOptions = {
   size: 20,
   thinning: 0,
@@ -59,8 +59,7 @@ export function Eraser() {
           new Flatten.Point(e.clientX, e.clientY),
           eraserSize * 1.1
         ), // 1.1是橡皮点击之后扩大的比例
-        true,
-        canvas!
+        true
       );
       if (isHit) {
         hitedEles.push(ele);
@@ -105,7 +104,9 @@ export function Eraser() {
     });
 
     sceneState.updatingElements.forEach((up) => {
-      up.ele.eraserOutlines[up.eraserOutlineIdx!] = eraserOutlinePoints;
+      up.ele.eraserOutlines[up.eraserOutlineIdx!] = new Polygon(
+        eraserOutlinePoints.map((pt) => new Flatten.Point(pt.x, pt.y))
+      );
     });
   };
 
@@ -118,12 +119,10 @@ export function Eraser() {
     setSceneAtom({ ...sceneState });
   };
 
-  const eraseEnd = () => {
+  const eraseEnd = (e: MouseEvent) => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
     sceneState.updatingElements.length = 0;
-
-    setSceneAtom({ ...sceneState });
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;

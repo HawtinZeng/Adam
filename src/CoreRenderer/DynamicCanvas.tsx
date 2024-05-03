@@ -18,9 +18,6 @@ export function DynamicCanvas() {
     setDyCanvasAtom(cvsRef.current);
     cvsRef.current!.height = cvsRef.current!.offsetHeight;
     cvsRef.current!.width = cvsRef.current!.offsetWidth;
-    cvsRef
-      .current!.getContext("2d")!
-      .clearRect(0, 0, cvsRef.current!.width, cvsRef.current!.height);
   }, []);
   return <canvas ref={cvsRef} {...stylex.props(dCvsSt.container)}></canvas>;
 }

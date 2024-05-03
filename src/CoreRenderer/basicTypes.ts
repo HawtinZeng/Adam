@@ -30,7 +30,7 @@ export type DrawingElement = {
 
   polygons: Flatten.Polygon[]; // 用于点击鼠标之后，判断鼠标点击到哪个元素
 
-  eraserOutlines: Point[][];
+  eraserOutlines: Flatten.Polygon[];
 };
 export type FrameData = {
   width: number;
@@ -58,8 +58,7 @@ export type AStrokeOptions = StrokeOptions & {
 export function isContained(
   polygons: Flatten.Polygon[],
   eraserCircle: Flatten.Circle,
-  excludeHoles: boolean = false,
-  canvas: HTMLCanvasElement | undefined
+  excludeHoles: boolean = false
 ) {
   const solidsAndHoles = partition(polygons, (poly) => {
     const f = [...poly.faces][0] as Flatten.Face;
@@ -71,7 +70,6 @@ export function isContained(
   const holes = solidsAndHoles[1];
   if (!outer) return;
   const intOuter = eraserCircle.intersect(outer);
-
   if (!intOuter.length) return false;
 
   if (excludeHoles) return true;
@@ -85,4 +83,24 @@ export function isContained(
     }
   }
   return true;
+}
+
+export function ptIsContained(
+  incPolygons: Flatten.Polygon[],
+  excPolygons: Flatten.Polygon[],
+  pt: Flatten.Point
+) {
+  if (!incPolygons || !excPolygons) return;
+
+  for (let i = 0; i < excPolygons.length; i++) {
+    const isExc = excPolygons[i].contains(pt);
+    if (isExc) return false;
+  }
+
+  for (let i = 0; i < incPolygons.length; i++) {
+    const isInc = incPolygons[i].contains(pt);
+    if (isInc) return true;
+  }
+
+  return false;
 }

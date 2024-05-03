@@ -1,8 +1,10 @@
+import Flatten from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useEffect, useRef, useState } from "react";
+import { ptIsContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
@@ -11,7 +13,8 @@ import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanel } from "src/ShapePanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { selectedKeyAtom } from "src/state/uiState";
+import { sceneAtom } from "src/state/sceneState";
+import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
 import circle from "../images/svgs/circle.svg";
@@ -207,6 +210,10 @@ export const menuConfigs: BtnConfigs = [
 export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
 
+  const canvasTrigger = useAtomValue(canvasEventTriggerAtom);
+
+  const sceneState = useAtomValue(sceneAtom);
+
   const subMenuRef = useRef<HTMLElement>(null);
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
@@ -237,6 +244,32 @@ export function MainMenu() {
   useEffect(() => {
     updateSubMenuPosition();
   }, [subMenuDragCtrl]);
+
+  useEffect(() => {
+    canvasTrigger?.addEventListener("mousedown", checkHit);
+
+    return () => {
+      canvasTrigger?.removeEventListener("mousedown", checkHit);
+    };
+  }, [sceneState]);
+
+  const checkHit = (e: MouseEvent) => {
+    console.time("hit stroke...");
+    for (let i = sceneState.elements.length - 1; i >= 0; i--) {
+      const ele = sceneState.elements[i];
+      const isHit = ptIsContained(
+        ele.polygons,
+        ele.eraserOutlines,
+        new Flatten.Point(e.clientX, e.clientY)
+      );
+      if (isHit) {
+        console.timeEnd("hit stroke...");
+        return true;
+      }
+    }
+    console.timeEnd("hit stroke...");
+  };
+
   return (
     <>
       <Menu

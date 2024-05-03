@@ -211,7 +211,7 @@ function drawEraserOutline(
   ctx.globalCompositeOperation = "destination-out";
   if (updatingEraser !== undefined && eraserOutlinePoints[updatingEraser])
     fillPolygon(
-      eraserOutlinePoints[updatingEraser].map((pt) => {
+      [...eraserOutlinePoints[updatingEraser].vertices].map((pt) => {
         return [pt.x, pt.y];
       }),
       "rgb(100 0 0 / 100%)",
