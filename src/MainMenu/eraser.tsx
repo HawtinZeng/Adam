@@ -43,25 +43,23 @@ export function Eraser() {
       canvas?.removeEventListener("mousemove", eraseMoving);
       canvas?.removeEventListener("mouseup", eraseEnd);
     };
-  }, [sceneState]);
+  }, [sceneState, eraserSize]);
 
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
-      console.time("detect collision..." + i);
       const isHit = isContained(
         ele.polygons,
         new Flatten.Circle(
           new Flatten.Point(e.clientX, e.clientY),
           eraserSize * 1.1
         ), // 1.1是橡皮点击之后扩大的比例
-        true
+        true,
+        canvas!
       );
       if (isHit) {
         hitedEles.push(ele);
       }
-      console.timeEnd("detect collision..." + i);
-      i++;
     });
     return hitedEles;
   };
@@ -108,7 +106,6 @@ export function Eraser() {
 
   const eraseMoving = (e: MouseEvent) => {
     collectUpdatingElements(e);
-
     if (!mousePressed.current) return;
     if (sceneState.updatingElements.length === 0) return;
     appendEraserPoints(e);
@@ -116,10 +113,12 @@ export function Eraser() {
     setSceneAtom({ ...sceneState });
   };
 
-  const eraseEnd = (e: MouseEvent) => {
+  const eraseEnd = () => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
     sceneState.updatingElements.length = 0;
+
+    setSceneAtom({ ...sceneState });
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;

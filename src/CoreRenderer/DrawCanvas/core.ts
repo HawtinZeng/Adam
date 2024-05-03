@@ -69,6 +69,24 @@ export function renderDrawCanvas(
       (ele as FreeDrawing).strokeOptions?.haveTrailling
     ) {
       cachedCvs = createDrawingCvs(ele, appCanvas);
+
+      ele.eraserOutlines.forEach((_, idx) => {
+        drawEraserOutline(ele, idx, cachedCvs!);
+      });
+
+      // getAntArea(
+      //   ele.points[0].x,
+      //   ele.points[0].y,
+      //   {
+      //     width: cachedCvs!.width,
+      //     height: cachedCvs!.height,
+      //     context: cachedCvs!.getContext("2d")!,
+      //     imageData: cachedCvs!
+      //       .getContext("2d")!
+      //       .getImageData(0, 0, cachedCvs!.width, cachedCvs!.height),
+      //   },
+      //   true
+      // );
       if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
 
@@ -81,7 +99,10 @@ export function renderDrawCanvas(
   });
 }
 
-function createDrawingCvs(ele: DrawingElement, targetCvs: HTMLCanvasElement) {
+export function createDrawingCvs(
+  ele: DrawingElement,
+  targetCvs: HTMLCanvasElement
+) {
   if (ele.points.length === 0) return;
 
   const canvas = document.createElement("canvas");
@@ -212,7 +233,7 @@ function drawEraserOutline(
   ctx.globalCompositeOperation = "source-over";
 }
 
-function fillPolygon(
+export function fillPolygon(
   outlinePoints: number[][],
   color: string | CanvasGradient,
   ctx: CanvasRenderingContext2D

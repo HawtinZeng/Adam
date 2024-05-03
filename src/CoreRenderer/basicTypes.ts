@@ -58,7 +58,8 @@ export type AStrokeOptions = StrokeOptions & {
 export function isContained(
   polygons: Flatten.Polygon[],
   eraserCircle: Flatten.Circle,
-  excludeHoles: boolean = false
+  excludeHoles: boolean = false,
+  canvas: HTMLCanvasElement | undefined
 ) {
   const solidsAndHoles = partition(polygons, (poly) => {
     const f = [...poly.faces][0] as Flatten.Face;
@@ -70,7 +71,9 @@ export function isContained(
   const holes = solidsAndHoles[1];
   if (!outer) return;
   const intOuter = eraserCircle.intersect(outer);
-  if (!intOuter) return false;
+
+  if (!intOuter.length) return false;
+
   if (excludeHoles) return true;
   for (let i = 0; i < holes.length; i++) {
     const h = holes[i];

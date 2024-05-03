@@ -1,6 +1,6 @@
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useEffect, useRef, useState } from "react";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
@@ -11,8 +11,7 @@ import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanel } from "src/ShapePanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { sceneAtom } from "src/state/sceneState";
-import { canvasAtom, selectedKeyAtom } from "src/state/uiState";
+import { selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
 import circle from "../images/svgs/circle.svg";
@@ -106,7 +105,7 @@ export const penConfigs: BtnConfigs = [
     svg: highlighterPen,
     key: "highlighterPen",
     strokeOptions: {
-      thinning: 0.7,
+      thinning: 1,
       size: 20,
       simulatePressure: false,
       start: {
@@ -214,9 +213,6 @@ export function MainMenu() {
   const [hoveredKey, setHoveredKey] = useState(-1);
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
-  const canvas = useAtomValue(canvasAtom);
-
-  const [scene, setScene] = useAtom(sceneAtom);
 
   function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
@@ -237,19 +233,6 @@ export function MainMenu() {
   useEffect(() => {
     setSubMenuDragCtrl(nanoid());
   }, [selectedKey]);
-  // 主菜单选择监听
-  // useEffect(() => {
-  //   if (selectedKey === 2) {
-  //     canvas?.addEventListener("mousedown", detectEle);
-  //   }
-
-  //   return () => {
-  //     canvas?.removeEventListener("mousedown", detectEle);
-  //     canvas?.removeEventListener("mousedown", eraseStart);
-  //     canvas?.removeEventListener("mousemove", eraseMoving);
-  //     canvas?.removeEventListener("mouseup", eraseEnd);
-  //   };
-  // }, [selectedKey, sceneState]);
 
   useEffect(() => {
     updateSubMenuPosition();

@@ -1,12 +1,12 @@
 import Flatten, { Polygon } from "@flatten-js/core";
 import stylex from "@stylexjs/stylex";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useAtomCallback } from "jotai/react/utils";
+import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
+import { createDrawingCvs } from "src/CoreRenderer/DrawCanvas/core";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 import { Point } from "src/CoreRenderer/basicTypes";
 import {
@@ -64,18 +64,11 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
   const [cvsEle] = useAtom(canvasAtom);
 
-  const setSceneAtom = useSetAtom(sceneAtom);
+  const [sceneState, setSceneAtom] = useAtom(sceneAtom);
   const size = useAtomValue(brushRadius);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
 
-  const sceneState = useAtomCallback(
-    useCallback((get) => {
-      const scene = get(sceneAtom);
-
-      return scene;
-    }, [])
-  )();
   const [menuKey] = useAtom(selectedKeyAtom);
 
   const animationTasks = useRef<Function[]>([]);
@@ -123,7 +116,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           pressure: 1,
           timestamp: new Date().getTime(),
         };
-        setSceneAtom({ ...sceneState });
+        setSceneAtom(sceneState);
       }
     },
     [selectedKey, colorIdx, color, size]
@@ -182,12 +175,15 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     cvsEle?.addEventListener("mousedown", penPanelMousedown);
     cvsEle?.addEventListener("mousemove", penPanelMousemove);
     cvsEle?.addEventListener("mouseup", strokeOutlineStopCurrentDrawing);
-    cvsEle?.addEventListener("mouseleave", stopCurrentDrawing);
+    cvsEle?.addEventListener("mouseleave", strokeOutlineStopCurrentDrawing);
     return () => {
       cvsEle?.removeEventListener("mousedown", penPanelMousedown);
       cvsEle?.removeEventListener("mousemove", penPanelMousemove);
       cvsEle?.removeEventListener("mouseup", strokeOutlineStopCurrentDrawing);
-      cvsEle?.removeEventListener("mouseleave", stopCurrentDrawing);
+      cvsEle?.removeEventListener(
+        "mouseleave",
+        strokeOutlineStopCurrentDrawing
+      );
     };
   }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
@@ -242,24 +238,29 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     }
   };
 
-  const strokeOutlineStopCurrentDrawing = (evt: MouseEvent) => {
+  const strokeOutlineStopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
       const drawingEle = sceneState.updatingElements[0].ele as FreeDrawing;
-      const cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
+      let cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
+
+      if (!cvs) {
+        cvs = createDrawingCvs(drawingEle, cvsEle!)!;
+      }
+
       const ctx = cvs.getContext("2d")!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theSecondPt = drawingEle.points[0];
 
-      drawingEle.polygons =
-        getAntArea(theSecondPt.x, theSecondPt.y, {
-          width: cvs.width,
-          height: cvs.height,
-          context: ctx,
-          imageData: imgd,
-        }) ?? [];
+      if (theSecondPt)
+        drawingEle.polygons =
+          getAntArea(theSecondPt.x, theSecondPt.y, {
+            width: cvs.width,
+            height: cvs.height,
+            context: ctx,
+            imageData: imgd,
+          }) ?? [];
 
       stopCurrentDrawing();
-      setSceneAtom({ ...sceneState });
     }
   };
 
@@ -281,7 +282,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   );
 }
 
-export function getAntArea(x: number, y: number, imageInfo: ImageInfo) {
+export function getAntArea(
+  x: number,
+  y: number,
+  imageInfo: ImageInfo,
+  needStroke = false
+) {
   const image = {
     data: imageInfo.imageData.data,
     width: imageInfo.width,
@@ -290,7 +296,7 @@ export function getAntArea(x: number, y: number, imageInfo: ImageInfo) {
   };
 
   const mask = mw.floodFill(image, x, y, 8, null, true);
-  const ptsGrp = strokeTrace(mask, imageInfo, false) as Array<{
+  const ptsGrp = strokeTrace(mask, imageInfo, needStroke) as Array<{
     inner: boolean;
     label: number;
     points: Point[];
