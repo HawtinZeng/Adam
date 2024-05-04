@@ -28,9 +28,9 @@ export type DrawingElement = {
   position: Point;
   rotation: Degree;
 
-  polygons: Flatten.Polygon[]; // 用于点击鼠标之后，判断鼠标点击到哪个元素
-
-  eraserOutlines: Flatten.Polygon[];
+  polygons: Flatten.Polygon[]; // stroke outline
+  eraserPolygons: Flatten.Polygon[]; // stroke exclusion
+  boundingBox?: Flatten.Box;
 };
 export type FrameData = {
   width: number;

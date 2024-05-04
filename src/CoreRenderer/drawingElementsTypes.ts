@@ -19,7 +19,7 @@ export enum DrawingType {
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [],
-  eraserOutlines: [],
+  eraserPolygons: [],
   needSimulate: true,
 
   id: "1",

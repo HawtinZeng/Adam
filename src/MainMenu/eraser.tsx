@@ -87,7 +87,7 @@ export function Eraser() {
         const updating: UpdatingElement = {
           type: "erase",
           ele,
-          eraserOutlineIdx: ele.eraserOutlines.length,
+          eraserOutlineIdx: ele.eraserPolygons.length,
         };
         sceneState.updatingElements.push(updating);
       }
@@ -104,7 +104,7 @@ export function Eraser() {
     });
 
     sceneState.updatingElements.forEach((up) => {
-      up.ele.eraserOutlines[up.eraserOutlineIdx!] = new Polygon(
+      up.ele.eraserPolygons[up.eraserOutlineIdx!] = new Polygon(
         eraserOutlinePoints.map((pt) => new Flatten.Point(pt.x, pt.y))
       );
     });
@@ -122,7 +122,14 @@ export function Eraser() {
   const eraseEnd = (e: MouseEvent) => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
+
+    sceneState.updatingElements.forEach((up) => {
+      // up.ele.polygons
+      // ele.ele.boundingBox = new Flatten.Box();
+    });
+
     sceneState.updatingElements.length = 0;
+    setSceneAtom({ ...sceneState });
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;

@@ -70,7 +70,7 @@ export function renderDrawCanvas(
     ) {
       cachedCvs = createDrawingCvs(ele, appCanvas);
 
-      ele.eraserOutlines.forEach((_, idx) => {
+      ele.eraserPolygons.forEach((_, idx) => {
         drawEraserOutline(ele, idx, cachedCvs!);
       });
 
@@ -78,7 +78,7 @@ export function renderDrawCanvas(
     }
 
     // 将一个eraserOutline叠加至element canvas上
-    if (checkUpdating?.type === "erase") {
+    if (checkUpdating?.type === "erase" && cachedCvs) {
       drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
     }
 
@@ -205,7 +205,7 @@ function drawEraserOutline(
   updatingEraser: number,
   canvas: HTMLCanvasElement
 ) {
-  const eraserOutlinePoints = ele.eraserOutlines;
+  const eraserOutlinePoints = ele.eraserPolygons;
   const ctx = canvas.getContext("2d")!;
 
   ctx.globalCompositeOperation = "destination-out";

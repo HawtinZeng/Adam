@@ -1,10 +1,10 @@
-import Flatten from "@flatten-js/core";
+import Flatten, { BooleanOperations } from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useEffect, useRef, useState } from "react";
-import { ptIsContained } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
@@ -246,12 +246,16 @@ export function MainMenu() {
   }, [subMenuDragCtrl]);
 
   useEffect(() => {
-    canvasTrigger?.addEventListener("mousedown", checkHit);
+    if (selectedKey === 2) {
+      canvasTrigger?.addEventListener("mousedown", checkHit);
+
+      mergePolygonsAndEraserPolygons(sceneState.elements);
+    }
 
     return () => {
       canvasTrigger?.removeEventListener("mousedown", checkHit);
     };
-  }, [sceneState]);
+  }, [sceneState, selectedKey]);
 
   const checkHit = (e: MouseEvent) => {
     console.time("hit stroke...");
@@ -259,7 +263,7 @@ export function MainMenu() {
       const ele = sceneState.elements[i];
       const isHit = ptIsContained(
         ele.polygons,
-        ele.eraserOutlines,
+        ele.eraserPolygons,
         new Flatten.Point(e.clientX, e.clientY)
       );
       if (isHit) {
@@ -296,3 +300,23 @@ export function MainMenu() {
   );
 }
 export default MainMenu;
+
+function mergePolygonsAndEraserPolygons(eles: DrawingElement[]) {
+  const resPs: any = [];
+  eles.forEach((el) => {
+    el.polygons.forEach((p, idx) => {
+      const era = el.eraserPolygons[0];
+      if (era) {
+        el.eraserPolygons.forEach((po, i) => {
+          if (i >= 1) {
+            [...po.faces].forEach((p) => {
+              era.faces.add(p);
+            });
+          }
+        });
+        resPs.push(BooleanOperations.outerClip(p, era));
+      }
+      el.eraserPolygons = [era];
+    });
+  });
+}
