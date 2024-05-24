@@ -5,6 +5,7 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
+import { gpuReducerSum } from "src/CoreRenderer/algorithm/gpuReducerSum";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -83,6 +84,17 @@ export function renderDrawCanvas(
     }
 
     if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
+  });
+}
+
+export function removeBlankEle(eles: DrawingElement[]) {
+  eles.forEach((el) => {
+    const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+    if (elCvs) {
+      const elCtx = elCvs.getContext("2d")!;
+      const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
+      gpuReducerSum(imageArr);
+    }
   });
 }
 

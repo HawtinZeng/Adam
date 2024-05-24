@@ -16,7 +16,8 @@
     "noImplicitAny": false,
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "outDir": ".",
-    "module": "ESNext"
+    "module": "ESNext",
+    "types": ["@webgpu/types"]
   },
   "include": [
     "src/**/*.ts",

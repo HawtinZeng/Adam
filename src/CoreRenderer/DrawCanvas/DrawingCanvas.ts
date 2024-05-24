@@ -27,7 +27,6 @@ const options = {
 };
 class DrawingCanvasCache {
   ele2DrawingCanvas = new LRUCache<DrawingElement, HTMLCanvasElement>(options);
-  ele2EraserCanvas = new LRUCache<DrawingElement, HTMLCanvasElement>(options);
 }
 
 export const drawingCanvasCache = new DrawingCanvasCache();

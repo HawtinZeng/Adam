@@ -43,7 +43,7 @@ export const penPanelStyles = stylex.create({
   },
 });
 
-async function* nextFrame(fps) {
+async function* nextFrame(fps: number) {
   let then = performance.now();
   const interval = 1000 / fps;
   let delta = 0;
@@ -193,7 +193,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
   const startAnimationLoop = async () => {
-    for await (const _ of nextFrame(60 /* fps */)) {
+    // @ts-ignore
+    for await (const _ of nextFrame(60)) {
       if (isStop.current) {
         break;
       }

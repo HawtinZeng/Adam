@@ -2,7 +2,10 @@ import Flatten, { Polygon } from "@flatten-js/core";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
 import React, { useEffect, useRef } from "react";
-import { throttledRenderDC } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  removeBlankEle,
+  throttledRenderDC,
+} from "src/CoreRenderer/DrawCanvas/core";
 import {
   DrawingElement,
   Point,
@@ -126,6 +129,7 @@ export function Eraser() {
     sceneState.updatingElements.forEach((up) => {
       // up.ele.polygons
       // ele.ele.boundingBox = new Flatten.Box();
+      removeBlankEle(sceneState.updatingElements.map((u) => u.ele));
     });
 
     sceneState.updatingElements.length = 0;
