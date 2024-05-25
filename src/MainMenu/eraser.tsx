@@ -55,14 +55,17 @@ export function Eraser() {
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
+      // console.time("isHit");
       const isHit = isContained(
         ele.polygons,
         new Flatten.Circle(
           new Flatten.Point(e.clientX, e.clientY),
           eraserSize / 2
-        ), // 1.1是橡皮点击之后扩大的比例
+        ),
         true
       );
+      // console.timeEnd("isHit");
+
       if (isHit) {
         hitedEles.push(ele);
         console.log("hit");
