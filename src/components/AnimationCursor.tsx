@@ -65,7 +65,7 @@ function CursorCore({
   type,
 }: AnimatedCursorProps) {
   const [outSizeOri] = useAtom(controledAtom);
-  const outSize = controledAtom === brushRadius ? outSizeOri / 4 : outSizeOri;
+  const outSize = controledAtom === brushRadius ? outSizeOri / 2 : outSizeOri;
 
   const colorIdx = useAtomValue(colorAtom);
   const _customColor = useAtomValue(customColor);
@@ -439,7 +439,7 @@ function AnimatedCursor({
       outerStyle={outerStyle}
       showSystemCursor={showSystemCursor}
       trailingSpeed={trailingSpeed}
-      controledAtom={controledAtom}
+      controledAtom={controledAtom} // 鼠标圆的直径
       type={type}
     >
       {children}

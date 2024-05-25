@@ -52,7 +52,6 @@ export function Eraser() {
       cvsTrigger?.removeEventListener("mouseup", eraseEnd);
     };
   }, [sceneState, eraserSize]);
-
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
@@ -60,19 +59,32 @@ export function Eraser() {
         ele.polygons,
         new Flatten.Circle(
           new Flatten.Point(e.clientX, e.clientY),
-          eraserSize * 1.1
+          eraserSize / 2
         ), // 1.1是橡皮点击之后扩大的比例
         true
       );
       if (isHit) {
         hitedEles.push(ele);
       }
+      // function drawCircle() {}
+      // ele.polygons.forEach((po) =>
+      //   fillPolygon(
+      //     po.vertices.map((v) => [v.x, v.y]),
+      //     "red",
+      //     canvas!.getContext("2d")!
+      //   )
+      // );
+      // drawCircle(
+      //   canvas!.getContext("2d")!,
+      //   new Flatten.Circle(new Flatten.Point(e.clientX, e.clientY), eraserSize)
+      // );
     });
     return hitedEles;
   };
 
   const eraseStart = (e: MouseEvent) => {
     mousePressed.current = true;
+
     collectUpdatingElements(e);
     appendEraserPoints(e);
 
@@ -81,7 +93,6 @@ export function Eraser() {
 
   const collectUpdatingElements = (e: MouseEvent) => {
     const eles = detectEle(e);
-
     eles.forEach((ele) => {
       const isExist = sceneState.updatingElements
         .map((up) => up.ele)
@@ -125,15 +136,14 @@ export function Eraser() {
   const eraseEnd = (e: MouseEvent) => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
-
     sceneState.updatingElements.forEach((up) => {
-      // up.ele.polygons
-      // ele.ele.boundingBox = new Flatten.Box();
-      removeBlankEle(sceneState.updatingElements.map((u) => u.ele));
+      removeBlankEle(
+        sceneState.updatingElements.map((u) => u.ele),
+        sceneState
+      );
     });
 
-    sceneState.updatingElements.length = 0;
-    setSceneAtom({ ...sceneState });
+    setSceneAtom({ ...sceneState, updatingElements: [] });
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;

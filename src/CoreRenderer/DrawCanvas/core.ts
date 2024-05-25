@@ -4,9 +4,10 @@ import {
   getStrokeOutlinePoints,
   getStrokePoints,
 } from "perfect-freehand";
+import { showEleId } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { sumArray } from "src/CoreRenderer/algorithm/headTailSum";
-import { DrawingElement } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
@@ -87,24 +88,23 @@ export function renderDrawCanvas(
   });
 }
 
-export function removeBlankEle(eles?: DrawingElement[]) {
+export function removeBlankEle(eles: DrawingElement[], sceneState: Scene) {
   eles.forEach((el) => {
-    const radomValues: number[] = [];
-    for (let i = 0; i < 10000000; i++) {
-      radomValues[i] = Math.floor(Math.random() * 1000);
-    }
-
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
     if (elCvs) {
       const elCtx = elCvs.getContext("2d")!;
+
       const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
 
-      console.time("headTailSum");
-      const res2 = sumArray(imageArr, 4);
-      console.log(res2);
-      console.timeEnd("headTailSum");
+      // console.time("headTailSum");
+      const alphaValue = sumArray(imageArr, 4);
+      if (alphaValue < 1000) {
+        el.isDeleted = true;
+      }
+      // console.timeEnd("headTailSum");
     }
   });
+  sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
 }
 
 export function createDrawingCvs(
@@ -218,7 +218,20 @@ export function createDrawingCvs(
       }
   }
 
+  if (showEleId) {
+    const textPos = ele.points[0];
+    drawText(ctx, textPos, ele.id);
+  }
   return canvas;
+}
+
+function drawText(ctx: CanvasRenderingContext2D, pos: Point, text: string) {
+  const fontSize = 30;
+  const fontStyle = "Arial";
+
+  ctx.font = `${fontSize}px ${fontStyle}`;
+
+  ctx.fillText(text, pos.x, pos.y);
 }
 
 function drawEraserOutline(
@@ -269,4 +282,14 @@ function drawStrokeLine(
   ctx.lineWidth = width;
 
   ctx.stroke();
+}
+
+export function drawCircle(
+  ctx: CanvasRenderingContext2D,
+  circle: Flatten.Circle
+) {
+  ctx.beginPath();
+  ctx.arc(circle.center.x, circle.center.y, circle.r, 0, 2 * Math.PI); // Full circle
+  ctx.fillStyle = "red";
+  ctx.fill();
 }

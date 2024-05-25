@@ -1,5 +1,6 @@
-import { gpuDevice } from "src/App";
 import { TypedArray } from "src/CoreRenderer/utilsTypes";
+const adapter = await navigator.gpu?.requestAdapter();
+const gpuDevice = await adapter!.requestDevice()!;
 export async function gpuReducerSum(sumValues: TypedArray) {
   const MaxWorkGroupSize = 256;
   if (!gpuDevice) {
