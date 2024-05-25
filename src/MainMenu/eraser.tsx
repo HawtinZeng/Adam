@@ -19,6 +19,7 @@ import {
   canvasEventTriggerAtom,
   eraserRadius,
 } from "src/state/uiState";
+const updatingLimit = 3;
 
 const defaultEraserStrokeOptions = {
   size: 20,
@@ -68,8 +69,8 @@ export function Eraser() {
 
       if (isHit) {
         hitedEles.push(ele);
-        console.log("hit");
-        console.log(sceneState.elements.length);
+        // console.log("hit");
+        // console.log(sceneState.elements.length);
       }
       // function drawCircle() {}
       // ele.polygons.forEach((po) =>
@@ -109,8 +110,14 @@ export function Eraser() {
           eraserOutlineIdx: ele.eraserPolygons.length,
         };
         sceneState.updatingElements.push(updating);
+        if (sceneState.updatingElements.length > updatingLimit)
+          sceneState.updatingElements.splice(
+            0,
+            sceneState.updatingElements.length - updatingLimit
+          );
       }
     });
+    console.log(sceneState.updatingElements);
   };
 
   const appendEraserPoints = (e: MouseEvent) => {

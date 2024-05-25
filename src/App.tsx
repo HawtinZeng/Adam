@@ -6,7 +6,7 @@ import MainMenu from "src/MainMenu";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import { canvasEventTriggerAtom } from "src/state/uiState";
 import { setTransparent } from "./commonUtils";
-export const showEleId = true;
+export const showEleId = false;
 function App() {
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
