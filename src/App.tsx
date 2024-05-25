@@ -6,7 +6,8 @@ import MainMenu from "src/MainMenu";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import { canvasEventTriggerAtom } from "src/state/uiState";
 import { setTransparent } from "./commonUtils";
-
+const adapter = await navigator.gpu?.requestAdapter();
+export const gpuDevice = await adapter!.requestDevice()!;
 function App() {
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);

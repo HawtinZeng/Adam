@@ -5,7 +5,7 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { gpuReducerSum, jsSum } from "src/CoreRenderer/algorithm/gpuReducerSum";
+import { sumArray } from "src/CoreRenderer/algorithm/headTailSum";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -87,22 +87,22 @@ export function renderDrawCanvas(
   });
 }
 
-export function removeBlankEle(eles: DrawingElement[]) {
+export function removeBlankEle(eles?: DrawingElement[]) {
   eles.forEach((el) => {
+    const radomValues: number[] = [];
+    for (let i = 0; i < 10000000; i++) {
+      radomValues[i] = Math.floor(Math.random() * 1000);
+    }
+
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
     if (elCvs) {
       const elCtx = elCvs.getContext("2d")!;
-      // const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
-      const imageArr = new Uint8ClampedArray([1, 2, 3, 4, 5, 6, 7, 8]);
-      console.time("gpuReducerSum");
-      gpuReducerSum(imageArr).then((s) => {
-        console.log(s);
-        console.timeEnd("gpuReducerSum");
-      });
-      console.time("jsSum");
-      const res = jsSum(imageArr);
-      console.log(res);
-      console.timeEnd("jsSum");
+      const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
+
+      console.time("headTailSum");
+      const res2 = sumArray(imageArr, 4);
+      console.log(res2);
+      console.timeEnd("headTailSum");
     }
   });
 }
