@@ -1,5 +1,4 @@
 import { Point as PointF, Vector } from "@flatten-js/core";
-import { compact } from "lodash";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -89,63 +88,37 @@ export function renderDrawCanvas(
   });
 }
 
-const getIsDeletedFlag = (imageDataS) => {
-  console.log(imageDataS);
-  // const multipleImageData = JSON.parse(imageDataS) as Uint8ClampedArray[];
-  // const isDeletedFlags: boolean[] = [];
-  // multipleImageData.forEach((imageData, idx) => {
-  //   const alphaValue = sumArray(imageData, 4);
-  //   if (alphaValue < 1000) {
-  //     isDeletedFlags[idx] = true;
-  //   } else {
-  //     isDeletedFlags[idx] = false;
-  //   }
-  // });
-  // return JSON.stringify(isDeletedFlags);
+const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
+  let sum = 0,
+    length = arr.length,
+    half = Math.floor(length / 2);
+  let i: number = 0;
+  for (i = 0; i < half; i++) {
+    if ((i + 1) % 4 === 0) {
+      sum += arr[i] + arr[length - i + 4 - 2];
+    }
+  }
+
+  if (length % 2) {
+    sum += arr[half];
+  }
+  return sum < 1000;
 };
 
-const setIsDeletedFlag = (elesStr: string) => {
-  const eles = JSON.parse(elesStr);
-  const testV = drawingCanvasCache.ele2DrawingCanvas.get(eles[0]);
-
-  // eles.forEach((el) => {
-
-  // if (elCvs) {
-  //   const elCtx = elCvs.getContext("2d")!;
-
-  //   const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
-  //   // console.time("headTailSum");
-  //   const alphaValue = sumArray(imageArr, 4);
-  //   if (alphaValue < 1000) {
-  //     el.isDeleted = true;
-  //     console.log(`delete ${el.id}`);
-  //   }
-  //   // console.timeEnd("headTailSum");
-  // }
-  // });
-  return JSON.stringify(testV);
-};
-
-export function removeBlankEle(eles: DrawingElement[], sceneState: Scene) {
-  const offscreenCvs = compact(
-    eles.map((el) => {
-      const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-      if (elCvs) {
-        let ctx = elCvs.getContext("2d");
-        ctx = null;
-        return elCvs.transferControlToOffscreen();
-      }
-    })
-  );
-  // TODO: offScreenCanvas接入
-  coreThreadPool.exec(getIsDeletedFlag, offscreenCvs as any).then((r) => {
-    console.log(r);
-    // eles.forEach((v, idx) => {
-    //   const updatedEle = r[idx];
-    //   v.isDeleted = updatedEle.isDeleted;
-    // });
-
-    sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
+export function removeBlankEle(
+  els: DrawingElement[],
+  sceneState: Scene,
+  updateAtomStatus: () => any
+) {
+  els.forEach((el) => {
+    const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
+    const ctx = elCvs.getContext("2d", { willReadFrequently: true })!;
+    const imageData = ctx.getImageData(0, 0, elCvs.width, elCvs.height);
+    coreThreadPool.exec(getIsDeletedFlag, [imageData.data]).then((r) => {
+      el.isDeleted = r;
+      sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
+      updateAtomStatus();
+    });
   });
 }
 

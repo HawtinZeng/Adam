@@ -65,6 +65,8 @@ export function Eraser() {
       );
       if (isHit) {
         hitedEles.push(ele);
+        console.log("hit");
+        console.log(sceneState.elements.length);
       }
       // function drawCircle() {}
       // ele.polygons.forEach((po) =>
@@ -84,7 +86,7 @@ export function Eraser() {
 
   const eraseStart = (e: MouseEvent) => {
     mousePressed.current = true;
-
+    console.log("eraseStart");
     collectUpdatingElements(e);
     appendEraserPoints(e);
 
@@ -136,14 +138,15 @@ export function Eraser() {
   const eraseEnd = (e: MouseEvent) => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
-    sceneState.updatingElements.forEach((up) => {
-      removeBlankEle(
-        sceneState.updatingElements.map((u) => u.ele),
-        sceneState
-      );
-    });
-
-    setSceneAtom({ ...sceneState, updatingElements: [] });
+    removeBlankEle(
+      sceneState.updatingElements.map((u) => u.ele),
+      sceneState,
+      () =>
+        setSceneAtom({
+          ...sceneState,
+          updatingElements: [],
+        })
+    );
   };
 
   return <SizeSlider controledAtom={eraserRadius} />;
