@@ -1,4 +1,5 @@
 import { Point as PointF, Vector } from "@flatten-js/core";
+import { compact } from "lodash";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -6,7 +7,6 @@ import {
 } from "perfect-freehand";
 import { showEleId } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { sumArray } from "src/CoreRenderer/algorithm/headTailSum";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -14,7 +14,8 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
-
+import workerpool from "workerpool";
+const coreThreadPool = workerpool.pool({ workerType: "web", maxWorkers: 10 });
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -88,23 +89,64 @@ export function renderDrawCanvas(
   });
 }
 
+const getIsDeletedFlag = (imageDataS) => {
+  console.log(imageDataS);
+  // const multipleImageData = JSON.parse(imageDataS) as Uint8ClampedArray[];
+  // const isDeletedFlags: boolean[] = [];
+  // multipleImageData.forEach((imageData, idx) => {
+  //   const alphaValue = sumArray(imageData, 4);
+  //   if (alphaValue < 1000) {
+  //     isDeletedFlags[idx] = true;
+  //   } else {
+  //     isDeletedFlags[idx] = false;
+  //   }
+  // });
+  // return JSON.stringify(isDeletedFlags);
+};
+
+const setIsDeletedFlag = (elesStr: string) => {
+  const eles = JSON.parse(elesStr);
+  const testV = drawingCanvasCache.ele2DrawingCanvas.get(eles[0]);
+
+  // eles.forEach((el) => {
+
+  // if (elCvs) {
+  //   const elCtx = elCvs.getContext("2d")!;
+
+  //   const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
+  //   // console.time("headTailSum");
+  //   const alphaValue = sumArray(imageArr, 4);
+  //   if (alphaValue < 1000) {
+  //     el.isDeleted = true;
+  //     console.log(`delete ${el.id}`);
+  //   }
+  //   // console.timeEnd("headTailSum");
+  // }
+  // });
+  return JSON.stringify(testV);
+};
+
 export function removeBlankEle(eles: DrawingElement[], sceneState: Scene) {
-  eles.forEach((el) => {
-    const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-    if (elCvs) {
-      const elCtx = elCvs.getContext("2d")!;
-
-      const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
-
-      // console.time("headTailSum");
-      const alphaValue = sumArray(imageArr, 4);
-      if (alphaValue < 1000) {
-        el.isDeleted = true;
+  const offscreenCvs = compact(
+    eles.map((el) => {
+      const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+      if (elCvs) {
+        let ctx = elCvs.getContext("2d");
+        ctx = null;
+        return elCvs.transferControlToOffscreen();
       }
-      // console.timeEnd("headTailSum");
-    }
+    })
+  );
+  // TODO: offScreenCanvas接入
+  coreThreadPool.exec(getIsDeletedFlag, offscreenCvs as any).then((r) => {
+    console.log(r);
+    // eles.forEach((v, idx) => {
+    //   const updatedEle = r[idx];
+    //   v.isDeleted = updatedEle.isDeleted;
+    // });
+
+    sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
   });
-  sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
 }
 
 export function createDrawingCvs(
@@ -230,7 +272,6 @@ function drawText(ctx: CanvasRenderingContext2D, pos: Point, text: string) {
   const fontStyle = "Arial";
 
   ctx.font = `${fontSize}px ${fontStyle}`;
-
   ctx.fillText(text, pos.x, pos.y);
 }
 
