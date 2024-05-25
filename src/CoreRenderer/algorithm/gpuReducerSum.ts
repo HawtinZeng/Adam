@@ -2,8 +2,7 @@ import { TypedArray } from "src/CoreRenderer/utilsTypes";
 export async function gpuReducerSum(sumValues: TypedArray) {
   const MaxWorkGroupSize = 256;
   const adapter = await navigator.gpu?.requestAdapter();
-  const device = await adapter?.requestDevice();
-
+  const device = await adapter!.requestDevice()!;
   if (!device) {
     console.error("need a browser that supports WebGPU");
     return sumValues;
@@ -86,17 +85,15 @@ export async function gpuReducerSum(sumValues: TypedArray) {
       GPUBufferUsage.COPY_DST |
       GPUBufferUsage.COPY_SRC,
   });
-  sumValues = new Int32Array([1, 2, 3, 4, 0, 0, 1, 4, 0, 0, 1, 4, 0, 4, 9, 9]);
 
-  const num = sumValues.length / 4;
-  const filteredVals = new Int32Array(num + 4 - (num % 4));
+  // const num = sumValues.length / 4;
+  const filteredVals = new Int32Array(sumValues.length);
   let offset = 0;
   sumValues.forEach((val, idx) => {
-    if ((idx + 1) % 4 === 0) {
-      filteredVals[offset++] = val;
-    }
+    // if ((idx + 1) % 4 === 0) {
+    filteredVals[offset++] = val;
+    // }
   });
-  console.log(filteredVals);
 
   const sumValuesBuffer = device.createBuffer({
     label: "sum values",
@@ -154,7 +151,7 @@ export async function gpuReducerSum(sumValues: TypedArray) {
   device.queue.submit([encoder.finish()]);
 
   // Finally, map and read from the CPU-readable buffer.
-  resBuffer
+  return resBuffer
     .mapAsync(
       GPUMapMode.READ,
       0, // Offset
@@ -165,7 +162,17 @@ export async function gpuReducerSum(sumValues: TypedArray) {
         0,
         outputStorageBuffer.size
       );
-      // resBuffer.unmap();
-      console.log(new Int32Array(copyArrayBuffer));
+
+      return new Int32Array(copyArrayBuffer)[0];
     });
+}
+
+export function jsSum(sumValues: TypedArray) {
+  let sum = 0;
+  sumValues.forEach((val, idx) => {
+    // if ((idx + 1) % 4 === 0) {
+    sum += sumValues[idx];
+    // }
+  });
+  return sum;
 }

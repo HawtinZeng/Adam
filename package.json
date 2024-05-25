@@ -85,6 +85,7 @@
     "@stylexjs/eslint-plugin": "^0.5.1",
     "@stylexjs/webpack-plugin": "^0.5.1",
     "@types/lodash": "^4.17.0",
+    "@webgpu/types": "^0.1.40",
     "cross-env": "^7.0.3",
     "electron": "^29.1.4",
     "electron-devtools-installer": "^3.2.0",

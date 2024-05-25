@@ -5,7 +5,7 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
-import { gpuReducerSum } from "src/CoreRenderer/algorithm/gpuReducerSum";
+import { gpuReducerSum, jsSum } from "src/CoreRenderer/algorithm/gpuReducerSum";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -92,8 +92,17 @@ export function removeBlankEle(eles: DrawingElement[]) {
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
     if (elCvs) {
       const elCtx = elCvs.getContext("2d")!;
-      const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
-      gpuReducerSum(imageArr);
+      // const imageArr = elCtx.getImageData(0, 0, elCvs.width, elCvs.height).data;
+      const imageArr = new Uint8ClampedArray([1, 2, 3, 4, 5, 6, 7, 8]);
+      console.time("gpuReducerSum");
+      gpuReducerSum(imageArr).then((s) => {
+        console.log(s);
+        console.timeEnd("gpuReducerSum");
+      });
+      console.time("jsSum");
+      const res = jsSum(imageArr);
+      console.log(res);
+      console.timeEnd("jsSum");
     }
   });
 }
