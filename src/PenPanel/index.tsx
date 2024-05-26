@@ -99,6 +99,9 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const newEleUpdating: UpdatingElement = {
         ele: newFreeElement,
         type: "addPoints",
+        oriImageData: cvsEle!
+          .getContext("2d")!
+          .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
       };
       sceneState.updatingElements.push(newEleUpdating);
       if (

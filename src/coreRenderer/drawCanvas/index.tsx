@@ -28,8 +28,8 @@ const staticCvsSte = stylex.create({
 export function DrawCanvas() {
   const innerCvsRef = useRef<HTMLCanvasElement>(null);
   const setCvsAtom = useSetAtom(canvasAtom);
-  const [sceneData] = useAtom(sceneAtom);
 
+  const [sceneData] = useAtom(sceneAtom);
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
   const rgbArr = hexToRgb(colorIdx !== -1 ? colorConfigs[colorIdx].key : color);
@@ -37,15 +37,15 @@ export function DrawCanvas() {
     `${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`
   );
 
-  const [_, setMousePos] = useState({ x: 0, y: 0 });
   const [selectedKey] = useAtom(selectedKeyAtom);
 
+  useEffect(() => {
+    innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
+    innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
+  }, []);
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
-
-    innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
-    innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
 
     throttledRenderDC(sceneData, innerCvsRef.current!);
   }, [sceneData]);
@@ -56,16 +56,6 @@ export function DrawCanvas() {
     );
     setRgbColor(`${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`);
   }, [colorIdx, color]);
-  const setMousePosWrapper = (e) => {
-    setMousePos({ x: e.clientX, y: e.clientY });
-  };
-  useEffect(() => {
-    window.addEventListener("mousemove", setMousePosWrapper);
-    return () => {
-      window.removeEventListener("mousemove", setMousePosWrapper);
-    };
-  }, []);
-
   return (
     <>
       <canvas

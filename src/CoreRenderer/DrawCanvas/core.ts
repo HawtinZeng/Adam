@@ -1,4 +1,5 @@
 import { Point as PointF, Vector } from "@flatten-js/core";
+import { groupBy } from "lodash";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -50,42 +51,49 @@ function getSvgPathFromStroke(points: number[][]): string {
 export const throttledRenderDC = throttleRAF(renderDrawCanvas, {
   trailing: true,
 });
-
 export function renderDrawCanvas(
   sceneData: Scene,
   appCanvas: HTMLCanvasElement
 ) {
-  const { elements } = sceneData;
   const appCtx = appCanvas.getContext("2d")!;
-  elements.forEach((ele) => {
-    let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
+  const groupedElements = groupBy(sceneData.updatingElements, (up) => up.type);
+  groupedElements.addPoints?.forEach((checkUpdating) => {
+    const { ele } = checkUpdating;
+    let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(checkUpdating.ele);
+    cachedCvs = createDrawingCvs(ele, appCanvas);
 
-    const checkUpdating = sceneData.updatingElements.find(
-      (up) => up.ele === ele
-    );
+    ele.eraserPolygons.forEach((_, idx) => {
+      drawEraserOutline(ele, idx, cachedCvs!);
+    });
 
-    // 渐变的画笔需要实时更新
-    if (
-      cachedCvs === undefined ||
-      checkUpdating?.type === "addPoints" ||
-      (ele as FreeDrawing).strokeOptions?.haveTrailling
-    ) {
-      cachedCvs = createDrawingCvs(ele, appCanvas);
-
-      ele.eraserPolygons.forEach((_, idx) => {
-        drawEraserOutline(ele, idx, cachedCvs!);
-      });
-
-      if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+    if (cachedCvs && checkUpdating?.oriImageData) {
+      appCtx.putImageData(checkUpdating.oriImageData, 0, 0);
+      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
 
-    // 将一个eraserOutline叠加至element canvas上
-    if (checkUpdating?.type === "erase" && cachedCvs) {
-      drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
+    // 绘制checkUpdating到画布上
+    if (cachedCvs && checkUpdating) {
+      appCtx.drawImage(cachedCvs!, 0, 0);
     }
-
-    if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
   });
+
+  const { elements } = sceneData;
+  // 绘制橡皮效果
+  groupedElements.erase?.forEach((checkUpdating) => {
+    const { ele } = checkUpdating;
+    const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
+    if (cachedCvs) {
+      drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
+      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+    }
+  });
+  if (groupedElements.erase?.length ?? 0 > 0) {
+    appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
+    elements.forEach((el) => {
+      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+      appCtx.drawImage(cachedCvs!, 0, 0);
+    });
+  }
 }
 
 const getIsDeletedFlag = (arr: Uint8ClampedArray) => {

@@ -117,7 +117,6 @@ export function Eraser() {
           );
       }
     });
-    console.log(sceneState.updatingElements);
   };
 
   const appendEraserPoints = (e: MouseEvent) => {
