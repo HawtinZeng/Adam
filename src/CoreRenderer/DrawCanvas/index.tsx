@@ -13,6 +13,7 @@ import {
   colorAtom,
   customColor,
   eraserRadius,
+  mousePosition,
   selectedKeyAtom,
 } from "src/state/uiState";
 
@@ -36,6 +37,7 @@ export function DrawCanvas() {
   const [rgbColor, setRgbColor] = useState(
     `${rgbArr[0]}, ${rgbArr[1]}, ${rgbArr[2]}`
   );
+  const mousePos = useAtomValue(mousePosition);
 
   const [selectedKey] = useAtom(selectedKeyAtom);
 
@@ -72,6 +74,7 @@ export function DrawCanvas() {
           trailingSpeed={1}
           controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
           type={selectedKey === 0 || selectedKey === 1 ? "circle" : "pointer"}
+          initialPosition={mousePos}
         />
       )}
     </>

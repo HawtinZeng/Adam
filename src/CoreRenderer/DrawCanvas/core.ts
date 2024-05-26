@@ -126,7 +126,7 @@ export function removeBlankEle(
       el.isDeleted = r;
       sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
       updateAtomStatus();
-      console.log(sceneState.elements.length);
+      // console.log(sceneState.elements.length);
     });
   });
 }

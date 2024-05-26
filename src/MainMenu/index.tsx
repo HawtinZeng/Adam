@@ -78,8 +78,8 @@ export const colorConfigs: BtnConfigs = [
     key: "#d9453c",
   },
   {
-    label: "灰色",
-    key: "#646972",
+    label: "黄色",
+    key: "#fff385",
   },
 ];
 
@@ -220,19 +220,17 @@ export function MainMenu() {
   const [hoveredKey, setHoveredKey] = useState(-1);
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
-
   function updateSubMenuPosition() {
     if (hoveredKey === -1 || selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];
     if (!reference || !subMenuRef?.current) return;
-
     computePosition(reference, subMenuRef.current, {
       placement: "left",
       middleware: [flip()],
-    }).then(({ x, y }) => {
+    }).then(({ x, y, placement }) => {
       Object.assign(subMenuRef!.current!.style, {
         top: `${y}px`,
-        left: `${x - 20}px`,
+        left: placement === "right" ? `${x + 20}px` : `${x - 20}px`,
       });
     });
   }
@@ -289,7 +287,6 @@ export function MainMenu() {
         <DraggableTransparent
           horizontal={true}
           ref={subMenuRef}
-          key={subMenuDragCtrl}
           needBorder={menuConfigs[selectedKey].needBorder ?? true}
           needPadding={menuConfigs[selectedKey].needPadding ?? true}
         >

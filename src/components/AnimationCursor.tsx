@@ -1,6 +1,5 @@
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import {
-  AnimatedCursorCoordinates,
   AnimatedCursorOptions,
   AnimatedCursorProps,
   Clickable,
@@ -63,6 +62,7 @@ function CursorCore({
   trailingSpeed = 8,
   controledAtom,
   type,
+  initialPosition,
 }: AnimatedCursorProps) {
   const [outSizeOri] = useAtom(controledAtom);
   const outSize = controledAtom === brushRadius ? outSizeOri / 2 : outSizeOri;
@@ -92,12 +92,7 @@ function CursorCore({
 
   const cursorOuterRef = useRef<HTMLDivElement>(null);
   const cursorInnerRef = useRef<HTMLDivElement>(null);
-  const requestRef = useRef<number | null>(null);
-  const previousTimeRef = useRef<number | null>(null);
-  const [coords, setCoords] = useState<AnimatedCursorCoordinates>({
-    x: 0,
-    y: 0,
-  });
+
   const [isVisible, setIsVisible] = useState(true);
   const [options, setOptions] = useState(defaultOptions);
   const [isActive, setIsActive] = useState<boolean | AnimatedCursorOptions>(
@@ -105,8 +100,6 @@ function CursorCore({
   );
 
   const [isActiveClickable, setIsActiveClickable] = useState(false);
-  const endX = useRef(0);
-  const endY = useRef(0);
 
   /**
    * Primary Mouse move event
@@ -115,41 +108,23 @@ function CursorCore({
    */
   const onMouseMove = useCallback((event: MouseEvent) => {
     const { clientX, clientY } = event;
-    setCoords({ x: clientX, y: clientY });
     if (cursorInnerRef.current !== null) {
       cursorInnerRef.current.style.top = `${clientY}px`;
       cursorInnerRef.current.style.left = `${clientX}px`;
     }
-    endX.current = clientX;
-    endY.current = clientY;
+
+    if (cursorOuterRef.current !== null) {
+      cursorOuterRef.current.style.top = `${clientY}px`;
+      cursorOuterRef.current.style.left = `${clientX}px`;
+    }
   }, []);
 
-  // Outer Cursor Animation Delay
-  const animateOuterCursor = useCallback(
-    (time: number) => {
-      if (previousTimeRef.current !== undefined) {
-        coords.x += (endX.current - coords.x) / trailingSpeed;
-        coords.y += (endY.current - coords.y) / trailingSpeed;
-        if (cursorOuterRef.current !== null) {
-          cursorOuterRef.current.style.top = `${coords.y}px`;
-          cursorOuterRef.current.style.left = `${coords.x}px`;
-        }
-      }
-      previousTimeRef.current = time;
-      requestRef.current = requestAnimationFrame(animateOuterCursor);
-    },
-    [requestRef] // eslint-disable-line
-  );
-
-  // Outer cursor RAF setup / cleanup
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(animateOuterCursor);
-    return () => {
-      if (requestRef.current !== null) {
-        cancelAnimationFrame(requestRef.current);
-      }
-    };
-  }, [animateOuterCursor]);
+    onMouseMove({
+      clientX: initialPosition.x,
+      clientY: initialPosition.y,
+    } as MouseEvent);
+  }, []);
 
   /**
    * Calculates amount to scale cursor in px3
@@ -356,6 +331,7 @@ function CursorCore({
     transition:
       "opacity 0.15s ease-in-out, height 0.2s ease-in-out, width 0.2s ease-in-out",
   };
+
   // Cursor Styles
   const styles = {
     cursorInner: {
@@ -427,6 +403,7 @@ function AnimatedCursor({
   trailingSpeed,
   controledAtom,
   type,
+  initialPosition,
 }: AnimatedCursorProps) {
   return (
     <CursorCore
@@ -441,6 +418,7 @@ function AnimatedCursor({
       trailingSpeed={trailingSpeed}
       controledAtom={controledAtom} // 鼠标圆的直径
       type={type}
+      initialPosition={initialPosition}
     >
       {children}
     </CursorCore>

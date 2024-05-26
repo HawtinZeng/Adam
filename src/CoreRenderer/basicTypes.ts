@@ -32,6 +32,13 @@ export type DrawingElement = {
   eraserPolygons: Flatten.Polygon[]; // stroke exclusion
   boundingBox?: Flatten.Box;
 };
+
+export type DomElement = {
+  type: "note";
+  position: Point;
+  text: string;
+};
+
 export type FrameData = {
   width: number;
   height: number;
@@ -91,7 +98,6 @@ export function ptIsContained(
   pt: Flatten.Point
 ) {
   if (!incPolygons || !excPolygons) return;
-
   for (let i = 0; i < excPolygons.length; i++) {
     const isExc = excPolygons[i].contains(pt);
     if (isExc) return false;

@@ -1,5 +1,6 @@
 import { PrimitiveAtom } from "jotai";
 import { CSSProperties, ReactNode } from "react";
+import { Point } from "src/CoreRenderer/basicTypes";
 
 export interface AnimatedCursorOptions {
   children?: ReactNode;
@@ -23,6 +24,7 @@ export interface AnimatedCursorProps extends AnimatedCursorOptions {
   trailingSpeed?: number;
   controledAtom: PrimitiveAtom<number>;
   type: "circle" | "cross" | "pointer";
+  initialPosition: Point;
 }
 
 export interface AnimatedCursorCoordinates {

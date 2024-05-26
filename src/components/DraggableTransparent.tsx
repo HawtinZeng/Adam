@@ -1,11 +1,9 @@
-import React, { ReactNode, Ref, forwardRef } from "react";
-import { setTransparent, unsetTransparent } from "../commonUtils";
 import stylex from "@stylexjs/stylex";
+import React, { ReactNode, Ref, forwardRef, useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import { penPanelStyles } from "src/PenPanel/index";
 import { Point } from "src/Utils/Data/geometry";
-import { useAtom } from "jotai";
-import { selectedSubEffectAtom } from "src/state/uiState";
+import { setTransparent, unsetTransparent } from "../commonUtils";
 export const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
@@ -42,8 +40,10 @@ export const DraggableTransparent = forwardRef(
     const needPadding = props.needPadding ?? true;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
     const onDrag = props.onDrag;
-    useAtom(selectedSubEffectAtom);
-
+    const [hasIni, setHasIni] = useState(false);
+    useEffect(() => {
+      if (!hasIni) setTimeout(() => setHasIni(true), 10);
+    }, [hasIni]);
     return (
       <Draggable
         cancel="#btn"
@@ -75,6 +75,7 @@ export const DraggableTransparent = forwardRef(
             }
           )}
           ref={ref as Ref<HTMLDivElement>}
+          style={hasIni ? { visibility: "visible" } : { visibility: "hidden" }}
         >
           {props.children}
         </div>

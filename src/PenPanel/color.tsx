@@ -1,11 +1,12 @@
+import stylex from "@stylexjs/stylex";
 import { useAtom } from "jotai";
 import React from "react";
-import { Btn } from "src/components/Btn";
 import { colorConfigs, mainMenu } from "src/MainMenu";
+import { Btn } from "src/components/Btn";
 import { colorAtom } from "src/state/uiState";
-import stylex from "@stylexjs/stylex";
 
-export function ColorsSubPanel() {
+export function ColorsSubPanel(props: { showNumber?: number }) {
+  //仅显示后showNumber个
   const [selectedKey, setSelectedKey] = useAtom(colorAtom);
 
   const btns = Btn(
@@ -18,7 +19,10 @@ export function ColorsSubPanel() {
     "horizontal",
     true
   );
-
+  const { showNumber } = props;
+  if (showNumber !== undefined) {
+    btns.splice(0, showNumber);
+  }
   const len = btns.length,
     grpNums = Math.max(Math.ceil(len / 3), 0),
     grps = new Array(grpNums);
