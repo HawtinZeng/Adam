@@ -90,7 +90,6 @@ export function Eraser() {
 
   const eraseStart = (e: MouseEvent) => {
     mousePressed.current = true;
-    console.log("eraseStart");
     collectUpdatingElements(e);
     appendEraserPoints(e);
 
