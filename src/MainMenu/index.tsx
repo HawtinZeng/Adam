@@ -209,7 +209,7 @@ export const menuConfigs: BtnConfigs = [
 
 export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
-
+  // console.log("re-render main menu");
   const canvasTrigger = useAtomValue(canvasEventTriggerAtom);
 
   const sceneState = useAtomValue(sceneAtom);

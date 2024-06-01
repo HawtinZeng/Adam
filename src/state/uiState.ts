@@ -1,6 +1,6 @@
 import { atom } from "jotai";
 import { atomEffect } from "jotai-effect";
-import { DomElement, Point } from "src/CoreRenderer/basicTypes";
+import { DomElement } from "src/CoreRenderer/basicTypes";
 import { setTransparentOption, unsetTransparent } from "src/commonUtils";
 export const selectedKeyAtom = atom(-1);
 export const selectedKeyAtomSubMenu = atom(0);
@@ -30,7 +30,7 @@ export const customColor = atom<string>("");
 
 export const simulatePressureSize = atom<number>(0);
 
-export const mousePosition = atom<Point>({ x: 0, y: 0 });
+// export const mousePosition = atom<Point>({ x: 0, y: 0 });
 
 export const hoveringDomsAtom = atom<DomElement | null>(null);
 

@@ -6,10 +6,13 @@ import { sceneAtom } from "src/state/sceneState";
 const dom = styleX.create({
   fixed: {
     position: "fixed",
+    display: "flex",
+    flexWrap: "wrap",
   },
 });
 export function DomElements() {
   const scene = useAtomValue(sceneAtom);
+  // console.log("re-render DomElements");
 
   return (
     <div {...styleX.props(dom.fixed)}>

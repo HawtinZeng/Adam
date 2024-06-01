@@ -2,7 +2,7 @@ import { TextareaAutosize as BaseTextareaAutosize } from "@mui/base/TextareaAuto
 import { Button, styled } from "@mui/material";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useSetAtom } from "jotai";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Draggable from "react-draggable";
 import { DomElement } from "src/CoreRenderer/basicTypes";
 import { colorConfigs } from "src/MainMenu";
@@ -46,6 +46,8 @@ const noteStyles = stylex.create({
     minHeight: "150px",
     backgroundColor: "#ffffff",
     userSelect: "none",
+    marginTop: "10px",
+    marginLeft: "10px",
   },
   head: {
     height: "55px",
@@ -67,6 +69,9 @@ const noteStyles = stylex.create({
     display: "flex",
     justifyContent: "space-evenly",
     fontSize: "20px",
+  },
+  stickingFoot: {
+    marginBottom: "9px",
   },
   btn: {
     display: "inline-block",
@@ -92,10 +97,10 @@ export function NotePanel(props: {
 }) {
   const { status = "creating", text = "" } = props;
   const [colorIdx, setColor] = useState(props.color ?? 5);
-  const colorHex = colorConfigs[colorIdx].key;
+  const colorHex = colorConfigs[colorIdx]?.key ?? "#ffffff";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [scene, setScene] = useAtom(sceneAtom);
-  const setSelectedKey = useSetAtom(selectedKeyAtom);
+  const [_, setSelectedKey] = useAtom(selectedKeyAtom);
   const disableDrawing = useSetAtom(disableDrawingAtom);
 
   const customizeTextareaStyle = colorHex
@@ -139,6 +144,16 @@ export function NotePanel(props: {
   const cancel = () => {
     setSelectedKey(-1);
   };
+  useEffect(() => {
+    return () => disableDrawing(false);
+  }, []);
+  const deleteNote = () => {
+    const idx = scene.domElements.findIndex((d) => d === props.ele);
+    if (idx !== -1) {
+      scene.domElements.splice(idx, 1);
+    }
+    setScene({ ...scene, domElements: [...scene.domElements] });
+  };
 
   const saveNote = () => {
     setSelectedKey(-1);
@@ -156,13 +171,21 @@ export function NotePanel(props: {
   const saveContentSticking = () => {
     if (props.ele && status === "sticking") {
       props.ele.text = textareaRef.current?.value ?? "";
-      // setScene({ ...scene, domElements: [...scene.domElements] });不需要更新视图，因为textarea组件已经更新了内容
+      setScene({ ...scene, domElements: [...scene.domElements] });
     }
   };
-  console.log(`re-render: ${new Date().getTime()}`);
+  // console.log(`re-render: ${new Date().getTime()}`);
 
   return (
-    <Draggable cancel="#notDraggable">
+    <Draggable
+      cancel="#notDraggable"
+      onDrag={(_, d) => {
+        if (props.ele) {
+          props.ele.position.x = d.x;
+          props.ele.position.y = d.y;
+        }
+      }}
+    >
       <div
         {...stylex.props(
           noteStyles.container,
@@ -188,7 +211,11 @@ export function NotePanel(props: {
             color={colorIdx}
           />
         </div>
-        <div {...stylex.props(noteStyles.body)} id="notDraggable">
+        <div
+          {...stylex.props(noteStyles.body)}
+          id="notDraggable"
+          onMouseLeave={saveContentSticking}
+        >
           <Textarea
             ref={textareaRef}
             aria-label="minimum height"
@@ -198,7 +225,6 @@ export function NotePanel(props: {
             {...stylex.props(noteStyles.textarea)}
             style={customizeTextareaStyle}
             defaultValue={text}
-            onBlur={saveContentSticking}
           />
         </div>
         {status === "creating" && (
@@ -208,6 +234,13 @@ export function NotePanel(props: {
             </Button>
             <Button variant="contained" size="large" onClick={saveNote}>
               保存
+            </Button>
+          </div>
+        )}
+        {status === "sticking" && (
+          <div {...stylex.props(noteStyles.foot, noteStyles.stickingFoot)}>
+            <Button variant="outlined" size="large" onClick={deleteNote}>
+              删除
             </Button>
           </div>
         )}

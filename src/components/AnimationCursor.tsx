@@ -10,10 +10,10 @@ import React from "react";
 import { ReactSVG } from "react-svg";
 import { hexToRgb } from "src/CoreRenderer/DrawCanvas/colorUtils";
 import { colorConfigs } from "src/MainMenu";
-import findInArray from "src/components/helpers/find";
 import { useEventListener } from "src/components/hooks/useEventListener";
 import { brushRadius, colorAtom, customColor } from "src/state/uiState";
 
+import findInArray from "src/components/helpers/find";
 import crossSvg from "src/images/svgs/mouse/cross.svg";
 import pointerSvg from "src/images/svgs/mouse/pointer.svg";
 /**
@@ -39,7 +39,6 @@ import pointerSvg from "src/images/svgs/mouse/pointer.svg";
  */
 function CursorCore({
   clickables = [
-    "a",
     'input[type="text"]',
     'input[type="email"]',
     'input[type="number"]',
@@ -59,7 +58,6 @@ function CursorCore({
   outerScale = 6,
   outerStyle,
   showSystemCursor = false,
-  trailingSpeed = 8,
   controledAtom,
   type,
   initialPosition,
@@ -235,7 +233,9 @@ function CursorCore({
         .join(",")
     );
     clickableEls.forEach((el) => {
-      if (!showSystemCursor) el.style.cursor = "none";
+      if (!showSystemCursor) {
+        el.style.cursor = "none";
+      }
 
       const clickableOptions =
         typeof clickables === "object"
@@ -274,6 +274,7 @@ function CursorCore({
 
     return () => {
       clickableEls.forEach((el) => {
+        if (el.tagName === "button") el.style.cursor = "pointer";
         const clickableOptions =
           typeof clickables === "object"
             ? findInArray(
@@ -309,7 +310,7 @@ function CursorCore({
         });
       });
     };
-  }, [isActive, clickables, showSystemCursor, defaultOptions]);
+  }, [isActive, clickables, showSystemCursor, defaultOptions, type]);
 
   useEffect(() => {
     if (typeof window === "object" && !showSystemCursor) {

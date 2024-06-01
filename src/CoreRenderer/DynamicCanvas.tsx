@@ -12,6 +12,8 @@ const dCvsSt = stylex.create({
   },
 });
 export function DynamicCanvas() {
+  // console.log("re-render DynamicCanvas");
+
   const setDyCanvasAtom = useSetAtom(dyCanvasAtom);
   const cvsRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
