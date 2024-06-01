@@ -6,7 +6,7 @@ import { ColorPicker } from "src/PenPanel/colorPicker";
 import { mainMenu, penConfigs } from "src/MainMenu";
 import { PenPanel } from "src/PenPanel";
 import { SizeSlider } from "src/SizeSlider";
-import { brushRadius } from "src/state/uiState";
+import { brushRadius, colorAtom } from "src/state/uiState";
 export function PenPanelComposal() {
   return (
     <div {...stylex.props(mainMenu.multilineLayout)}>
@@ -14,7 +14,7 @@ export function PenPanelComposal() {
         <PenPanel btnConfigs={penConfigs} />
       </div>
       <div {...stylex.props(mainMenu.onelineFlex)}>
-        <ColorsSubPanel />
+        <ColorsSubPanel controlledAtom={colorAtom} />
         <ColorPicker />
         <div {...stylex.props(mainMenu.brushRadiusSlider)}>
           <SizeSlider controledAtom={brushRadius} />

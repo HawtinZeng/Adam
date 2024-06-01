@@ -1,7 +1,6 @@
 import stylex from "@stylexjs/stylex";
 import React, { ReactNode, Ref, forwardRef, useEffect, useState } from "react";
 import Draggable from "react-draggable";
-import { penPanelStyles } from "src/PenPanel/index";
 import { Point } from "src/Utils/Data/geometry";
 import { setTransparent, unsetTransparent } from "../commonUtils";
 export const menuContainer = stylex.create({
@@ -17,9 +16,19 @@ export const menuContainer = stylex.create({
   },
   areaBorder: {
     border: "2px solid #898989",
+    // borderRadius: "5px",
   },
   menuPadding: {
     padding: "9px",
+  },
+});
+
+export const draggableTrans = stylex.create({
+  horizontalPanel: {
+    flexDirection: "row",
+  },
+  corner: {
+    borderRadius: "5px",
   },
 });
 export const DraggableTransparent = forwardRef(
@@ -64,8 +73,8 @@ export const DraggableTransparent = forwardRef(
           {...stylex.props(
             menuContainer.flexContent,
             isHorizontal && {
-              ...penPanelStyles.horizontalPanel,
-              ...penPanelStyles.corner,
+              ...draggableTrans.horizontalPanel,
+              ...draggableTrans.corner,
             },
             needBorder && {
               ...menuContainer.areaBorder,

@@ -1,11 +1,11 @@
 import { useSetAtom } from "jotai";
 import React, { useEffect, useRef } from "react";
+import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import MainMenu from "src/MainMenu";
-import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
-import { canvasEventTriggerAtom, mousePosition } from "src/state/uiState";
+import { canvasEventTriggerAtom } from "src/state/uiState";
 import { setTransparent } from "./commonUtils";
 export const showEleId = false;
 function App() {
@@ -13,11 +13,6 @@ function App() {
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
   setTransparent();
   useDrawingOperator();
-
-  const pos = useMousePosition();
-  const setPosAtom = useSetAtom(mousePosition);
-  setPosAtom(pos);
-
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
   }, []);
@@ -26,6 +21,7 @@ function App() {
       <div ref={canvasEventTrigger}>
         <DrawCanvas />
         <DynamicCanvas />
+        <DomElements />
       </div>
       <MainMenu />
     </>

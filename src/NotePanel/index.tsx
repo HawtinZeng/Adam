@@ -1,14 +1,23 @@
 import { TextareaAutosize as BaseTextareaAutosize } from "@mui/base/TextareaAutosize";
-import { styled } from "@mui/material";
-import Button from "@mui/material/Button";
+import { Button, styled } from "@mui/material";
 import stylex from "@stylexjs/stylex";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import React, { useEffect, useRef, useState } from "react";
+import { useAtom, useSetAtom } from "jotai";
+import React, { useRef, useState } from "react";
+import Draggable from "react-draggable";
+import { DomElement } from "src/CoreRenderer/basicTypes";
 import { colorConfigs } from "src/MainMenu";
 import { ColorsSubPanel } from "src/PenPanel/color";
 import { getComplementaryColor } from "src/Utils/color";
+import {
+  draggableTrans,
+  menuContainer,
+} from "src/components/DraggableTransparent";
 import { sceneAtom } from "src/state/sceneState";
-import { colorAtom, selectedKeyAtom } from "src/state/uiState";
+import {
+  disableDrawingAtom,
+  noteColorAtom,
+  selectedKeyAtom,
+} from "src/state/uiState";
 
 const blue = {
   100: "#DAECFF",
@@ -35,6 +44,8 @@ const noteStyles = stylex.create({
   container: {
     width: "300px",
     minHeight: "150px",
+    backgroundColor: "#ffffff",
+    userSelect: "none",
   },
   head: {
     height: "55px",
@@ -76,14 +87,17 @@ const noteStyles = stylex.create({
 export function NotePanel(props: {
   status?: "creating" | "sticking";
   text?: string;
+  ele?: DomElement;
+  color?: number;
 }) {
-  const { status = "creating", text = "hello" } = props;
-  const colorIdx = useAtomValue(colorAtom);
-  const colorHex = colorIdx >= 3 ? colorConfigs[colorIdx].key : "#fff385";
+  const { status = "creating", text = "" } = props;
+  const [colorIdx, setColor] = useState(props.color ?? 5);
+  const colorHex = colorConfigs[colorIdx].key;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
   const [scene, setScene] = useAtom(sceneAtom);
   const setSelectedKey = useSetAtom(selectedKeyAtom);
+  const disableDrawing = useSetAtom(disableDrawingAtom);
+
   const customizeTextareaStyle = colorHex
     ? {
         backgroundColor: colorHex,
@@ -108,7 +122,6 @@ export function NotePanel(props: {
     &:hover {
       border-color: ${blue[400]};
     }
-  
     &:focus {
       outline: 0;
       border-color: ${blue[400]};
@@ -130,43 +143,75 @@ export function NotePanel(props: {
   const saveNote = () => {
     setSelectedKey(-1);
 
-    scene.domElements.push();
-    setScene({ ...scene, domElements: [] });
+    scene.domElements.push({
+      type: "note",
+      position: { x: 0, y: 0 },
+      text: textareaRef.current?.value ?? "",
+      createTime: new Date(),
+      color: colorIdx,
+    });
+    setScene({ ...scene, domElements: [...scene.domElements] });
   };
-  useEffect(() => {
-    if (text !== "") {
-      textareaRef.current!.value = text!;
+
+  const saveContentSticking = () => {
+    if (props.ele && status === "sticking") {
+      props.ele.text = textareaRef.current?.value ?? "";
+      // setScene({ ...scene, domElements: [...scene.domElements] });不需要更新视图，因为textarea组件已经更新了内容
     }
-    // setTimeout(() => {
-    //   setIsShow(true);
-    // }, 50);
-    return;
-  }, []);
+  };
+  console.log(`re-render: ${new Date().getTime()}`);
+
   return (
-    <div {...stylex.props(noteStyles.container)}>
-      <div {...stylex.props(noteStyles.head)}>
-        新建便签 <ColorsSubPanel showNumber={3} />
+    <Draggable cancel="#notDraggable">
+      <div
+        {...stylex.props(
+          noteStyles.container,
+          status === "sticking"
+            ? { ...menuContainer.areaBorder, ...draggableTrans.corner }
+            : {}
+        )}
+        onMouseEnter={() => disableDrawing(true)}
+        onMouseLeave={() => disableDrawing(false)}
+      >
+        <div {...stylex.props(noteStyles.head)}>
+          &nbsp;
+          {status === "sticking"
+            ? props.ele!.createTime!.toLocaleString(undefined, {
+                dateStyle: "short",
+                timeStyle: "short",
+              })
+            : "新建便签"}
+          <ColorsSubPanel
+            showNumber={3}
+            controlledAtom={noteColorAtom}
+            setColor={setColor}
+            color={colorIdx}
+          />
+        </div>
+        <div {...stylex.props(noteStyles.body)} id="notDraggable">
+          <Textarea
+            ref={textareaRef}
+            aria-label="minimum height"
+            placeholder="请输入文字"
+            minRows="5"
+            id="btn"
+            {...stylex.props(noteStyles.textarea)}
+            style={customizeTextareaStyle}
+            defaultValue={text}
+            onBlur={saveContentSticking}
+          />
+        </div>
+        {status === "creating" && (
+          <div {...stylex.props(noteStyles.foot)}>
+            <Button variant="outlined" size="large" onClick={cancel}>
+              取消
+            </Button>
+            <Button variant="contained" size="large" onClick={saveNote}>
+              保存
+            </Button>
+          </div>
+        )}
       </div>
-      <div {...stylex.props(noteStyles.body)}>
-        <Textarea
-          ref={textareaRef}
-          aria-label="minimum height"
-          placeholder="请输入文字"
-          minRows="5"
-          id="btn"
-          {...stylex.props(noteStyles.textarea)}
-          style={customizeTextareaStyle}
-          content="hello"
-        />
-      </div>
-      <div {...stylex.props(noteStyles.foot)}>
-        <Button variant="outlined" size="large" onClick={cancel}>
-          取消
-        </Button>
-        <Button variant="contained" size="large" onClick={saveNote}>
-          保存
-        </Button>
-      </div>
-    </div>
+    </Draggable>
   );
 }

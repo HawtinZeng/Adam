@@ -1,5 +1,4 @@
 import Flatten, { Polygon } from "@flatten-js/core";
-import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
@@ -23,6 +22,7 @@ import {
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
+  disableDrawingAtom,
   selectedKeyAtom,
   selectedKeyAtomSubMenu,
 } from "src/state/uiState";
@@ -33,15 +33,6 @@ type ImageInfo = {
   context: CanvasRenderingContext2D;
   imageData: ImageData;
 };
-
-export const penPanelStyles = stylex.create({
-  horizontalPanel: {
-    flexDirection: "row",
-  },
-  corner: {
-    borderRadius: "5px",
-  },
-});
 
 async function* nextFrame(fps: number) {
   let then = performance.now();
@@ -75,8 +66,11 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const animationTasks = useRef<Function[]>([]);
   const isStop = useRef<boolean>(true);
+  const disableDrawing = useAtomValue(disableDrawingAtom);
+
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
+      if (disableDrawing) return;
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
         id: nanoid(),
         position: { x: 0, y: 0 },
@@ -124,7 +118,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         setSceneAtom(sceneState);
       }
     },
-    [selectedKey, colorIdx, color, size]
+    [selectedKey, colorIdx, color, size, disableDrawing]
   );
   const traillingEffect = (lastIdx: number) => {
     const currentTime = new Date().getTime();

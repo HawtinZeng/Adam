@@ -48,9 +48,15 @@ function getSvgPathFromStroke(points: number[][]): string {
     .replace(TO_FIXED_PRECISION, "$1");
 }
 
-export const throttledRenderDC = throttleRAF(renderDrawCanvas, {
-  trailing: true,
-});
+export const throttledRenderDC = throttleRAF(
+  (s, c) => {
+    renderDrawCanvas(s, c);
+  },
+  {
+    trailing: true,
+  }
+);
+
 export function renderDrawCanvas(
   sceneData: Scene,
   appCanvas: HTMLCanvasElement
@@ -87,7 +93,7 @@ export function renderDrawCanvas(
       drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
     }
   });
-  if (groupedElements.erase?.length ?? 0 > 0) {
+  if (groupedElements.erase?.length > 0) {
     appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
     elements.forEach((el) => {
       const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);

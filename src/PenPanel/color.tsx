@@ -1,13 +1,27 @@
 import stylex from "@stylexjs/stylex";
-import { useAtom } from "jotai";
+import { Atom, useAtom } from "jotai";
+import { isNil } from "lodash";
 import React from "react";
 import { colorConfigs, mainMenu } from "src/MainMenu";
 import { Btn } from "src/components/Btn";
-import { colorAtom } from "src/state/uiState";
 
-export function ColorsSubPanel(props: { showNumber?: number }) {
+export function ColorsSubPanel(props: {
+  showNumber?: number;
+  controlledAtom?: Atom<number>;
+  setColor?: React.Dispatch<React.SetStateAction<number>>;
+  color?: number;
+}) {
+  const { showNumber, controlledAtom, setColor, color } = props;
   //仅显示后showNumber个
-  const [selectedKey, setSelectedKey] = useAtom(colorAtom);
+  let selectedKey, setSelectedKey;
+  if (controlledAtom)
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    [selectedKey, setSelectedKey] = useAtom(controlledAtom);
+
+  if (!isNil(setColor) && !isNil(color)) {
+    selectedKey = color;
+    setSelectedKey = setColor;
+  }
 
   const btns = Btn(
     setSelectedKey,
@@ -19,7 +33,6 @@ export function ColorsSubPanel(props: { showNumber?: number }) {
     "horizontal",
     true
   );
-  const { showNumber } = props;
   if (showNumber !== undefined) {
     btns.splice(0, showNumber);
   }

@@ -17,6 +17,7 @@ import { sceneAtom } from "src/state/sceneState";
 import {
   canvasAtom,
   canvasEventTriggerAtom,
+  disableDrawingAtom,
   eraserRadius,
 } from "src/state/uiState";
 const updatingLimit = 3;
@@ -40,6 +41,7 @@ export function Eraser() {
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
   const mousePressed = useRef<boolean>(false);
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
+  const disableDrawing = useAtomValue(disableDrawingAtom);
 
   useEffect(() => {
     throttledRenderDC(sceneState, canvas!);
@@ -52,7 +54,7 @@ export function Eraser() {
       cvsTrigger?.removeEventListener("mousemove", eraseMoving);
       cvsTrigger?.removeEventListener("mouseup", eraseEnd);
     };
-  }, [sceneState, eraserSize]);
+  }, [sceneState, eraserSize, disableDrawing]);
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
@@ -89,6 +91,7 @@ export function Eraser() {
   };
 
   const eraseStart = (e: MouseEvent) => {
+    if (disableDrawing) return;
     mousePressed.current = true;
     collectUpdatingElements(e);
     appendEraserPoints(e);
@@ -135,8 +138,8 @@ export function Eraser() {
   };
 
   const eraseMoving = (e: MouseEvent) => {
-    collectUpdatingElements(e);
     if (!mousePressed.current) return;
+    collectUpdatingElements(e);
     if (sceneState.updatingElements.length === 0) return;
     appendEraserPoints(e);
 
