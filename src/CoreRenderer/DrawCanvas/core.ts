@@ -94,6 +94,7 @@ export function renderDrawCanvas(
     }
   });
   if (groupedElements.erase?.length > 0) {
+    // 重绘全部元素
     appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
     elements.forEach((el) => {
       const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);

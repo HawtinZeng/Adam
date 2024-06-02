@@ -178,7 +178,7 @@ export function NotePanel(props: {
 
   return (
     <Draggable
-      cancel="#notDraggable"
+      cancel="#btn"
       onDrag={(_, d) => {
         if (props.ele) {
           props.ele.position.x = d.x;
@@ -213,7 +213,7 @@ export function NotePanel(props: {
         </div>
         <div
           {...stylex.props(noteStyles.body)}
-          id="notDraggable"
+          id="btn"
           onMouseLeave={saveContentSticking}
         >
           <Textarea
@@ -228,7 +228,7 @@ export function NotePanel(props: {
           />
         </div>
         {status === "creating" && (
-          <div {...stylex.props(noteStyles.foot)}>
+          <div {...stylex.props(noteStyles.foot)} id="btn">
             <Button variant="outlined" size="large" onClick={cancel}>
               取消
             </Button>
@@ -238,7 +238,10 @@ export function NotePanel(props: {
           </div>
         )}
         {status === "sticking" && (
-          <div {...stylex.props(noteStyles.foot, noteStyles.stickingFoot)}>
+          <div
+            {...stylex.props(noteStyles.foot, noteStyles.stickingFoot)}
+            id="btn"
+          >
             <Button variant="outlined" size="large" onClick={deleteNote}>
               删除
             </Button>
