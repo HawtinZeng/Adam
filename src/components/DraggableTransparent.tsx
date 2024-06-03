@@ -11,12 +11,10 @@ export const menuContainer = stylex.create({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    width: "min-content",
     position: "absolute",
   },
   areaBorder: {
     border: "2px solid #898989",
-    // borderRadius: "5px",
   },
   menuPadding: {
     padding: "9px",
@@ -65,6 +63,7 @@ export const DraggableTransparent = forwardRef(
             isDragging = false;
           }
         }}
+        defaultClassName="draggable"
         defaultPosition={defaultPosition}
       >
         <div

@@ -27,6 +27,7 @@ export type DrawingElement = {
 
   position: Point;
   rotation: Degree;
+  scale?: Point;
 
   polygons: Flatten.Polygon[]; // stroke outline
   eraserPolygons: Flatten.Polygon[]; // stroke exclusion

@@ -7,6 +7,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
+import { ImageInput } from "src/MainMenu/imageInput";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
 import { ScreenShotPanel } from "src/ScreenShotPanel/index";
@@ -181,6 +182,7 @@ export const menuConfigs: BtnConfigs = [
     label: "图片",
     svg: image,
     key: "image",
+    subMenu: <ImageInput />,
   },
   {
     label: "圆圈",

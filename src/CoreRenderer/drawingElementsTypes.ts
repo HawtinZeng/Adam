@@ -14,6 +14,7 @@ export interface FreeDrawing extends DrawingElement {
 export enum DrawingType {
   freeDraw = "freeDraw",
   eraser = "eraser",
+  img = "img",
 }
 
 export const newFreeDrawingElement: FreeDrawing = {
@@ -38,4 +39,27 @@ export const newFreeDrawingElement: FreeDrawing = {
   rotation: 0,
   strokeOptions: {} as AStrokeOptions,
   polygons: [] as Flatten.Polygon[],
+};
+export const newImgElement: DrawingElement = {
+  type: DrawingType.img,
+  points: [],
+
+  id: "1",
+  strokeColor: "#000000",
+  strokeStyle: "solid",
+  fillStyle: "solid",
+  opacity: 1,
+
+  belongedFrame: "defaultFrameId",
+  belongedGroup: "defaultGrp",
+
+  status: "notLocked",
+  isDeleted: false,
+
+  position: { x: 0, y: 0 },
+  rotation: 0,
+  scale: { x: 1, y: 1 },
+
+  polygons: [],
+  eraserPolygons: [],
 };

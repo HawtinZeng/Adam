@@ -1,4 +1,6 @@
-import { Point } from "src/CoreRenderer/basicTypes";
+import { cloneDeep } from "lodash";
+import { nanoid } from "nanoid";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import { FreedrawComp } from "src/drawingElements/data/freedrawElement";
 
 const getFreeDrawElementAbsoluteCoords = (
@@ -31,3 +33,9 @@ export const getBoundsFromPoints = (points: Point[]): Point[] => {
     { x: maxX, y: maxY },
   ];
 };
+
+export function cloneDeepGenId(e: DrawingElement) {
+  const createdE = cloneDeep(e);
+  createdE.id = nanoid();
+  return e;
+}

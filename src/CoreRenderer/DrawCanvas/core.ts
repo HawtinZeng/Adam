@@ -14,8 +14,7 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
-import workerpool from "workerpool";
-const coreThreadPool = workerpool.pool({ workerType: "web", maxWorkers: 10 });
+import { coreThreadPool, logger } from "src/setup";
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -126,6 +125,7 @@ export function removeBlankEle(
   updateAtomStatus: () => any
 ) {
   els.forEach((el) => {
+    const prevLen = sceneState.elements.length;
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
     const ctx = elCvs.getContext("2d", { willReadFrequently: true })!;
     const imageData = ctx.getImageData(0, 0, elCvs.width, elCvs.height);
@@ -133,7 +133,8 @@ export function removeBlankEle(
       el.isDeleted = r;
       sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
       updateAtomStatus();
-      // console.log(sceneState.elements.length);
+      if (prevLen - sceneState.elements.length > 0)
+        logger.log(`removed ${prevLen - sceneState.elements.length} elements`);
     });
   });
 }

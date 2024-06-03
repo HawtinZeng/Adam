@@ -8,6 +8,7 @@ import MainMenu, { colorConfigs } from "src/MainMenu";
 import AnimatedCursor from "src/components/AnimationCursor";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
+import { setup } from "src/setup";
 import {
   brushRadius,
   canvasEventTriggerAtom,
@@ -39,9 +40,11 @@ function App() {
   setTransparent();
   useDrawingOperator();
   const m = useMousePosition();
-  // console.log("re-render App");
+
+  // initialize
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
+    setup();
   }, []);
   return (
     <>
