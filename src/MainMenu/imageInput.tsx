@@ -1,11 +1,15 @@
 import x from "@stylexjs/stylex";
+import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ReactSVG } from "react-svg";
 import { newImgElement } from "src/CoreRenderer/drawingElementsTypes";
 import { cloneDeepGenId } from "src/common/utils";
+import { UpdatingElement } from "src/drawingElements/data/scene";
 import add from "src/images/svgs/addButton.svg";
+import { sceneAtom } from "src/state/sceneState";
+import { canvasAtom } from "src/state/uiState";
 
-const s = x.create({
+const st = x.create({
   rootContainer: {
     display: "flex",
     maxWidth: "300px",
@@ -25,6 +29,9 @@ export function ImageInput() {
   const [usedImg, setusedImg] = useState<Map<File, boolean>>(new Map());
   const [cur, setCur] = useState<File | null>(null);
   const isAssignSecPt = useRef(false);
+  const [s, ss] = useAtom(sceneAtom);
+  const htmlImgs = useRef<WeakMap<File, HTMLImageElement>>(new WeakMap());
+  const [cvsEle] = useAtom(canvasAtom);
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target) return;
@@ -40,13 +47,23 @@ export function ImageInput() {
     setImgs(files);
     setCur(files[0] ?? null);
 
-    files.forEach((_) => {
-      usedImg.set(_, false);
+    files.forEach((imgFile) => {
+      usedImg.set(imgFile, false);
+      const imgEl = new Image();
+      const reader = new FileReader();
+      reader.onload = (event: ProgressEvent<FileReader>) => {
+        const img = new Image();
+        if (!event.target?.result) return;
+        imgEl.src = event.target.result as string;
+        htmlImgs.current.set(imgFile, imgEl);
+      };
+      reader.readAsDataURL(imgFile);
     });
     setusedImg(new Map([...usedImg]));
   }
   const i = useRef<null | HTMLInputElement>(null);
   const excuted = useRef(false);
+
   const updateDraggableItemPos = (e: MouseEvent) => {
     if (!excuted.current) return;
     const len = document.getElementsByClassName("draggable").length;
@@ -57,15 +74,41 @@ export function ImageInput() {
       el.style.left = e.clientX + 30 + "px";
       el.style.top = e.clientY + 30 + "px";
     }
+
+    const updating = s.updatingElements[0];
+    if (updating && isAssignSecPt.current && cur) {
+      const fPt = updating.ele.points[0];
+      const scaledW = e.clientX - fPt.x;
+      const img = htmlImgs.current.get(cur);
+      if (!img) return;
+      updating.ele.scale = { x: scaledW / img.width, y: scaledW / img.width };
+
+      ss({ ...s });
+    }
   };
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: MouseEvent) => {
     if (!cur) return;
-    // cur
     if (!isAssignSecPt.current) {
       isAssignSecPt.current = true;
       const imgEle = cloneDeepGenId(newImgElement);
+      imgEle.points[0] = { x: e.clientX, y: e.clientY };
+      imgEle.image = htmlImgs.current.get(cur);
+
+      const updating: UpdatingElement = {
+        type: "scale",
+        ele: imgEle,
+        oriImageData: cvsEle!
+          .getContext("2d")!
+          .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
+      };
+      s.updatingElements[0] = updating;
+      ss({ ...s });
     } else {
+      isAssignSecPt.current = false;
+      s.elements.push(s.updatingElements[0].ele);
+      ss({ ...s });
+      s.updatingElements.length = 0;
     }
   };
   useEffect(() => {
@@ -79,7 +122,7 @@ export function ImageInput() {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
-  }, []);
+  }, [cur, s]);
   return (
     <>
       {!cur && <span>选择图片中...</span>}
@@ -92,13 +135,13 @@ export function ImageInput() {
         style={{ display: "none" }}
       ></input>
       {imgs?.length ?? -1 > 0 ? (
-        <div {...x.props(s.rootContainer)}>
+        <div {...x.props(st.rootContainer)}>
           {imgs!.map((f) => {
             return (
               <div
                 {...x.props(
-                  s.flexContainer,
-                  usedImg.get(f) ? s.greyText : null
+                  st.flexContainer,
+                  usedImg.get(f) ? st.greyText : null
                 )}
                 key={f.name}
               >

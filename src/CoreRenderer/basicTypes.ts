@@ -1,6 +1,7 @@
 import Flatten from "@flatten-js/core";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
+import { URL } from "url";
 
 export type Point = {
   x: number;
@@ -27,7 +28,8 @@ export type DrawingElement = {
 
   position: Point;
   rotation: Degree;
-  scale?: Point;
+  scale: Point;
+  imgSrc?: URL;
 
   polygons: Flatten.Polygon[]; // stroke outline
   eraserPolygons: Flatten.Polygon[]; // stroke exclusion

@@ -18,7 +18,7 @@ import {
   selectedKeyAtom,
 } from "src/state/uiState";
 import { setTransparent } from "./commonUtils";
-export const showEleId = false;
+export const debugShowEleId = false;
 function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);

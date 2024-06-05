@@ -5,12 +5,13 @@ import {
   getStrokeOutlinePoints,
   getStrokePoints,
 } from "perfect-freehand";
-import { showEleId } from "src/App";
+import { debugShowEleId } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
+  ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
@@ -100,6 +101,23 @@ export function renderDrawCanvas(
       appCtx.drawImage(cachedCvs!, 0, 0);
     });
   }
+
+  groupedElements.scale?.forEach((t) => {
+    const { ele } = t;
+    const cachedCvs = createDrawingCvs(ele, appCanvas);
+    if (t.oriImageData && cachedCvs && ele.type === DrawingType.img) {
+      const i = ele as ImageElement;
+      appCtx.putImageData(t.oriImageData, 0, 0);
+      appCtx.drawImage(
+        i.image!,
+        i.points[0]!.x,
+        i.points[0]!.y,
+        i.image!.width * i.scale.x,
+        i.image!.height * i.scale.y
+      );
+    }
+    // if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+  });
 }
 
 const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
@@ -248,9 +266,22 @@ export function createDrawingCvs(
         );
         fillPolygon(outlinePoints, strokeColor!, ctx);
       }
+      break;
+    case DrawingType.img: {
+      const i = ele as ImageElement;
+      if (!i.image) return;
+      ctx.drawImage(
+        i.image,
+        i.points[0].x,
+        i.points[0].y,
+        i.image.width * i.scale.x,
+        i.image.height * i.scale.y
+      );
+      break;
+    }
   }
 
-  if (showEleId) {
+  if (debugShowEleId) {
     const textPos = ele.points[0];
     drawText(ctx, textPos, ele.id);
   }

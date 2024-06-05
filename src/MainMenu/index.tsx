@@ -213,7 +213,6 @@ export function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
   // console.log("re-render main menu");
   const canvasTrigger = useAtomValue(canvasEventTriggerAtom);
-
   const sceneState = useAtomValue(sceneAtom);
 
   const subMenuRef = useRef<HTMLElement>(null);

@@ -50,6 +50,14 @@ export const DraggableTransparent = forwardRef(
     const [hasIni, setHasIni] = useState(false);
     useEffect(() => {
       if (!hasIni) setTimeout(() => setHasIni(true), 10);
+
+      const rootElements = document.getElementsByClassName("draggable");
+      if (rootElements)
+        [...rootElements].forEach((e) => {
+          e.addEventListener("click", (event) => {
+            event.preventDefault();
+          });
+        });
     }, [hasIni]);
     return (
       <Draggable

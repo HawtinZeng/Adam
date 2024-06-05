@@ -5,7 +5,7 @@ import {
   FrameData,
   SceneOptions,
 } from "src/CoreRenderer/basicTypes";
-export type ActionType = "addPoints" | "erase" | "transform";
+export type ActionType = "addPoints" | "erase" | "transform" | "scale";
 export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;

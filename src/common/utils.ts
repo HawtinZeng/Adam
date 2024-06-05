@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash";
 import { nanoid } from "nanoid";
-import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
+import { Point } from "src/CoreRenderer/basicTypes";
 import { FreedrawComp } from "src/drawingElements/data/freedrawElement";
 
 const getFreeDrawElementAbsoluteCoords = (
@@ -34,7 +34,10 @@ export const getBoundsFromPoints = (points: Point[]): Point[] => {
   ];
 };
 
-export function cloneDeepGenId(e: DrawingElement) {
+type HasId = {
+  id: string;
+};
+export function cloneDeepGenId<T extends HasId>(e: T) {
   const createdE = cloneDeep(e);
   createdE.id = nanoid();
   return e;
