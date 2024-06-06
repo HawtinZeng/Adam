@@ -51,13 +51,13 @@ export const DraggableTransparent = forwardRef(
     useEffect(() => {
       if (!hasIni) setTimeout(() => setHasIni(true), 10);
 
-      const rootElements = document.getElementsByClassName("draggable");
-      if (rootElements)
-        [...rootElements].forEach((e) => {
-          e.addEventListener("click", (event) => {
-            event.preventDefault();
-          });
-        });
+      // const rootElements = document.getElementsByClassName("draggable");
+      // if (rootElements)
+      // [...rootElements].forEach((e) => {
+      //   e.addEventListener("click", (event) => {
+      //     event.preventDefault();
+      //   });
+      // });
     }, [hasIni]);
     return (
       <Draggable

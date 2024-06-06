@@ -7,7 +7,7 @@ import { cloneDeepGenId } from "src/common/utils";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import add from "src/images/svgs/addButton.svg";
 import { sceneAtom } from "src/state/sceneState";
-import { canvasAtom } from "src/state/uiState";
+import { canvasAtom, selectedKeyAtom } from "src/state/uiState";
 
 const st = x.create({
   rootContainer: {
@@ -27,11 +27,13 @@ const st = x.create({
 export function ImageInput() {
   const [imgs, setImgs] = useState<File[] | null>(null);
   const [usedImg, setusedImg] = useState<Map<File, boolean>>(new Map());
-  const [cur, setCur] = useState<File | null>(null);
+  const [cur, setCur] = useState<number>(-1);
   const isAssignSecPt = useRef(false);
   const [s, ss] = useAtom(sceneAtom);
   const htmlImgs = useRef<WeakMap<File, HTMLImageElement>>(new WeakMap());
   const [cvsEle] = useAtom(canvasAtom);
+  const fileListRef = useRef<File[]>();
+  const [seleted, setSelectedKey] = useAtom(selectedKeyAtom);
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target) return;
@@ -45,7 +47,8 @@ export function ImageInput() {
       files.push(f);
     });
     setImgs(files);
-    setCur(files[0] ?? null);
+    setCur(0);
+    fileListRef.current = files;
 
     files.forEach((imgFile) => {
       usedImg.set(imgFile, false);
@@ -76,10 +79,12 @@ export function ImageInput() {
     }
 
     const updating = s.updatingElements[0];
-    if (updating && isAssignSecPt.current && cur) {
+    if (updating && isAssignSecPt.current && fileListRef.current?.[cur]) {
       const fPt = updating.ele.points[0];
       const scaledW = e.clientX - fPt.x;
-      const img = htmlImgs.current.get(cur);
+
+      const img = htmlImgs.current.get(fileListRef.current?.[cur]);
+
       if (!img) return;
       updating.ele.scale = { x: scaledW / img.width, y: scaledW / img.width };
 
@@ -88,12 +93,12 @@ export function ImageInput() {
   };
 
   const handleMouseDown = (e: MouseEvent) => {
-    if (!cur) return;
+    if (!fileListRef.current?.[cur]) return;
     if (!isAssignSecPt.current) {
       isAssignSecPt.current = true;
       const imgEle = cloneDeepGenId(newImgElement);
       imgEle.points[0] = { x: e.clientX, y: e.clientY };
-      imgEle.image = htmlImgs.current.get(cur);
+      imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
 
       const updating: UpdatingElement = {
         type: "scale",
@@ -103,14 +108,29 @@ export function ImageInput() {
           .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
       };
       s.updatingElements[0] = updating;
-      ss({ ...s });
     } else {
       isAssignSecPt.current = false;
       s.elements.push(s.updatingElements[0].ele);
-      ss({ ...s });
       s.updatingElements.length = 0;
+
+      setCur(cur + 1);
+      if (
+        fileListRef.current?.length &&
+        cur + 1 >= fileListRef.current?.length
+      ) {
+        setSelectedKey(-1);
+      }
     }
   };
+  useEffect(() => {
+    window.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mousemove", updateDraggableItemPos);
+    return () => {
+      window.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mousemove", updateDraggableItemPos);
+    };
+  }, [cur, ss]);
+
   useEffect(() => {
     if (!excuted.current) {
       i.current!.click();
@@ -125,7 +145,7 @@ export function ImageInput() {
   }, [cur, s]);
   return (
     <>
-      {!cur && <span>选择图片中...</span>}
+      {cur === -1 && <span>选择图片中...</span>}
       <input
         type="file"
         ref={i}
@@ -155,7 +175,7 @@ export function ImageInput() {
                   }}
                 >{`${f.name}`}</span>
                 <span>{`${Math.round(f.size / 1024)}KB`}</span>
-                {cur === f && <ReactSVG src={add} />}
+                {fileListRef.current?.[cur] === f && <ReactSVG src={add} />}
               </div>
             );
           })}

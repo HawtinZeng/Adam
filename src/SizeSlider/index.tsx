@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
 import stylex from "@stylexjs/stylex";
 import { PrimitiveAtom, useAtom } from "jotai";
+import React, { useEffect, useState } from "react";
 import { colorPickerStyles } from "src/PenPanel/colorPicker";
 
 export const sizeSliderStyles = stylex.create({

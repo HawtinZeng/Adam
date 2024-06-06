@@ -13,6 +13,11 @@ import {
   FreeDrawing,
   ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
+import {
+  TransformHandle,
+  TransformHandleType,
+  TransformHandles,
+} from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
@@ -102,6 +107,7 @@ export function renderDrawCanvas(
     });
   }
 
+  // draw image scaling effect.
   groupedElements.scale?.forEach((t) => {
     const { ele } = t;
     const cachedCvs = createDrawingCvs(ele, appCanvas);
@@ -116,9 +122,98 @@ export function renderDrawCanvas(
         i.image!.height * i.scale.y
       );
     }
-    // if (cachedCvs) drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
   });
+
+  if (sceneData.updatingElements.length > 0) {
+    sceneData.updatingElements.forEach((e) => {
+      const handles = getHandles(e.ele);
+      // renderTransformHandles(handles, appCtx);
+    });
+  }
 }
+
+const getHandles = (e: DrawingElement) => {
+  if (e.type === DrawingType.img) {
+    // const h = generateTransformHandle(
+    //   e.points[0] - dashedLineMargin - handleMarginX + centeringOffset,
+    //   y1 - dashedLineMargin - handleMarginY + centeringOffset,
+    //   handleWidth,
+    //   handleHeight,
+    //   cx,
+    //   cy,
+    //   angle,
+    // )
+  }
+};
+
+export const fillCircle = (
+  context: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  radius: number,
+  stroke = true
+) => {
+  context.beginPath();
+  context.arc(cx, cy, radius, 0, Math.PI * 2);
+  context.fill();
+  if (stroke) {
+    context.stroke();
+  }
+};
+
+const renderTransformHandles = (
+  transformHandles: TransformHandles,
+  context: CanvasRenderingContext2D
+) => {
+  Object.keys(transformHandles).forEach((key) => {
+    const transformHandle = transformHandles[key as TransformHandleType];
+    if (transformHandle !== undefined) {
+      const [x, y, width, height] = transformHandle;
+      context.save();
+      context.strokeStyle = "blue";
+
+      if (key === "rotation") {
+        fillCircle(context, x + width / 2, y + height / 2, width / 2);
+      } else if (context.roundRect) {
+        context.beginPath();
+        context.roundRect(x, y, width, height, 4);
+        context.fill();
+        context.stroke();
+      }
+    }
+  });
+};
+
+export const rotate = (
+  // target point to rotate
+  x: number,
+  y: number,
+  // point to rotate against
+  cx: number,
+  cy: number,
+  angle: number
+): [number, number] =>
+  // 𝑎′𝑥=(𝑎𝑥−𝑐𝑥)cos𝜃−(𝑎𝑦−𝑐𝑦)sin𝜃+𝑐𝑥
+  // 𝑎′𝑦=(𝑎𝑥−𝑐𝑥)sin𝜃+(𝑎𝑦−𝑐𝑦)cos𝜃+𝑐𝑦.
+  // https://math.stackexchange.com/questions/2204520/how-do-i-rotate-a-line-segment-in-a-specific-point-on-the-line
+  [
+    (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle) + cx,
+    (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
+  ];
+
+const generateTransformHandle = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  cx: number,
+  cy: number,
+  angle: number
+): TransformHandle => {
+  const [xx, yy] = rotate(x + width / 2, y + height / 2, cx, cy, angle);
+
+  return [xx - width / 2, yy - height / 2, width, height];
+};
 
 const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
   let sum = 0,
@@ -285,6 +380,7 @@ export function createDrawingCvs(
     const textPos = ele.points[0];
     drawText(ctx, textPos, ele.id);
   }
+
   return canvas;
 }
 

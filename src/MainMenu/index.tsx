@@ -250,7 +250,7 @@ export function MainMenu() {
 
       mergePolygonsAndEraserPolygons(sceneState.elements);
     }
-
+    console.log(selectedKey);
     return () => {
       canvasTrigger?.removeEventListener("mousedown", checkHit);
     };
