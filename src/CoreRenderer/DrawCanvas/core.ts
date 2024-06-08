@@ -1,4 +1,5 @@
-import { Point as PointF, Vector } from "@flatten-js/core";
+import { Box, Point as PointF, Vector } from "@flatten-js/core";
+import d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
   StrokeOptions,
@@ -7,17 +8,13 @@ import {
 } from "perfect-freehand";
 import { debugShowEleId } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
+import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
   ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import {
-  TransformHandle,
-  TransformHandleType,
-  TransformHandles,
-} from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
@@ -107,7 +104,7 @@ export function renderDrawCanvas(
     });
   }
 
-  // draw image scaling effect.
+  // Draw image scaling effect.
   groupedElements.scale?.forEach((t) => {
     const { ele } = t;
     const cachedCvs = createDrawingCvs(ele, appCanvas);
@@ -124,27 +121,22 @@ export function renderDrawCanvas(
     }
   });
 
+  // Render transform handler
   if (sceneData.updatingElements.length > 0) {
-    sceneData.updatingElements.forEach((e) => {
-      const handles = getHandles(e.ele);
-      // renderTransformHandles(handles, appCtx);
+    sceneData.updatingElements.forEach((u) => {
+      if ((u.type !== "scale" && u.type !== "transform") || !u.ele.sBoundingBox)
+        return;
+      // 重绘全部元素
+      // appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
+      // elements.forEach((el) => {
+      //   const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+      //   appCtx.drawImage(cachedCvs!, 0, 0);
+      // });
+      const handles = new Transform2DOperator(u.ele.sBoundingBox);
+      drawHandles(handles, appCtx, u.ele.scale);
     });
   }
 }
-
-const getHandles = (e: DrawingElement) => {
-  if (e.type === DrawingType.img) {
-    // const h = generateTransformHandle(
-    //   e.points[0] - dashedLineMargin - handleMarginX + centeringOffset,
-    //   y1 - dashedLineMargin - handleMarginY + centeringOffset,
-    //   handleWidth,
-    //   handleHeight,
-    //   cx,
-    //   cy,
-    //   angle,
-    // )
-  }
-};
 
 export const fillCircle = (
   context: CanvasRenderingContext2D,
@@ -159,29 +151,6 @@ export const fillCircle = (
   if (stroke) {
     context.stroke();
   }
-};
-
-const renderTransformHandles = (
-  transformHandles: TransformHandles,
-  context: CanvasRenderingContext2D
-) => {
-  Object.keys(transformHandles).forEach((key) => {
-    const transformHandle = transformHandles[key as TransformHandleType];
-    if (transformHandle !== undefined) {
-      const [x, y, width, height] = transformHandle;
-      context.save();
-      context.strokeStyle = "blue";
-
-      if (key === "rotation") {
-        fillCircle(context, x + width / 2, y + height / 2, width / 2);
-      } else if (context.roundRect) {
-        context.beginPath();
-        context.roundRect(x, y, width, height, 4);
-        context.fill();
-        context.stroke();
-      }
-    }
-  });
 };
 
 export const rotate = (
@@ -200,20 +169,6 @@ export const rotate = (
     (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle) + cx,
     (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
   ];
-
-const generateTransformHandle = (
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  cx: number,
-  cy: number,
-  angle: number
-): TransformHandle => {
-  const [xx, yy] = rotate(x + width / 2, y + height / 2, cx, cy, angle);
-
-  return [xx - width / 2, yy - height / 2, width, height];
-};
 
 const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
   let sum = 0,
@@ -450,4 +405,34 @@ export function drawCircle(
   ctx.arc(circle.center.x, circle.center.y, circle.r, 0, 2 * Math.PI); // Full circle
   ctx.fillStyle = "red";
   ctx.fill();
+}
+
+function drawHandles(
+  op: Transform2DOperator,
+  ctx: CanvasRenderingContext2D,
+  scale: Point
+) {
+  const border = op.border;
+  Object.values(op.handles).forEach((h: Box) => {
+    drawRect(ctx, h.scale(scale.x, scale.y), op.fillColor);
+    // drawRectBorder(ctx, h.scale(1.1 * scale.x, 1.1 * scale.y), op.borderColor);
+  });
+}
+
+function drawRect(ctx: CanvasRenderingContext2D, rect: Box, color: d3c.Color) {
+  ctx.save();
+  ctx.fillStyle = color.formatHex();
+  ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
+  ctx.restore();
+}
+
+function drawRectBorder(
+  ctx: CanvasRenderingContext2D,
+  rect: Box,
+  color: d3c.Color
+) {
+  ctx.save();
+  ctx.strokeStyle = color.formatHex();
+  ctx.strokeRect(rect.xmin, rect.ymin - rect.height, rect.width, rect.height);
+  ctx.restore();
 }

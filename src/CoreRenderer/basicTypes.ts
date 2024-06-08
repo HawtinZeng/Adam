@@ -33,7 +33,7 @@ export type DrawingElement = {
 
   polygons: Flatten.Polygon[]; // stroke outline
   eraserPolygons: Flatten.Polygon[]; // stroke exclusion
-  boundingBox?: Flatten.Box;
+  sBoundingBox?: Flatten.Box; // static bounding box
 };
 
 export type DomElement = {

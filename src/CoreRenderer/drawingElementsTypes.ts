@@ -71,4 +71,6 @@ export const newImgElement: ImageElement = {
   polygons: [],
   eraserPolygons: [],
   image: undefined,
+
+  sBoundingBox: undefined,
 };

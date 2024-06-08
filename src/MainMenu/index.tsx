@@ -56,11 +56,14 @@ export const mainMenu = stylex.create({
     visibility: isShow ? "visible" : "hidden",
   }),
 });
-
+export const colorLabel2Key = {
+  橙色: "#d9453c",
+  黑色: "#3c4043",
+};
 export const colorConfigs: BtnConfigs = [
   {
     label: "黑色",
-    key: "#3c4043",
+    key: colorLabel2Key["黑色"],
   },
   {
     label: "青色",
@@ -72,7 +75,7 @@ export const colorConfigs: BtnConfigs = [
   },
   {
     label: "橙色",
-    key: "#f3b32a",
+    key: colorLabel2Key["橙色"],
   },
   {
     label: "红色",

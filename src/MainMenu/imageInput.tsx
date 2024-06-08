@@ -1,8 +1,12 @@
+import { Box } from "@flatten-js/core";
 import x from "@stylexjs/stylex";
 import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { ReactSVG } from "react-svg";
-import { newImgElement } from "src/CoreRenderer/drawingElementsTypes";
+import {
+  ImageElement,
+  newImgElement,
+} from "src/CoreRenderer/drawingElementsTypes";
 import { cloneDeepGenId } from "src/common/utils";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import add from "src/images/svgs/addButton.svg";
@@ -110,8 +114,19 @@ export function ImageInput() {
       s.updatingElements[0] = updating;
     } else {
       isAssignSecPt.current = false;
-      s.elements.push(s.updatingElements[0].ele);
+      const img = s.updatingElements[0].ele as ImageElement;
+      s.elements.push(img);
       s.updatingElements.length = 0;
+
+      const scaledImgWidth = img.scale.x * img.image!.width;
+      const scaledImgHeight = img.scale.y * img.image!.height;
+      const topLeftPt = img.points[0];
+      img.sBoundingBox = new Box(
+        topLeftPt.x,
+        topLeftPt.y + scaledImgHeight,
+        topLeftPt.x + scaledImgWidth,
+        topLeftPt.y + scaledImgHeight
+      );
 
       setCur(cur + 1);
       if (
@@ -125,6 +140,10 @@ export function ImageInput() {
   useEffect(() => {
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", updateDraggableItemPos);
+
+    i.current!.addEventListener("cancel", () => {
+      setSelectedKey(-1);
+    });
     return () => {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", updateDraggableItemPos);
@@ -153,7 +172,7 @@ export function ImageInput() {
         onChange={handleFileSelect}
         multiple
         style={{ display: "none" }}
-      ></input>
+      />
       {imgs?.length ?? -1 > 0 ? (
         <div {...x.props(st.rootContainer)}>
           {imgs!.map((f) => {

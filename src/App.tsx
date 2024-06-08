@@ -41,7 +41,6 @@ function App() {
   useDrawingOperator();
   const m = useMousePosition();
 
-  // initialize
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
     setup();
@@ -69,7 +68,6 @@ function App() {
           outerAlpha={0.6}
           // todo: move the mouse...
           outerScale={1.1}
-          trailingSpeed={1}
           controledAtom={selectedKey === 0 ? brushRadius : eraserRadius}
           type={selectedKey === 0 || selectedKey === 1 ? "circle" : "pointer"}
           initialPosition={m}
