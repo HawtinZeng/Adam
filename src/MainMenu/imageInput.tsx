@@ -1,4 +1,4 @@
-import { Box } from "@flatten-js/core";
+import { Box, Polygon } from "@flatten-js/core";
 import x from "@stylexjs/stylex";
 import { useAtom, useSetAtom } from "jotai";
 import React, {
@@ -113,6 +113,8 @@ export function ImageInput() {
         const imgEle = cloneDeepGenId(newImgElement);
         imgEle.points[0] = { x: e.clientX, y: e.clientY };
         imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
+        imgEle.originalWidth = imgEle.image!.width;
+        imgEle.originalHeight = imgEle.image!.height;
 
         const updating: UpdatingElement = {
           type: "scale",
@@ -125,25 +127,24 @@ export function ImageInput() {
       } else {
         isAssignSecPt.current = false;
         const img = s.updatingElements[0].ele as ImageElement;
+
+        const bbx = new Box(
+          img.points[0].x,
+          img.points[0].y + img.originalHeight * img.scale.y,
+          img.points[0].x + img.originalWidth * img.scale.x,
+          img.points[0].y
+        );
+        img.polygons.push(new Polygon(bbx));
+
         s.elements.push(img);
         s.updatingElements.length = 0;
-
-        const scaledImgWidth = img.scale.x * img.image!.width;
-        const scaledImgHeight = img.scale.y * img.image!.height;
-        const topLeftPt = img.points[0];
-        img.sBoundingBox = new Box(
-          topLeftPt.x,
-          topLeftPt.y + scaledImgHeight,
-          topLeftPt.x + scaledImgWidth,
-          topLeftPt.y + scaledImgHeight
-        );
 
         setCur(cur + 1);
         if (
           fileListRef.current?.length &&
           cur + 1 >= fileListRef.current?.length
         ) {
-          setSelectedKey(-1);
+          setSelectedKey(2); // arrow select tool.
         }
       }
     },

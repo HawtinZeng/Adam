@@ -3,7 +3,7 @@ import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
@@ -57,7 +57,7 @@ export const mainMenu = stylex.create({
   }),
 });
 export const colorLabel2Key = {
-  橙色: "#d9453c",
+  橙色: "#f3b32a",
   黑色: "#3c4043",
 };
 export const colorConfigs: BtnConfigs = [
@@ -222,9 +222,11 @@ export function MainMenu() {
   // 全局状态
   const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
   const [hoveredKey, setHoveredKey] = useState(-1);
-  // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里直接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
-  const [subMenuDragCtrl, setSubMenuDragCtrl] = useState("");
-  function updateSubMenuPosition() {
+  // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setSubMenuDragCtrl] = useState("");
+
+  const updateSubMenuPosition = useCallback(() => {
     if (hoveredKey === -1 || selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];
     if (!reference || !subMenuRef?.current) return;
@@ -232,12 +234,32 @@ export function MainMenu() {
       placement: "left",
       middleware: [flip()],
     }).then(({ x, y, placement }) => {
-      Object.assign(subMenuRef!.current!.style, {
+      Object.assign(subMenuRef.current!.style, {
         top: `${y}px`,
         left: placement === "right" ? `${x + 20}px` : `${x - 20}px`,
       });
     });
-  }
+  }, [hoveredKey, selectedKey, btnRefs, subMenuRef]);
+
+  const checkHit = useCallback(
+    (e: MouseEvent) => {
+      console.time("hit stroke...");
+      for (let i = sceneState.elements.length - 1; i >= 0; i--) {
+        const ele = sceneState.elements[i];
+        const isHit = ptIsContained(
+          ele.polygons,
+          ele.eraserPolygons,
+          new Flatten.Point(e.clientX, e.clientY)
+        );
+        if (isHit) {
+          console.timeEnd("hit stroke...");
+          return true;
+        }
+      }
+      console.timeEnd("hit stroke...");
+    },
+    [sceneState.elements]
+  );
 
   useEffect(() => {
     setSubMenuDragCtrl(nanoid());
@@ -245,7 +267,7 @@ export function MainMenu() {
 
   useEffect(() => {
     updateSubMenuPosition();
-  }, [subMenuDragCtrl]);
+  }, [updateSubMenuPosition]);
 
   useEffect(() => {
     if (selectedKey === 2) {
@@ -253,28 +275,11 @@ export function MainMenu() {
 
       mergePolygonsAndEraserPolygons(sceneState.elements);
     }
-    console.log(selectedKey);
+
     return () => {
       canvasTrigger?.removeEventListener("mousedown", checkHit);
     };
-  }, [sceneState, selectedKey]);
-
-  const checkHit = (e: MouseEvent) => {
-    console.time("hit stroke...");
-    for (let i = sceneState.elements.length - 1; i >= 0; i--) {
-      const ele = sceneState.elements[i];
-      const isHit = ptIsContained(
-        ele.polygons,
-        ele.eraserPolygons,
-        new Flatten.Point(e.clientX, e.clientY)
-      );
-      if (isHit) {
-        console.timeEnd("hit stroke...");
-        return true;
-      }
-    }
-    console.timeEnd("hit stroke...");
-  };
+  }, [canvasTrigger, checkHit, sceneState, selectedKey]);
 
   return (
     <>

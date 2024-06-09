@@ -1,4 +1,5 @@
 import { merge } from "lodash";
+import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
   DomElement,
   DrawingElement,
@@ -11,6 +12,7 @@ export type UpdatingElement = {
   ele: DrawingElement;
   eraserOutlineIdx?: number;
   oriImageData?: ImageData; // addPoints 操作启动之前的整个画布绘图数据
+  handles?: Transform2DOperator;
 };
 export class Scene {
   elements: DrawingElement[] = [];

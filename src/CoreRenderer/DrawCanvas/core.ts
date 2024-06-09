@@ -1,5 +1,5 @@
 import { Box, Point as PointF, Vector } from "@flatten-js/core";
-import d3c from "d3-color";
+import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
   StrokeOptions,
@@ -15,6 +15,7 @@ import {
   FreeDrawing,
   ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
+import { TransformHandles } from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
@@ -115,8 +116,8 @@ export function renderDrawCanvas(
         i.image!,
         i.points[0]!.x,
         i.points[0]!.y,
-        i.image!.width * i.scale.x,
-        i.image!.height * i.scale.y
+        i.originalWidth * i.scale.x,
+        i.originalHeight * i.scale.y
       );
     }
   });
@@ -124,16 +125,21 @@ export function renderDrawCanvas(
   // Render transform handler
   if (sceneData.updatingElements.length > 0) {
     sceneData.updatingElements.forEach((u) => {
-      if ((u.type !== "scale" && u.type !== "transform") || !u.ele.sBoundingBox)
-        return;
+      if (u.type !== "transform") return;
       // 重绘全部元素
-      // appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
-      // elements.forEach((el) => {
-      //   const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-      //   appCtx.drawImage(cachedCvs!, 0, 0);
-      // });
-      const handles = new Transform2DOperator(u.ele.sBoundingBox);
-      drawHandles(handles, appCtx, u.ele.scale);
+      redrawAllEles(appCtx, appCanvas, elements);
+      if (u.ele.type === DrawingType.img) {
+        const img = u.ele as ImageElement;
+        const bbx = new Box(
+          img.points[0].x,
+          img.points[0].y + img.originalHeight * img.scale.y,
+          img.points[0].x + img.originalWidth * img.scale.x,
+          img.points[0].y
+        );
+        const handles = new Transform2DOperator(bbx);
+        drawRectBorder(appCtx, bbx, handles.borderColor, handles.border);
+        drawHandles(handles, appCtx);
+      }
     });
   }
 }
@@ -187,12 +193,44 @@ const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
   return sum < 1000;
 };
 
+let globalAppCtx: CanvasRenderingContext2D | null = null,
+  globalCvs: HTMLCanvasElement | null = null;
+export function redrawAllEles(
+  appCtx: CanvasRenderingContext2D | undefined,
+  appCanvas: HTMLCanvasElement | undefined,
+  elements: DrawingElement[]
+) {
+  if (appCtx) globalAppCtx = appCtx;
+  if (appCanvas) globalCvs = appCanvas;
+  if (!globalAppCtx || !globalCvs) {
+    console.error("globalAppCtx or globalCvs is not initialized");
+    return;
+  }
+  globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
+  elements.forEach((el) => {
+    if (el.type !== DrawingType.img) {
+      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+      globalAppCtx!.drawImage(cachedCvs!, 0, 0);
+    } else {
+      const i = el as ImageElement;
+      globalAppCtx!.drawImage(
+        i.image!,
+        i.points[0]!.x,
+        i.points[0]!.y,
+        i.originalWidth * i.scale.x,
+        i.originalHeight * i.scale.y
+      );
+    }
+  });
+}
+
 export function removeBlankEle(
   els: DrawingElement[],
   sceneState: Scene,
   updateAtomStatus: () => any
 ) {
   els.forEach((el) => {
+    if (el.type === DrawingType.img) return;
     const prevLen = sceneState.elements.length;
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
     const ctx = elCvs.getContext("2d", { willReadFrequently: true })!;
@@ -347,6 +385,47 @@ function drawText(ctx: CanvasRenderingContext2D, pos: Point, text: string) {
   ctx.fillText(text, pos.x, pos.y);
 }
 
+function drawSvgPathOnCanvas(
+  ctx: CanvasRenderingContext2D,
+  svgPathData: string,
+  color: d3c.Color,
+  translate: PointF
+) {
+  ctx.save();
+  const box = getBoundingBoxOfSVGPath(svgPathData);
+  if (box)
+    ctx.translate(translate.x - box.width / 2, translate.y - box.height / 2);
+  else ctx.translate(translate.x, translate.y);
+
+  const path = new Path2D(svgPathData);
+  ctx.fillStyle = color.formatHex();
+  ctx.fill(path);
+  ctx.restore();
+}
+
+function getBoundingBoxOfSVGPath(svgPathData: string): Box | undefined {
+  const pathElement = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path"
+  );
+  const svgElement = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg"
+  );
+  pathElement.setAttribute("d", svgPathData);
+
+  svgElement.appendChild(pathElement);
+  document.body.appendChild(svgElement);
+  if (pathElement) {
+    const db = pathElement.getBBox();
+    const bbx = new Box(0, 0, db.width, db.height);
+    document.body.removeChild(svgElement);
+    return bbx;
+  }
+  return undefined;
+}
+
+// Ex
 function drawEraserOutline(
   ele: DrawingElement,
   updatingEraser: number,
@@ -407,32 +486,39 @@ export function drawCircle(
   ctx.fill();
 }
 
-function drawHandles(
-  op: Transform2DOperator,
-  ctx: CanvasRenderingContext2D,
-  scale: Point
-) {
-  const border = op.border;
-  Object.values(op.handles).forEach((h: Box) => {
-    drawRect(ctx, h.scale(scale.x, scale.y), op.fillColor);
-    // drawRectBorder(ctx, h.scale(1.1 * scale.x, 1.1 * scale.y), op.borderColor);
+function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
+  Object.keys(op.handles).forEach((k) => {
+    const h = op.handles[k as keyof TransformHandles] as Box;
+    if (k === "ro") {
+      drawSvgPathOnCanvas(
+        ctx,
+        `M11.031 24a11.033 11.033 0 0 0 1-22.021V0L7.125 4.1 12.033 8V6.007a7.032 7.032 0 0 1-1 13.993A7.032 7.032 0 0 1 4 13H0a11.026 11.026 0 0 0 11.031 11z`,
+        op.borderColor,
+        h.center
+      );
+    } else {
+      drawRect(ctx, h, op.fillColor);
+      drawRectBorder(ctx, h, op.borderColor, op.border);
+    }
   });
 }
 
 function drawRect(ctx: CanvasRenderingContext2D, rect: Box, color: d3c.Color) {
   ctx.save();
   ctx.fillStyle = color.formatHex();
-  ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
+  ctx.fillRect(rect.xmin, rect.ymin - rect.height, rect.width, rect.height);
   ctx.restore();
 }
 
 function drawRectBorder(
   ctx: CanvasRenderingContext2D,
   rect: Box,
-  color: d3c.Color
+  color: d3c.Color,
+  thickness: number
 ) {
   ctx.save();
   ctx.strokeStyle = color.formatHex();
+  ctx.lineWidth = thickness;
   ctx.strokeRect(rect.xmin, rect.ymin - rect.height, rect.width, rect.height);
   ctx.restore();
 }

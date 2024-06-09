@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import Flatten, { Polygon } from "@flatten-js/core";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
@@ -35,7 +36,7 @@ const defaultEraserStrokeOptions = {
   streamline: 0.9,
 };
 export function Eraser() {
-  const eraserSize = useAtomValue<number>(eraserRadius);
+  const eraserSize = useAtomValue<number>(eraserRadius) / 2;
   const eraserPts = useRef<Point[]>([]);
   const canvas = useAtomValue(canvasAtom);
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
@@ -43,28 +44,13 @@ export function Eraser() {
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
   const disableDrawing = useAtomValue(disableDrawingAtom);
 
-  useEffect(() => {
-    throttledRenderDC(sceneState, canvas!);
-
-    cvsTrigger?.addEventListener("mousedown", eraseStart);
-    cvsTrigger?.addEventListener("mousemove", eraseMoving);
-    cvsTrigger?.addEventListener("mouseup", eraseEnd);
-    return () => {
-      cvsTrigger?.removeEventListener("mousedown", eraseStart);
-      cvsTrigger?.removeEventListener("mousemove", eraseMoving);
-      cvsTrigger?.removeEventListener("mouseup", eraseEnd);
-    };
-  }, [sceneState, eraserSize, disableDrawing]);
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
       // console.time("isHit");
       const isHit = isContained(
         ele.polygons,
-        new Flatten.Circle(
-          new Flatten.Point(e.clientX, e.clientY),
-          eraserSize / 2
-        ),
+        new Flatten.Circle(new Flatten.Point(e.clientX, e.clientY), eraserSize),
         true
       );
       // console.timeEnd("isHit");
@@ -74,18 +60,6 @@ export function Eraser() {
         // console.log("hit");
         // console.log(sceneState.elements.length);
       }
-      // function drawCircle() {}
-      // ele.polygons.forEach((po) =>
-      //   fillPolygon(
-      //     po.vertices.map((v) => [v.x, v.y]),
-      //     "red",
-      //     canvas!.getContext("2d")!
-      //   )
-      // );
-      // drawCircle(
-      //   canvas!.getContext("2d")!,
-      //   new Flatten.Circle(new Flatten.Point(e.clientX, e.clientY), eraserSize)
-      // );
     });
     return hitedEles;
   };
@@ -125,7 +99,7 @@ export function Eraser() {
     eraserPts.current.push({ x: e.clientX, y: e.clientY });
     const eraserOutlinePoints = getStroke(eraserPts.current, {
       ...defaultEraserStrokeOptions,
-      size: eraserSize * 1.1,
+      size: eraserSize,
     }).map((pt) => {
       return { x: pt[0], y: pt[1] };
     });
@@ -146,7 +120,7 @@ export function Eraser() {
     setSceneAtom({ ...sceneState });
   };
 
-  const eraseEnd = (e: MouseEvent) => {
+  const eraseEnd = () => {
     mousePressed.current = false;
     eraserPts.current.length = 0;
     removeBlankEle(
@@ -160,5 +134,26 @@ export function Eraser() {
     );
   };
 
+  useEffect(() => {
+    throttledRenderDC(sceneState, canvas!);
+
+    cvsTrigger?.addEventListener("mousedown", eraseStart);
+    cvsTrigger?.addEventListener("mousemove", eraseMoving);
+    cvsTrigger?.addEventListener("mouseup", eraseEnd);
+    return () => {
+      cvsTrigger?.removeEventListener("mousedown", eraseStart);
+      cvsTrigger?.removeEventListener("mousemove", eraseMoving);
+      cvsTrigger?.removeEventListener("mouseup", eraseEnd);
+    };
+  }, [
+    sceneState,
+    eraserSize,
+    disableDrawing,
+    canvas,
+    cvsTrigger,
+    eraseStart,
+    eraseMoving,
+    eraseEnd,
+  ]);
   return <SizeSlider controledAtom={eraserRadius} />;
 }

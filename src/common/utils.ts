@@ -40,5 +40,5 @@ type HasId = {
 export function cloneDeepGenId<T extends HasId>(e: T) {
   const createdE = cloneDeep(e);
   createdE.id = nanoid();
-  return e;
+  return createdE;
 }

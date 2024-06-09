@@ -1,6 +1,6 @@
 import stylex from "@stylexjs/stylex";
 import { PrimitiveAtom, useAtom } from "jotai";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { colorPickerStyles } from "src/PenPanel/colorPicker";
 
 export const sizeSliderStyles = stylex.create({
@@ -43,15 +43,19 @@ export function SizeSlider(props: { controledAtom: PrimitiveAtom<number> }) {
   const { controledAtom } = props;
   const [offset, setOffset] = useAtom(controledAtom);
 
-  const mouseMove = (e) => {
-    if (
-      isMouseDown &&
-      offset + e.movementX < 140 &&
-      offset + e.movementX > 10
-    ) {
-      setOffset(e.movementX + offset);
-    }
-  };
+  const mouseMove = useCallback(
+    (e) => {
+      // Wrap with useCallback
+      if (
+        isMouseDown &&
+        offset + e.movementX < 140 &&
+        offset + e.movementX > 10
+      ) {
+        setOffset(e.movementX + offset);
+      }
+    },
+    [isMouseDown, offset, setOffset]
+  ); // Add dependencies here
 
   const mouseDown = (e) => {
     setIsMouseDown(true);
@@ -62,7 +66,7 @@ export function SizeSlider(props: { controledAtom: PrimitiveAtom<number> }) {
     return () => {
       window.removeEventListener("mousemove", mouseMove);
     };
-  }, [isMouseDown, offset]);
+  }, [mouseMove]); // Depend only on mouseMove
 
   useEffect(() => {
     const cancelMouseDown = () => setIsMouseDown(false);

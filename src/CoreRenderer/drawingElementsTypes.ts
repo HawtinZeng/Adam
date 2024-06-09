@@ -47,6 +47,8 @@ export const newFreeDrawingElement: FreeDrawing = {
 };
 export type ImageElement = DrawingElement & {
   image: HTMLImageElement | undefined;
+  originalHeight: number;
+  originalWidth: number;
 };
 export const newImgElement: ImageElement = {
   type: DrawingType.img,
@@ -71,6 +73,6 @@ export const newImgElement: ImageElement = {
   polygons: [],
   eraserPolygons: [],
   image: undefined,
-
-  sBoundingBox: undefined,
+  originalHeight: 0,
+  originalWidth: 0,
 };
