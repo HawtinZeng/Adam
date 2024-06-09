@@ -273,7 +273,7 @@ export function MainMenu() {
     if (selectedKey === 2) {
       canvasTrigger?.addEventListener("mousedown", checkHit);
 
-      mergePolygonsAndEraserPolygons(sceneState.elements);
+      // mergePolygonsAndEraserPolygons(sceneState.elements);
     }
 
     return () => {

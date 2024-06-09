@@ -121,7 +121,10 @@ function App() {
       );
     } else if (selectedKey === 2) {
       setCursorSvg(`url(${pointer}), default`);
+    } else {
+      setCursorSvg("default");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCursorSvg, size, eraserSize, selectedKey, color, colorIdx]);
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
