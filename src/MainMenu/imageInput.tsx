@@ -1,7 +1,13 @@
 import { Box } from "@flatten-js/core";
 import x from "@stylexjs/stylex";
-import { useAtom } from "jotai";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useAtom, useSetAtom } from "jotai";
+import React, {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ReactSVG } from "react-svg";
 import {
   ImageElement,
@@ -37,7 +43,8 @@ export function ImageInput() {
   const htmlImgs = useRef<WeakMap<File, HTMLImageElement>>(new WeakMap());
   const [cvsEle] = useAtom(canvasAtom);
   const fileListRef = useRef<File[]>();
-  const [seleted, setSelectedKey] = useAtom(selectedKeyAtom);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const setSelectedKey = useSetAtom(selectedKeyAtom);
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target) return;
@@ -59,7 +66,6 @@ export function ImageInput() {
       const imgEl = new Image();
       const reader = new FileReader();
       reader.onload = (event: ProgressEvent<FileReader>) => {
-        const img = new Image();
         if (!event.target?.result) return;
         imgEl.src = event.target.result as string;
         htmlImgs.current.set(imgFile, imgEl);
@@ -71,72 +77,79 @@ export function ImageInput() {
   const i = useRef<null | HTMLInputElement>(null);
   const excuted = useRef(false);
 
-  const updateDraggableItemPos = (e: MouseEvent) => {
-    if (!excuted.current) return;
-    const len = document.getElementsByClassName("draggable").length;
-    const el = document.getElementsByClassName("draggable")[
-      len - 1
-    ] as HTMLElement;
-    if (el) {
-      el.style.left = e.clientX + 30 + "px";
-      el.style.top = e.clientY + 30 + "px";
-    }
-
-    const updating = s.updatingElements[0];
-    if (updating && isAssignSecPt.current && fileListRef.current?.[cur]) {
-      const fPt = updating.ele.points[0];
-      const scaledW = e.clientX - fPt.x;
-
-      const img = htmlImgs.current.get(fileListRef.current?.[cur]);
-
-      if (!img) return;
-      updating.ele.scale = { x: scaledW / img.width, y: scaledW / img.width };
-
-      ss({ ...s });
-    }
-  };
-
-  const handleMouseDown = (e: MouseEvent) => {
-    if (!fileListRef.current?.[cur]) return;
-    if (!isAssignSecPt.current) {
-      isAssignSecPt.current = true;
-      const imgEle = cloneDeepGenId(newImgElement);
-      imgEle.points[0] = { x: e.clientX, y: e.clientY };
-      imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
-
-      const updating: UpdatingElement = {
-        type: "scale",
-        ele: imgEle,
-        oriImageData: cvsEle!
-          .getContext("2d")!
-          .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
-      };
-      s.updatingElements[0] = updating;
-    } else {
-      isAssignSecPt.current = false;
-      const img = s.updatingElements[0].ele as ImageElement;
-      s.elements.push(img);
-      s.updatingElements.length = 0;
-
-      const scaledImgWidth = img.scale.x * img.image!.width;
-      const scaledImgHeight = img.scale.y * img.image!.height;
-      const topLeftPt = img.points[0];
-      img.sBoundingBox = new Box(
-        topLeftPt.x,
-        topLeftPt.y + scaledImgHeight,
-        topLeftPt.x + scaledImgWidth,
-        topLeftPt.y + scaledImgHeight
-      );
-
-      setCur(cur + 1);
-      if (
-        fileListRef.current?.length &&
-        cur + 1 >= fileListRef.current?.length
-      ) {
-        setSelectedKey(-1);
+  const updateDraggableItemPos = useCallback(
+    (e: MouseEvent) => {
+      if (!excuted.current) return;
+      const len = document.getElementsByClassName("draggable").length;
+      const el = document.getElementsByClassName("draggable")[
+        len - 1
+      ] as HTMLElement;
+      if (el) {
+        el.style.left = e.clientX + 30 + "px";
+        el.style.top = e.clientY + 30 + "px";
       }
-    }
-  };
+
+      const updating = s.updatingElements[0];
+      if (updating && isAssignSecPt.current && fileListRef.current?.[cur]) {
+        const fPt = updating.ele.points[0];
+        const scaledW = e.clientX - fPt.x;
+
+        const img = htmlImgs.current.get(fileListRef.current?.[cur]);
+
+        if (!img) return;
+        updating.ele.scale = { x: scaledW / img.width, y: scaledW / img.width };
+
+        ss({ ...s });
+      }
+    },
+    [s, ss, isAssignSecPt, fileListRef, cur]
+  );
+
+  const handleMouseDown = useCallback(
+    (e: MouseEvent) => {
+      if (!fileListRef.current?.[cur]) return;
+      if (!isAssignSecPt.current) {
+        isAssignSecPt.current = true;
+        const imgEle = cloneDeepGenId(newImgElement);
+        imgEle.points[0] = { x: e.clientX, y: e.clientY };
+        imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
+
+        const updating: UpdatingElement = {
+          type: "scale",
+          ele: imgEle,
+          oriImageData: cvsEle!
+            .getContext("2d")!
+            .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
+        };
+        s.updatingElements[0] = updating;
+      } else {
+        isAssignSecPt.current = false;
+        const img = s.updatingElements[0].ele as ImageElement;
+        s.elements.push(img);
+        s.updatingElements.length = 0;
+
+        const scaledImgWidth = img.scale.x * img.image!.width;
+        const scaledImgHeight = img.scale.y * img.image!.height;
+        const topLeftPt = img.points[0];
+        img.sBoundingBox = new Box(
+          topLeftPt.x,
+          topLeftPt.y + scaledImgHeight,
+          topLeftPt.x + scaledImgWidth,
+          topLeftPt.y + scaledImgHeight
+        );
+
+        setCur(cur + 1);
+        if (
+          fileListRef.current?.length &&
+          cur + 1 >= fileListRef.current?.length
+        ) {
+          setSelectedKey(-1);
+        }
+      }
+    },
+    [cur, cvsEle, s.updatingElements, s.elements, setSelectedKey]
+  );
+
   useEffect(() => {
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", updateDraggableItemPos);
@@ -148,7 +161,7 @@ export function ImageInput() {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
-  }, [cur, ss]);
+  }, [cur, handleMouseDown, setSelectedKey, ss, updateDraggableItemPos]);
 
   useEffect(() => {
     if (!excuted.current) {
