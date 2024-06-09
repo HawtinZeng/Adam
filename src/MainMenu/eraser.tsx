@@ -47,18 +47,14 @@ export function Eraser() {
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
-      // console.time("isHit");
       const isHit = isContained(
         ele.polygons,
         new Flatten.Circle(new Flatten.Point(e.clientX, e.clientY), eraserSize),
         true
       );
-      // console.timeEnd("isHit");
 
       if (isHit) {
         hitedEles.push(ele);
-        // console.log("hit");
-        // console.log(sceneState.elements.length);
       }
     });
     return hitedEles;
@@ -100,6 +96,7 @@ export function Eraser() {
     const eraserOutlinePoints = getStroke(eraserPts.current, {
       ...defaultEraserStrokeOptions,
       size: eraserSize,
+      streamline: 0,
     }).map((pt) => {
       return { x: pt[0], y: pt[1] };
     });

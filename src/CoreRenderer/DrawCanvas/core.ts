@@ -91,6 +91,7 @@ export function renderDrawCanvas(
   groupedElements.erase?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
     const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
+
     if (cachedCvs) {
       drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
       drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
@@ -98,27 +99,18 @@ export function renderDrawCanvas(
   });
   if (groupedElements.erase?.length > 0) {
     // 重绘全部元素
-    appCtx.clearRect(0, 0, appCanvas.width, appCanvas.height);
-    elements.forEach((el) => {
-      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-      appCtx.drawImage(cachedCvs!, 0, 0);
-    });
+    redrawAllEles(appCtx, appCanvas, elements);
   }
 
   // Draw image scaling effect.
   groupedElements.scale?.forEach((t) => {
     const { ele } = t;
-    const cachedCvs = createDrawingCvs(ele, appCanvas);
-    if (t.oriImageData && cachedCvs && ele.type === DrawingType.img) {
-      const i = ele as ImageElement;
+    if (t.oriImageData && ele.type === DrawingType.img) {
+      const cachedCvs = createDrawingCvs(ele, appCanvas)!;
+      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+
       appCtx.putImageData(t.oriImageData, 0, 0);
-      appCtx.drawImage(
-        i.image!,
-        i.points[0]!.x,
-        i.points[0]!.y,
-        i.originalWidth * i.scale.x,
-        i.originalHeight * i.scale.y
-      );
+      appCtx.drawImage(cachedCvs, 0, 0);
     }
   });
 
@@ -208,19 +200,8 @@ export function redrawAllEles(
   }
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
-    if (el.type !== DrawingType.img) {
-      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-      globalAppCtx!.drawImage(cachedCvs!, 0, 0);
-    } else {
-      const i = el as ImageElement;
-      globalAppCtx!.drawImage(
-        i.image!,
-        i.points[0]!.x,
-        i.points[0]!.y,
-        i.originalWidth * i.scale.x,
-        i.originalHeight * i.scale.y
-      );
-    }
+    const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+    globalAppCtx!.drawImage(cachedCvs!, 0, 0);
   });
 }
 
@@ -252,14 +233,14 @@ export function createDrawingCvs(
   if (ele.points.length === 0) return;
 
   const canvas = document.createElement("canvas");
+  canvas.width = targetCvs.width;
+  canvas.height = targetCvs.height;
   const ctx = canvas.getContext("2d")!;
 
   switch (ele.type) {
     case DrawingType.freeDraw:
       const freeDrawing = ele as FreeDrawing;
       const strokeOptions = freeDrawing.strokeOptions;
-      canvas.width = targetCvs.width;
-      canvas.height = targetCvs.height;
 
       const { strokeColor } = strokeOptions;
       const { points } = freeDrawing;

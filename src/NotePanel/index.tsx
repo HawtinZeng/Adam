@@ -166,6 +166,7 @@ export function NotePanel(props: {
       color: colorIdx,
     });
     setScene({ ...scene, domElements: [...scene.domElements] });
+    setSelectedKey(2);
   };
 
   const saveContentSticking = () => {

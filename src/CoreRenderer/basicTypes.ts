@@ -81,9 +81,10 @@ export function isContained(
   const holes = solidsAndHoles[1];
   if (!outer) return;
   const intOuter = eraserCircle.intersect(outer);
+
   if (!intOuter.length) return false;
 
-  if (excludeHoles) return true;
+  if (!excludeHoles) return true;
   for (let i = 0; i < holes.length; i++) {
     const h = holes[i];
     try {

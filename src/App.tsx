@@ -99,10 +99,15 @@ function App() {
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
 
   useEffect(() => {
+    if (selectedKey !== 2) {
+      sceneData.updatingElements = [];
+      redrawAllEles(undefined, undefined, sceneData.elements);
+    }
+
     if (selectedKey === 0 || selectedKey === 1) {
       const controlledSize = selectedKey === 0 ? size : eraserSize;
       const colorStr = colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
-      const c = d3c.color(colorStr);
+      const c = d3c.color(selectedKey === 0 ? colorStr : "#d9453c");
       if (!c) return;
       c.opacity = 0.8;
       setCursorSvg(
@@ -120,15 +125,18 @@ function App() {
   }, [setCursorSvg, size, eraserSize, selectedKey, color, colorIdx]);
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
+  }, [setTriggerAtom]);
 
-    document.addEventListener("mousedown", detectElesInterceted);
-    document.addEventListener("mousedown", detectHandles);
+  useEffect(() => {
+    const div = canvasEventTrigger.current!;
+    div.addEventListener("mousedown", detectElesInterceted);
+    div.addEventListener("mousedown", detectHandles);
     setup();
     return () => {
-      document.removeEventListener("mousedown", detectElesInterceted);
-      document.removeEventListener("mousedown", detectHandles);
+      div.removeEventListener("mousedown", detectElesInterceted);
+      div.removeEventListener("mousedown", detectHandles);
     };
-  }, [detectElesInterceted, detectHandles, setTriggerAtom]);
+  }, [detectElesInterceted, detectHandles, setTriggerAtom, canvasEventTrigger]);
   return (
     <>
       {useMemo(

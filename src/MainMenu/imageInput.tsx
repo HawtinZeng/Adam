@@ -134,7 +134,7 @@ export function ImageInput() {
           img.points[0].x + img.originalWidth * img.scale.x,
           img.points[0].y
         );
-        img.polygons.push(new Polygon(bbx));
+        img.polygons.push(new Polygon(bbx).reverse());
 
         s.elements.push(img);
         s.updatingElements.length = 0;
