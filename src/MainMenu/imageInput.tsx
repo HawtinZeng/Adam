@@ -161,7 +161,7 @@ export function ImageInput() {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
-  }, [cur, handleMouseDown, setSelectedKey, ss, updateDraggableItemPos]);
+  }, [handleMouseDown, setSelectedKey, updateDraggableItemPos]);
 
   useEffect(() => {
     if (!excuted.current) {
@@ -174,7 +174,7 @@ export function ImageInput() {
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
-  }, [cur, s]);
+  }, [handleMouseDown, updateDraggableItemPos]);
   return (
     <>
       {cur === -1 && <span>选择图片中...</span>}
