@@ -122,13 +122,19 @@ export function renderDrawCanvas(
       redrawAllEles(appCtx, appCanvas, elements);
       if (u.ele.type === DrawingType.img) {
         const img = u.ele as ImageElement;
-        const bbx = new Box(
+
+        const xs = [
           img.points[0].x,
-          img.points[0].y + img.originalHeight * img.scale.y,
           img.points[0].x + img.originalWidth * img.scale.x,
-          img.points[0].y
-        );
+        ].sort((a, b) => a - b);
+        const ys = [
+          img.points[0].y,
+          img.points[0].y + img.originalHeight * img.scale.y,
+        ].sort((a, b) => a - b);
+        const bbx = new Box(xs[0], ys[0], xs[1], ys[1]);
         const handles = new Transform2DOperator(bbx);
+        u.handles = handles;
+
         drawRectBorder(appCtx, bbx, handles.borderColor, handles.border);
         drawHandles(handles, appCtx);
       }
@@ -406,7 +412,6 @@ function getBoundingBoxOfSVGPath(svgPathData: string): Box | undefined {
   return undefined;
 }
 
-// Ex
 function drawEraserOutline(
   ele: DrawingElement,
   updatingEraser: number,
@@ -487,7 +492,7 @@ function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
 function drawRect(ctx: CanvasRenderingContext2D, rect: Box, color: d3c.Color) {
   ctx.save();
   ctx.fillStyle = color.formatHex();
-  ctx.fillRect(rect.xmin, rect.ymin - rect.height, rect.width, rect.height);
+  ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
   ctx.restore();
 }
 
@@ -500,6 +505,6 @@ function drawRectBorder(
   ctx.save();
   ctx.strokeStyle = color.formatHex();
   ctx.lineWidth = thickness;
-  ctx.strokeRect(rect.xmin, rect.ymin - rect.height, rect.width, rect.height);
+  ctx.strokeRect(rect.xmin, rect.ymin, rect.width, rect.height);
   ctx.restore();
 }

@@ -93,11 +93,15 @@ export function ImageInput() {
       if (updating && isAssignSecPt.current && fileListRef.current?.[cur]) {
         const fPt = updating.ele.points[0];
         const scaledW = e.clientX - fPt.x;
+        const scaledH = e.clientY - fPt.y;
 
         const img = htmlImgs.current.get(fileListRef.current?.[cur]);
 
         if (!img) return;
-        updating.ele.scale = { x: scaledW / img.width, y: scaledW / img.width };
+        updating.ele.scale = {
+          x: scaledW / img.width,
+          y: Math.abs(scaledW / img.width) * Math.sign(scaledH / img.height),
+        };
 
         ss({ ...s });
       }
