@@ -90,12 +90,12 @@ export function renderDrawCanvas(
   // 绘制橡皮效果
   groupedElements.erase?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
-    const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(ele);
+    const cachedCvs = createDrawingCvs(ele, appCanvas)!;
+    drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
 
-    if (cachedCvs) {
-      drawEraserOutline(ele, checkUpdating.eraserOutlineIdx!, cachedCvs!);
-      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
-    }
+    checkUpdating.ele.eraserPolygons.forEach((_, idx) => {
+      drawEraserOutline(ele, idx, cachedCvs!);
+    });
   });
   if (groupedElements.erase?.length > 0) {
     // 重绘全部元素
@@ -124,6 +124,10 @@ export function renderDrawCanvas(
         const img = u.ele as ImageElement;
 
         const cachedCvs = createDrawingCvs(img, appCanvas)!;
+        img.eraserPolygons.forEach((_, i) => {
+          drawEraserOutline(img, i, cachedCvs!);
+        });
+
         drawingCanvasCache.ele2DrawingCanvas.set(img, cachedCvs);
         const xs = [
           img.points[0].x,

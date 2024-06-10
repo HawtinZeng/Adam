@@ -79,7 +79,6 @@ export function Eraser() {
         const updating: UpdatingElement = {
           type: "erase",
           ele,
-          eraserOutlineIdx: ele.eraserPolygons.length,
         };
         sceneState.updatingElements.push(updating);
         if (sceneState.updatingElements.length > updatingLimit)
@@ -102,8 +101,10 @@ export function Eraser() {
     });
 
     sceneState.updatingElements.forEach((up) => {
-      up.ele.eraserPolygons[up.eraserOutlineIdx!] = new Polygon(
-        eraserOutlinePoints.map((pt) => new Flatten.Point(pt.x, pt.y))
+      up.ele.eraserPolygons.push(
+        new Polygon(
+          eraserOutlinePoints.map((pt) => new Flatten.Point(pt.x, pt.y))
+        )
       );
     });
   };

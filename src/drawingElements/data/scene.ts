@@ -10,7 +10,6 @@ export type ActionType = "addPoints" | "erase" | "transform" | "scale";
 export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;
-  eraserOutlineIdx?: number;
   oriImageData?: ImageData; // addPoints 操作启动之前的整个画布绘图数据
   handles?: Transform2DOperator;
 };

@@ -1,4 +1,4 @@
-import Flatten, { Box, Polygon } from "@flatten-js/core";
+import Flatten, { Box, Matrix, Polygon } from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep } from "lodash";
@@ -53,6 +53,7 @@ function App() {
     startPos: Point;
     originalScale?: Point;
     originalHandles?: Transform2DOperator;
+    originalEraserPolygons: Polygon[];
     originalPt?: Point;
   } | null>(null);
 
@@ -64,16 +65,17 @@ function App() {
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const dragStart = useCallback(
-    (e: MouseEvent, ele: DrawingElement) => {
+    (e: MouseEvent, ele?: DrawingElement) => {
       if (selectedKey !== 2) return;
-      setCursorSvg("move");
       const u = sceneData.updatingElements[0];
-      if (currentHandle.current === null) {
+      if (currentHandle.current === null && ele) {
         dragInfo.current = {
           type: "move",
           startPos: new Flatten.Point(e.clientX, e.clientY),
           originalPt: { ...ele.points[0] },
+          originalEraserPolygons: ele.eraserPolygons, // u.ele.eraserPolygons之后直接更新地址
         };
+        setCursorSvg("move");
         return;
       }
 
@@ -85,6 +87,7 @@ function App() {
           startPos: new Flatten.Point(e.clientX, e.clientY),
           originalScale: { ...img.scale },
           originalHandles: cloneDeep(u.handles)!,
+          originalEraserPolygons: u.ele.eraserPolygons, // u.ele.eraserPolygons之后直接更新地址
         };
       }
     },
@@ -197,7 +200,8 @@ function App() {
   const dragMove = useCallback(
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
-      const { type, startPos, originalPt } = dragInfo.current;
+      const { type, startPos, originalPt, originalEraserPolygons } =
+        dragInfo.current;
       if (type === "move") {
         const u = sceneData.updatingElements[0];
         const img = u!.ele as ImageElement;
@@ -215,10 +219,12 @@ function App() {
           img.points[0].x + img.originalWidth * img.scale.x,
           img.points[0].y
         );
+        bbx.transform(new Flatten.Matrix());
         img.polygons[0] = new Polygon(bbx).reverse();
-        img.eraserPolygons.forEach((p) =>
-          p.translate(new Flatten.Vector(offset.x, offset.y))
-        );
+
+        const m = new Matrix().translate(offset.x, offset.y);
+        img.eraserPolygons = originalEraserPolygons!.map((p) => p.transform(m));
+
         setSceneData({ ...sceneData });
         return;
       }
@@ -341,24 +347,38 @@ function App() {
   const dragEnd = useCallback(() => {
     if (dragInfo.current) {
       dragInfo.current = null;
+      const u = sceneData.updatingElements[0];
+      if (u) {
+        const img = u.ele as ImageElement;
+        const bbx = new Box(
+          img.points[0].x,
+          img.points[0].y + img.originalHeight * img.scale.y,
+          img.points[0].x + img.originalWidth * img.scale.x,
+          img.points[0].y
+        );
+        bbx.transform(new Flatten.Matrix());
+        img.polygons[0] = new Polygon(bbx).reverse();
+      }
     }
   }, []);
 
   useEffect(() => {
+    sceneData.updatingElements = [];
+    setSceneData({ ...sceneData });
     if (selectedKey !== 2) {
-      sceneData.updatingElements = [];
-      setSceneData({ ...sceneData });
       redrawAllEles(undefined, undefined, sceneData.elements);
     }
     change2DefaultCursor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCursorSvg, selectedKey]);
+  }, [setCursorSvg, selectedKey, size, eraserSize, colorIdx, color]);
   useEffect(() => {
     setTriggerAtom(canvasEventTrigger.current);
   }, [setTriggerAtom]);
   useEffect(() => {
     const div = canvasEventTrigger.current!;
     div.addEventListener("mousedown", detectElesInterceted);
+    div.addEventListener("mousedown", dragStart);
+
     div.addEventListener("mouseup", dragEnd);
 
     div.addEventListener("mousemove", detectHandles);
@@ -366,6 +386,8 @@ function App() {
     setup();
     return () => {
       div.removeEventListener("mousedown", detectElesInterceted);
+      div.removeEventListener("mousedown", dragStart);
+
       div.removeEventListener("mouseup", dragEnd);
 
       div.removeEventListener("mousemove", detectHandles);
