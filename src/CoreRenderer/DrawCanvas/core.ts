@@ -123,6 +123,8 @@ export function renderDrawCanvas(
       if (u.ele.type === DrawingType.img) {
         const img = u.ele as ImageElement;
 
+        const cachedCvs = createDrawingCvs(img, appCanvas)!;
+        drawingCanvasCache.ele2DrawingCanvas.set(img, cachedCvs);
         const xs = [
           img.points[0].x,
           img.points[0].x + img.originalWidth * img.scale.x,

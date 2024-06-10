@@ -1,10 +1,14 @@
 import Flatten, { Box, Polygon } from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { cloneDeep } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
-import { TransformHandle } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
+import {
+  Transform2DOperator,
+  TransformHandle,
+} from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { redrawAllEles } from "src/CoreRenderer/DrawCanvas/core";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
@@ -45,9 +49,11 @@ function App() {
     [DrawingElement, TransformHandleDirection] | null
   >(null);
   const dragInfo = useRef<{
-    isDragging: boolean;
+    type: "move" | "resize";
     startPos: Point;
-    bbx: Box;
+    originalScale?: Point;
+    originalHandles?: Transform2DOperator;
+    originalPt?: Point;
   } | null>(null);
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
@@ -57,34 +63,67 @@ function App() {
   const size = useAtomValue(brushRadius) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
+  const dragStart = useCallback(
+    (e: MouseEvent, ele: DrawingElement) => {
+      if (selectedKey !== 2) return;
+      setCursorSvg("move");
+      const u = sceneData.updatingElements[0];
+      if (currentHandle.current === null) {
+        dragInfo.current = {
+          type: "move",
+          startPos: new Flatten.Point(e.clientX, e.clientY),
+          originalPt: { ...ele.points[0] },
+        };
+        return;
+      }
+
+      if (!dragInfo.current && u?.handles) {
+        const img = u.ele as ImageElement;
+
+        dragInfo.current = {
+          type: "resize",
+          startPos: new Flatten.Point(e.clientX, e.clientY),
+          originalScale: { ...img.scale },
+          originalHandles: cloneDeep(u.handles)!,
+        };
+      }
+    },
+    [sceneData.updatingElements, selectedKey, setCursorSvg]
+  );
   const detectElesInterceted = useCallback(
     (e: MouseEvent) => {
       if (selectedKey !== 2) return;
       if (currentHandle.current !== null) return;
-      sceneData.elements.forEach((ele) => {
+      for (let i = 0; i < sceneData.elements.length; i++) {
         // console.time("isHit");
+        const ele = sceneData.elements[i];
         const isHit = ptIsContained(
           ele.polygons,
           ele.eraserPolygons,
           new Flatten.Point(e.clientX, e.clientY)
         );
         if (isHit) {
+          dragStart(e, ele);
+          if (sceneData.updatingElements.find((u) => u.ele === ele)) {
+            return;
+          }
           const updating: UpdatingElement = {
             type: "transform",
             ele,
           };
           sceneData.updatingElements[0] = updating;
           setSceneData({ ...sceneData });
-        } else {
-          redrawAllEles(undefined, undefined, sceneData.elements);
+          return;
         }
-        // console.timeEnd("isHit");
-      });
+      }
+      sceneData.updatingElements = [];
+      setSceneData({ ...sceneData });
+      redrawAllEles(undefined, undefined, sceneData.elements);
     },
-    [sceneData, selectedKey, setSceneData]
+    [dragStart, sceneData, selectedKey, setSceneData]
   );
 
-  const changeCursor = useCallback(() => {
+  const change2DefaultCursor = useCallback(() => {
     if (selectedKey === 0 || selectedKey === 1) {
       const controlledSize = selectedKey === 0 ? size : eraserSize;
       const colorStr = colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
@@ -134,95 +173,171 @@ function App() {
           }
         }
         currentHandle.current = null;
-        changeCursor();
+
+        const isHit = ptIsContained(
+          u.ele.polygons,
+          u.ele.eraserPolygons,
+          new Flatten.Point(e.clientX, e.clientY)
+        );
+        if (isHit) {
+          setCursorSvg("move");
+        } else {
+          change2DefaultCursor();
+        }
       }
     },
-    [sceneData.updatingElements, selectedKey, setCursorSvg, changeCursor]
+    [
+      sceneData.updatingElements,
+      selectedKey,
+      setCursorSvg,
+      change2DefaultCursor,
+    ]
   );
 
   const dragMove = useCallback(
     (e: MouseEvent) => {
-      if (!dragInfo.current || !currentHandle.current) return;
+      if (!dragInfo.current) return;
+      const { type, startPos, originalPt } = dragInfo.current;
+      if (type === "move") {
+        const u = sceneData.updatingElements[0];
+        const img = u!.ele as ImageElement;
+        const offset = {
+          x: e.clientX - startPos.x,
+          y: e.clientY - startPos.y,
+        };
+        img.points[0] = {
+          x: originalPt!.x + offset.x,
+          y: originalPt!.y + offset.y,
+        };
+        const bbx = new Box(
+          img.points[0].x,
+          img.points[0].y + img.originalHeight * img.scale.y,
+          img.points[0].x + img.originalWidth * img.scale.x,
+          img.points[0].y
+        );
+        img.polygons[0] = new Polygon(bbx).reverse();
+        img.eraserPolygons.forEach((p) =>
+          p.translate(new Flatten.Vector(offset.x, offset.y))
+        );
+        setSceneData({ ...sceneData });
+        return;
+      }
 
+      // resize
       const [x, y] = [e.clientX, e.clientY];
-      const [startX, startY, oriBbx] = [
+      const [startX, startY, oriScale, oriHandles] = [
         dragInfo.current.startPos.x,
         dragInfo.current.startPos.y,
-        dragInfo.current.bbx,
+        dragInfo.current.originalScale!,
+        dragInfo.current.originalHandles!,
       ];
-      const bbx = oriBbx.clone();
 
       let [diffX, diffY] = [x - startX, y - startY];
-      const [el, dir] = currentHandle.current;
+      const [el, dir] = currentHandle.current!;
       if (el && dir) {
         const u = sceneData.updatingElements[0];
+        const updatedScale = { x: oriScale.x, y: oriScale.y };
+        const updatedPt = { x: el.points[0].x, y: el.points[0].y };
+
         if (el.type === DrawingType.img && u && u.type === "transform") {
+          const img = el as ImageElement;
           switch (dir) {
             case TransformHandle.n:
-              bbx.ymin += diffY;
+              const h = oriHandles.handles[dir]!.center.y;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y -
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) > 0) updatedPt.y = h + diffY;
               break;
             case TransformHandle.ne:
-              bbx.ymin += diffY;
-              bbx.xmax += diffX;
+              const { x: neX, y: neY } = oriHandles.handles[dir]!.center;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y -
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) > 0) updatedPt.y = neY + diffY;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x +
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) < 0) updatedPt.x = neX + diffX;
               break;
             case TransformHandle.e:
-              bbx.xmax += diffX;
+              const r = oriHandles.handles[dir]!.center.x;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x +
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) < 0) updatedPt.x = r + diffX;
               break;
             case TransformHandle.se:
-              bbx.xmax += diffX;
-              bbx.ymax += diffY;
+              const { x: seX, y: seY } = oriHandles.handles[dir]!.center;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x +
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) < 0) updatedPt.x = seX + diffX;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y +
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) < 0) updatedPt.y = seY + diffY;
               break;
             case TransformHandle.s:
-              bbx.ymax += diffY;
+              const b = oriHandles.handles[dir]!.center.y;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y +
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) < 0) updatedPt.y = b + diffY;
               break;
             case TransformHandle.sw:
-              bbx.ymax += diffY;
-              bbx.xmin += diffX;
+              const { x: swX, y: swY } = oriHandles.handles[dir]!.center;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y +
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) < 0) updatedPt.y = swY + diffY;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x -
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) > 0) updatedPt.x = swX + diffX;
               break;
             case TransformHandle.w:
-              bbx.xmin += diffX;
+              const l = oriHandles.handles[dir]!.center.x;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x -
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) > 0) updatedPt.x = l + diffX;
               break;
             case TransformHandle.nw:
-              bbx.xmin += diffX;
-              bbx.ymin += diffY;
+              const { x: nwX, y: nwY } = oriHandles.handles[dir]!.center;
+              updatedScale.x =
+                (img.originalWidth * oriScale.x -
+                  Math.sign(oriScale.x) * diffX) /
+                img.originalWidth;
+              if (Math.sign(oriScale.x) > 0) updatedPt.x = nwX + diffX;
+              updatedScale.y =
+                (img.originalHeight * oriScale.y -
+                  Math.sign(oriScale.y) * diffY) /
+                img.originalHeight;
+              if (Math.sign(oriScale.y) > 0) updatedPt.y = nwY + diffY;
               break;
           }
+          el.scale = updatedScale;
+          el.points[0] = updatedPt;
+          setSceneData({ ...sceneData });
         } else {
           // FreeDrawing
         }
-
-        setSceneData({ ...sceneData });
       }
     },
     [sceneData, setSceneData]
   );
 
-  const dragStart = useCallback(
-    (e: MouseEvent) => {
-      if (selectedKey !== 2) return;
-      if (currentHandle.current === null) return;
-      const u = sceneData.updatingElements[0];
-      if (!dragInfo.current && u?.handles) {
-        const img = u.ele as ImageElement;
-        const xs = [
-          img.points[0].x,
-          img.points[0].x + img.originalWidth * img.scale.x,
-        ].sort((a, b) => a - b);
-        const ys = [
-          img.points[0].y,
-          img.points[0].y + img.originalHeight * img.scale.y,
-        ].sort((a, b) => a - b);
-        const bbx = new Box(xs[0], ys[0], xs[1], ys[1]);
-
-        dragInfo.current = {
-          isDragging: true,
-          startPos: new Flatten.Point(e.clientX, e.clientY),
-          bbx,
-        };
-      }
-    },
-    [sceneData.updatingElements, selectedKey]
-  );
   const dragEnd = useCallback(() => {
     if (dragInfo.current) {
       dragInfo.current = null;
@@ -232,9 +347,10 @@ function App() {
   useEffect(() => {
     if (selectedKey !== 2) {
       sceneData.updatingElements = [];
+      setSceneData({ ...sceneData });
       redrawAllEles(undefined, undefined, sceneData.elements);
     }
-    changeCursor();
+    change2DefaultCursor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCursorSvg, selectedKey]);
   useEffect(() => {
@@ -243,7 +359,6 @@ function App() {
   useEffect(() => {
     const div = canvasEventTrigger.current!;
     div.addEventListener("mousedown", detectElesInterceted);
-    div.addEventListener("mousedown", dragStart);
     div.addEventListener("mouseup", dragEnd);
 
     div.addEventListener("mousemove", detectHandles);
@@ -251,7 +366,6 @@ function App() {
     setup();
     return () => {
       div.removeEventListener("mousedown", detectElesInterceted);
-      div.removeEventListener("mousedown", dragStart);
       div.removeEventListener("mouseup", dragEnd);
 
       div.removeEventListener("mousemove", detectHandles);
