@@ -118,17 +118,13 @@ export function renderDrawCanvas(
   if (sceneData.updatingElements.length > 0) {
     sceneData.updatingElements.forEach((u) => {
       if (u.type !== "transform") return;
-      // 重绘全部元素
-      redrawAllEles(appCtx, appCanvas, elements);
       if (u.ele.type === DrawingType.img) {
         const img = u.ele as ImageElement;
+        // img.scale = u.;
+        // redraw all elements
+        redrawAllEles(appCtx, appCanvas, elements);
 
-        const cachedCvs = createDrawingCvs(img, appCanvas)!;
-        img.eraserPolygons.forEach((_, i) => {
-          drawEraserOutline(img, i, cachedCvs!);
-        });
-
-        drawingCanvasCache.ele2DrawingCanvas.set(img, cachedCvs);
+        // draw transform handles
         const xs = [
           img.points[0].x,
           img.points[0].x + img.originalWidth * img.scale.x,
@@ -213,7 +209,30 @@ export function redrawAllEles(
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
     const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-    globalAppCtx!.drawImage(cachedCvs!, 0, 0);
+    // Save the current context state
+    globalAppCtx!.save();
+
+    // Translate to the top-left corner of the image's intended position
+    globalAppCtx!.translate(-el.points[0].x, -el.points[0].y);
+
+    // Translate to the top-left corner of the image's intended position
+
+    // Draw the image at the original coordinates (0, 0) because the context's origin
+    // is already at the top-left corner where the image should start.
+    globalAppCtx!.drawImage(
+      cachedCvs!,
+      0,
+      0,
+      cachedCvs!.width * el.scale.x,
+      cachedCvs!.height * el.scale.y
+    );
+
+    globalAppCtx!.translate(
+      el.points[0].x * el.scale.x,
+      el.points[0].y * el.scale.y
+    );
+    // Restore the context to its original state
+    globalAppCtx!.restore();
   });
 }
 

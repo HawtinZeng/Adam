@@ -53,7 +53,6 @@ function App() {
     startPos: Point;
     originalScale?: Point;
     originalHandles?: Transform2DOperator;
-    originalEraserPolygons: Polygon[];
     originalPt?: Point;
   } | null>(null);
 
@@ -72,8 +71,7 @@ function App() {
         dragInfo.current = {
           type: "move",
           startPos: new Flatten.Point(e.clientX, e.clientY),
-          originalPt: { ...ele.points[0] },
-          originalEraserPolygons: ele.eraserPolygons, // u.ele.eraserPolygons之后直接更新地址
+          originalPt: { ...ele.position },
         };
         setCursorSvg("move");
         return;
@@ -87,7 +85,6 @@ function App() {
           startPos: new Flatten.Point(e.clientX, e.clientY),
           originalScale: { ...img.scale },
           originalHandles: cloneDeep(u.handles)!,
-          originalEraserPolygons: u.ele.eraserPolygons, // u.ele.eraserPolygons之后直接更新地址
         };
       }
     },
@@ -121,7 +118,6 @@ function App() {
       }
       sceneData.updatingElements = [];
       setSceneData({ ...sceneData });
-      redrawAllEles(undefined, undefined, sceneData.elements);
     },
     [dragStart, sceneData, selectedKey, setSceneData]
   );
@@ -200,8 +196,7 @@ function App() {
   const dragMove = useCallback(
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
-      const { type, startPos, originalPt, originalEraserPolygons } =
-        dragInfo.current;
+      const { type, startPos, originalPt } = dragInfo.current;
       if (type === "move") {
         const u = sceneData.updatingElements[0];
         const img = u!.ele as ImageElement;
@@ -209,21 +204,19 @@ function App() {
           x: e.clientX - startPos.x,
           y: e.clientY - startPos.y,
         };
-        img.points[0] = {
+        img.position = {
           x: originalPt!.x + offset.x,
           y: originalPt!.y + offset.y,
         };
         const bbx = new Box(
           img.points[0].x,
-          img.points[0].y + img.originalHeight * img.scale.y,
-          img.points[0].x + img.originalWidth * img.scale.x,
+          img.points[0].y + img.originalHeight,
+          img.points[0].x + img.originalWidth,
           img.points[0].y
         );
-        bbx.transform(new Flatten.Matrix());
-        img.polygons[0] = new Polygon(bbx).reverse();
-
-        const m = new Matrix().translate(offset.x, offset.y);
-        img.eraserPolygons = originalEraserPolygons!.map((p) => p.transform(m));
+        console.log(img.scale);
+        const m = new Matrix().translate(img.position.x, img.position.y);
+        img.polygons[0] = new Polygon(bbx.transform(m)).reverse();
 
         setSceneData({ ...sceneData });
         return;

@@ -252,11 +252,11 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       const ctx = cvs.getContext("2d")!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
-      const theSecondPt = drawingEle.points[0];
+      const theFirstPt = drawingEle.points[0];
 
-      if (theSecondPt)
+      if (theFirstPt)
         drawingEle.polygons =
-          getAntArea(theSecondPt.x, theSecondPt.y, {
+          getAntArea(theFirstPt.x, theFirstPt.y, {
             width: cvs.width,
             height: cvs.height,
             context: ctx,
@@ -268,9 +268,10 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   const stopCurrentDrawing = () => {
-    if (sceneState.updatingElements.length > 0) {
+    setSceneAtom(sceneState);
+    setTimeout(() => {
       sceneState.updatingElements.length = 0;
-    }
+    });
   };
 
   return Btn(
