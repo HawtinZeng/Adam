@@ -71,7 +71,7 @@ function App() {
         dragInfo.current = {
           type: "move",
           startPos: new Flatten.Point(e.clientX, e.clientY),
-          originalPt: { ...ele.position },
+          originalPt: { ...ele.points[0] },
         };
         setCursorSvg("move");
         return;
@@ -87,6 +87,7 @@ function App() {
           originalHandles: cloneDeep(u.handles)!,
         };
       }
+      console.log(u.ele.scale);
     },
     [sceneData.updatingElements, selectedKey, setCursorSvg]
   );
@@ -204,7 +205,7 @@ function App() {
           x: e.clientX - startPos.x,
           y: e.clientY - startPos.y,
         };
-        img.position = {
+        img.points[0] = {
           x: originalPt!.x + offset.x,
           y: originalPt!.y + offset.y,
         };
@@ -214,8 +215,7 @@ function App() {
           img.points[0].x + img.originalWidth,
           img.points[0].y
         );
-        console.log(img.scale);
-        const m = new Matrix().translate(img.position.x, img.position.y);
+        const m = new Matrix().translate(img.points[0].x, img.points[0].y);
         img.polygons[0] = new Polygon(bbx.transform(m)).reverse();
 
         setSceneData({ ...sceneData });
@@ -247,7 +247,7 @@ function App() {
                 (img.originalHeight * oriScale.y -
                   Math.sign(oriScale.y) * diffY) /
                 img.originalHeight;
-              if (Math.sign(oriScale.y) > 0) updatedPt.y = h + diffY;
+              updatedPt.y = h + diffY;
               break;
             case TransformHandle.ne:
               const { x: neX, y: neY } = oriHandles.handles[dir]!.center;
@@ -284,12 +284,10 @@ function App() {
               if (Math.sign(oriScale.y) < 0) updatedPt.y = seY + diffY;
               break;
             case TransformHandle.s:
-              const b = oriHandles.handles[dir]!.center.y;
               updatedScale.y =
                 (img.originalHeight * oriScale.y +
                   Math.sign(oriScale.y) * diffY) /
                 img.originalHeight;
-              if (Math.sign(oriScale.y) < 0) updatedPt.y = b + diffY;
               break;
             case TransformHandle.sw:
               const { x: swX, y: swY } = oriHandles.handles[dir]!.center;
@@ -351,9 +349,10 @@ function App() {
         );
         bbx.transform(new Flatten.Matrix());
         img.polygons[0] = new Polygon(bbx).reverse();
+        setSceneData({ ...sceneData });
       }
     }
-  }, []);
+  }, [sceneData, setSceneData]);
 
   useEffect(() => {
     sceneData.updatingElements = [];

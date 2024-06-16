@@ -132,14 +132,10 @@ export function ImageInput() {
         isAssignSecPt.current = false;
         const img = s.updatingElements[0].ele as ImageElement;
 
-        img.originalHeight = img.originalHeight * img.scale.y;
-        img.originalWidth = img.originalWidth * img.scale.x;
-        img.scale = { x: 1, y: 1 };
-
         const bbx = new Box(
           img.points[0].x,
-          img.points[0].y + img.originalHeight,
-          img.points[0].x + img.originalWidth,
+          img.points[0].y + img.originalHeight * img.scale.y,
+          img.points[0].x + img.originalWidth * img.scale.x,
           img.points[0].y
         );
         img.polygons[0] = new Polygon(bbx).reverse();

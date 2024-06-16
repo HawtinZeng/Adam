@@ -122,7 +122,7 @@ export function renderDrawCanvas(
         const img = u.ele as ImageElement;
         // img.scale = u.;
         // redraw all elements
-        redrawAllEles(appCtx, appCanvas, elements);
+        redrawAllEles(appCtx, appCanvas, elements, u.ele);
 
         // draw transform handles
         const xs = [
@@ -198,7 +198,8 @@ let globalAppCtx: CanvasRenderingContext2D | null = null,
 export function redrawAllEles(
   appCtx: CanvasRenderingContext2D | undefined,
   appCanvas: HTMLCanvasElement | undefined,
-  elements: DrawingElement[]
+  elements: DrawingElement[],
+  u?: DrawingElement
 ) {
   if (appCtx) globalAppCtx = appCtx;
   if (appCanvas) globalCvs = appCanvas;
@@ -208,31 +209,18 @@ export function redrawAllEles(
   }
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
-    const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-    // Save the current context state
-    globalAppCtx!.save();
-
-    // Translate to the top-left corner of the image's intended position
-    globalAppCtx!.translate(-el.points[0].x, -el.points[0].y);
-
-    // Translate to the top-left corner of the image's intended position
-
-    // Draw the image at the original coordinates (0, 0) because the context's origin
-    // is already at the top-left corner where the image should start.
+    let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+    if (el === u) {
+      cachedCvs = createDrawingCvs(el, globalCvs!);
+      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs!);
+    }
     globalAppCtx!.drawImage(
       cachedCvs!,
       0,
       0,
-      cachedCvs!.width * el.scale.x,
-      cachedCvs!.height * el.scale.y
+      cachedCvs!.width,
+      cachedCvs!.height
     );
-
-    globalAppCtx!.translate(
-      el.points[0].x * el.scale.x,
-      el.points[0].y * el.scale.y
-    );
-    // Restore the context to its original state
-    globalAppCtx!.restore();
   });
 }
 
@@ -510,6 +498,7 @@ function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
     } else {
       drawRect(ctx, h, op.fillColor);
       drawRectBorder(ctx, h, op.borderColor, op.border);
+      drawText(ctx, h.center, `x: ${h.center.x}, y: ${h.center.y}`);
     }
   });
 }

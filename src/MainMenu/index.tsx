@@ -1,10 +1,10 @@
-import Flatten, { BooleanOperations } from "@flatten-js/core";
+import Flatten from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
+import { ptIsContained } from "src/CoreRenderer/basicTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { ImageInput } from "src/MainMenu/imageInput";
@@ -306,23 +306,3 @@ export function MainMenu() {
   );
 }
 export default MainMenu;
-
-function mergePolygonsAndEraserPolygons(eles: DrawingElement[]) {
-  const resPs: any = [];
-  eles.forEach((el) => {
-    el.polygons.forEach((p, idx) => {
-      const era = el.eraserPolygons[0];
-      if (era) {
-        el.eraserPolygons.forEach((po, i) => {
-          if (i >= 1) {
-            [...po.faces].forEach((p) => {
-              era.faces.add(p);
-            });
-          }
-        });
-        resPs.push(BooleanOperations.outerClip(p, era));
-      }
-      el.eraserPolygons = [era];
-    });
-  });
-}
