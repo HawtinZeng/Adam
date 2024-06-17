@@ -1,10 +1,4 @@
-import Flatten, {
-  Box,
-  Line,
-  Matrix,
-  Point as PointF,
-  Polygon,
-} from "@flatten-js/core";
+import Flatten, { Box, Line, Point as PointF, Polygon } from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep } from "lodash";
@@ -105,7 +99,7 @@ function App() {
         // console.time("isHit");
         const ele = sceneData.elements[i];
         const isHit = ptIsContained(
-          ele.polygons,
+          ele.polygons.map((p) => p.rotate(ele.rotation, p.box.center)),
           ele.eraserPolygons,
           new Flatten.Point(e.clientX, e.clientY)
         );
@@ -163,7 +157,12 @@ function App() {
           const handles = Object.keys(operator.handles) as TransformHandle[];
           for (let handleIdx = 0; handleIdx < handles.length; handleIdx++) {
             const isHit = ptIsContained(
-              [new Polygon(operator.handles[handles[handleIdx]])],
+              [
+                new Polygon(operator.handles[handles[handleIdx]]).rotate(
+                  u.ele.rotation,
+                  u.ele.polygons[0].box.center
+                ),
+              ],
               [],
               new Flatten.Point(e.clientX, e.clientY)
             );
@@ -221,8 +220,8 @@ function App() {
           img.points[0].x + img.originalWidth,
           img.points[0].y
         );
-        const m = new Matrix().translate(img.points[0].x, img.points[0].y);
-        img.polygons[0] = new Polygon(bbx.transform(m)).reverse();
+        // const m = new Matrix().translate(img.points[0].x, img.points[0].y);
+        img.polygons[0] = new Polygon(bbx).reverse();
 
         setSceneData({ ...sceneData });
         return;
@@ -278,9 +277,7 @@ function App() {
               i.points[0].x + i.originalWidth * i.scale.x,
               i.points[0].y
             );
-            el.polygons[0] = new Polygon(bbx)
-              .reverse()
-              .rotate(i.rotation, rotationCenter);
+            el.polygons[0] = new Polygon(bbx).reverse();
 
             setSceneData({ ...sceneData });
           }

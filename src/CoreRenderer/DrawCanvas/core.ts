@@ -22,7 +22,9 @@ import { TransformHandles } from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import { Scene } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
+// @ts-ignore
 import SVGPathCommander from "svg-path-commander";
+
 // Trim SVG path data so number are each two decimal points. This
 // improves SVG exports, and prevents rendering errors on points
 // with long decimals.
@@ -227,6 +229,9 @@ export function redrawAllEles(
     if (el === u) {
       cachedCvs = createDrawingCvs(el, globalCvs!);
       drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs!);
+      el.eraserPolygons.forEach((_, idx) => {
+        drawEraserOutline(el, idx, cachedCvs!);
+      });
     }
     globalAppCtx!.drawImage(
       cachedCvs!,
@@ -410,46 +415,18 @@ function drawSvgPathOnCanvas(
   ctx: CanvasRenderingContext2D,
   svgPathData: string,
   color: d3c.Color,
-  translate: PointF,
   ro: Degree,
   center: Point
 ) {
   ctx.save();
-  // const box = getBoundingBoxOfSVGPath(svgPathData);
-  // if (box)
-  // ctx.translate(translate.x - box.width / 2, translate.y - box.height / 2);
-  ctx.restore();
-
-  // ctx.translate(center.x, center.y);
-  // ctx.rotate(ro);
-  // ctx.translate(-center.x, -center.y);
+  ctx.translate(center.x, center.y);
+  ctx.rotate(ro);
+  ctx.translate(-center.x, -center.y);
   const path = new Path2D(svgPathData);
   // path
   ctx.fillStyle = color.formatHex();
   ctx.fill(path);
   ctx.restore();
-}
-
-function getBoundingBoxOfSVGPath(svgPathData: string): Box | undefined {
-  const pathElement = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "path"
-  );
-  const svgElement = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    "svg"
-  );
-  pathElement.setAttribute("d", svgPathData);
-
-  svgElement.appendChild(pathElement);
-  document.body.appendChild(svgElement);
-  if (pathElement) {
-    const db = pathElement.getBBox();
-    const bbx = new Box(0, 0, db.width, db.height);
-    document.body.removeChild(svgElement);
-    return bbx;
-  }
-  return undefined;
 }
 
 function drawEraserOutline(
@@ -512,43 +489,20 @@ export function drawCircle(
   ctx.fill();
 }
 
-function translateSVGPath(pathData, dx, dy) {
-  const commands = pathData.split(/(?=[LMCSTQAHVZ])/);
-
-  return commands
-    .map((command) => {
-      const type = command[0];
-      const coords = command
-        .slice(1)
-        .trim()
-        .split(/[\s,]+/)
-        .map(Number);
-
-      // For Move (M/m) and Line (L/l) commands, adjust coordinates
-      if (type === "M" || type === "L") {
-        return `${type}${coords[0] + dx},${coords[1] + dy}`;
-      }
-      // Add other cases as needed for different command types
-      return command;
-    })
-    .join(" ");
-}
-
 function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
   Object.keys(op.handles).forEach((k) => {
     const h = op.handles[k as keyof TransformHandles] as Box;
     const rotationIcon = new SVGPathCommander(
-      "M11.031 24A11.033 11.033 0 0 0 1-22.021V0L7.125 4.1 12.033 8V6.007A7.032 7.032 0 0 1-1 13.993A7.032 7.032 0 0 1 4 13H0A11.026 11.026 0 0 0 11.031 11Z"
+      "M11.031 24a11.033 11.033 0 0 0 1-22.021V0L7.125 4.1 12.033 8V6.007a7.032 7.032 0 0 1-1 13.993A7.032 7.032 0 0 1 4 13H0a11.026 11.026 0 0 0 11.031 11z"
     );
     rotationIcon.transform({
-      translate: [h.center.x, h.center.y - h.height / 2 - 20],
+      translate: [h.center.x - 10, h.center.y - 10],
     });
     if (k === TransformHandle.ro) {
       drawSvgPathOnCanvas(
         ctx,
         rotationIcon.toString(),
         op.borderColor,
-        h.center,
         op.rotation,
         op.overallCenter
       );
@@ -577,9 +531,11 @@ function drawRect(
   center: Point
 ) {
   ctx.save();
+
   ctx.translate(center.x, center.y);
   ctx.rotate(ro);
   ctx.translate(-center.x, -center.y);
+
   ctx.fillStyle = color.formatHex();
   ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
   ctx.restore();

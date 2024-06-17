@@ -109,15 +109,16 @@ export class Transform2DOperator {
       referenceWN.y + offsetAlignDiagonal
     );
 
-    const referenceRotation = {
-      x: c.x,
-      y: c.y - h / 2 - 30,
-    };
-    this.handles[TransformHandle.ro] = new Box(
-      referenceRotation.x - (offsetAlignDiagonal + 5),
-      referenceRotation.y - (offsetAlignDiagonal + 5),
-      referenceRotation.x + (offsetAlignDiagonal + 5),
-      referenceRotation.y + (offsetAlignDiagonal + 5)
-    );
+    // 先关闭旋转
+    // const referenceRotation = {
+    //   x: c.x,
+    //   y: c.y - h / 2 - 30,
+    // };
+    // this.handles[TransformHandle.ro] = new Box(
+    //   referenceRotation.x - (offsetAlignDiagonal + 5),
+    //   referenceRotation.y - (offsetAlignDiagonal + 5),
+    //   referenceRotation.x + (offsetAlignDiagonal + 5),
+    //   referenceRotation.y + (offsetAlignDiagonal + 5)
+    // );
   }
 }
