@@ -1,5 +1,6 @@
 import { Box } from "@flatten-js/core";
 import * as d3c from "d3-color";
+import { Degree, Point } from "src/CoreRenderer/basicTypes";
 export enum TransformHandle {
   n = "n",
   s = "s",
@@ -32,8 +33,13 @@ export class Transform2DOperator {
   pointW: number = 10;
   fillColor: d3c.Color = d3c.rgb("#ffffff");
   borderColor: d3c.Color = d3c.rgb("#14C0E0");
+  rotation: Degree;
+  overallCenter: Point;
 
-  constructor(eleStaticBbx: Box) {
+  constructor(eleStaticBbx: Box, rotation: Degree) {
+    this.rotation = rotation;
+    this.overallCenter = { x: eleStaticBbx.center.x, y: eleStaticBbx.center.y };
+
     const c = eleStaticBbx.center;
     const w = eleStaticBbx.width;
     const h = eleStaticBbx.height;

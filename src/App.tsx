@@ -1,4 +1,10 @@
-import Flatten, { Box, Matrix, Polygon } from "@flatten-js/core";
+import Flatten, {
+  Box,
+  Line,
+  Matrix,
+  Point as PointF,
+  Polygon,
+} from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep } from "lodash";
@@ -20,7 +26,6 @@ import {
   DrawingType,
   ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import { TransformHandleDirection } from "src/CoreRenderer/utilsTypes";
 import MainMenu, { colorConfigs } from "src/MainMenu";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
@@ -38,6 +43,7 @@ import {
 } from "src/state/uiState";
 import { setTransparent } from "./commonUtils";
 export const debugShowEleId = false;
+export const debugShowHandlesPosition = false;
 function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
@@ -45,15 +51,15 @@ function App() {
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
   const [selectedKey] = useAtom(selectedKeyAtom);
   const [sceneData, setSceneData] = useAtom(sceneAtom);
-  const currentHandle = useRef<
-    [DrawingElement, TransformHandleDirection] | null
-  >(null);
+  const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const dragInfo = useRef<{
     type: "move" | "resize";
     startPos: Point;
     originalScale?: Point;
     originalHandles?: Transform2DOperator;
     originalPt?: Point;
+    originalRotation?: number;
+    originalPols?: Polygon[];
   } | null>(null);
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
@@ -70,7 +76,7 @@ function App() {
       if (currentHandle.current === null && ele) {
         dragInfo.current = {
           type: "move",
-          startPos: new Flatten.Point(e.clientX, e.clientY),
+          startPos: { x: e.clientX, y: e.clientY },
           originalPt: { ...ele.points[0] },
         };
         setCursorSvg("move");
@@ -82,12 +88,12 @@ function App() {
 
         dragInfo.current = {
           type: "resize",
-          startPos: new Flatten.Point(e.clientX, e.clientY),
+          startPos: { x: e.clientX, y: e.clientY },
           originalScale: { ...img.scale },
+          originalRotation: img.rotation,
           originalHandles: cloneDeep(u.handles)!,
         };
       }
-      console.log(u.ele.scale);
     },
     [sceneData.updatingElements, selectedKey, setCursorSvg]
   );
@@ -95,7 +101,7 @@ function App() {
     (e: MouseEvent) => {
       if (selectedKey !== 2) return;
       if (currentHandle.current !== null) return;
-      for (let i = 0; i < sceneData.elements.length; i++) {
+      for (let i = sceneData.elements.length - 1; i >= 0; i--) {
         // console.time("isHit");
         const ele = sceneData.elements[i];
         const isHit = ptIsContained(
@@ -118,7 +124,7 @@ function App() {
         }
       }
       sceneData.updatingElements = [];
-      setSceneData({ ...sceneData });
+      redrawAllEles(undefined, undefined, sceneData.elements);
     },
     [dragStart, sceneData, selectedKey, setSceneData]
   );
@@ -154,9 +160,7 @@ function App() {
         const u = sceneData.updatingElements[i];
         const operator = u.handles;
         if (operator) {
-          const handles = Object.keys(
-            operator.handles
-          ) as TransformHandleDirection[];
+          const handles = Object.keys(operator.handles) as TransformHandle[];
           for (let handleIdx = 0; handleIdx < handles.length; handleIdx++) {
             const isHit = ptIsContained(
               [new Polygon(operator.handles[handles[handleIdx]])],
@@ -197,6 +201,8 @@ function App() {
   const dragMove = useCallback(
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
+
+      // move
       const { type, startPos, originalPt } = dragInfo.current;
       if (type === "move") {
         const u = sceneData.updatingElements[0];
@@ -222,117 +228,66 @@ function App() {
         return;
       }
 
-      // resize
+      // transform
+      if (!currentHandle.current) return;
       const [x, y] = [e.clientX, e.clientY];
-      const [startX, startY, oriScale, oriHandles] = [
+      const [startX, startY, oriScale, oriHandles, originalRotation] = [
         dragInfo.current.startPos.x,
         dragInfo.current.startPos.y,
         dragInfo.current.originalScale!,
         dragInfo.current.originalHandles!,
+        dragInfo.current.originalRotation!,
+        dragInfo.current.originalPols!,
       ];
-
       let [diffX, diffY] = [x - startX, y - startY];
       const [el, dir] = currentHandle.current!;
       if (el && dir) {
-        const u = sceneData.updatingElements[0];
         const updatedScale = { x: oriScale.x, y: oriScale.y };
         const updatedPt = { x: el.points[0].x, y: el.points[0].y };
-
-        if (el.type === DrawingType.img && u && u.type === "transform") {
-          const img = el as ImageElement;
-          switch (dir) {
-            case TransformHandle.n:
-              const h = oriHandles.handles[dir]!.center.y;
-              updatedScale.y =
-                (img.originalHeight * oriScale.y -
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              updatedPt.y = h + diffY;
-              break;
-            case TransformHandle.ne:
-              const { x: neX, y: neY } = oriHandles.handles[dir]!.center;
-              updatedScale.y =
-                (img.originalHeight * oriScale.y -
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              if (Math.sign(oriScale.y) > 0) updatedPt.y = neY + diffY;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x +
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) < 0) updatedPt.x = neX + diffX;
-              break;
-            case TransformHandle.e:
-              const r = oriHandles.handles[dir]!.center.x;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x +
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) < 0) updatedPt.x = r + diffX;
-              break;
-            case TransformHandle.se:
-              const { x: seX, y: seY } = oriHandles.handles[dir]!.center;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x +
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) < 0) updatedPt.x = seX + diffX;
-              updatedScale.y =
-                (img.originalHeight * oriScale.y +
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              if (Math.sign(oriScale.y) < 0) updatedPt.y = seY + diffY;
-              break;
-            case TransformHandle.s:
-              updatedScale.y =
-                (img.originalHeight * oriScale.y +
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              break;
-            case TransformHandle.sw:
-              const { x: swX, y: swY } = oriHandles.handles[dir]!.center;
-              updatedScale.y =
-                (img.originalHeight * oriScale.y +
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              if (Math.sign(oriScale.y) < 0) updatedPt.y = swY + diffY;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x -
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) > 0) updatedPt.x = swX + diffX;
-              break;
-            case TransformHandle.w:
-              const l = oriHandles.handles[dir]!.center.x;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x -
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) > 0) updatedPt.x = l + diffX;
-              break;
-            case TransformHandle.nw:
-              const { x: nwX, y: nwY } = oriHandles.handles[dir]!.center;
-              updatedScale.x =
-                (img.originalWidth * oriScale.x -
-                  Math.sign(oriScale.x) * diffX) /
-                img.originalWidth;
-              if (Math.sign(oriScale.x) > 0) updatedPt.x = nwX + diffX;
-              updatedScale.y =
-                (img.originalHeight * oriScale.y -
-                  Math.sign(oriScale.y) * diffY) /
-                img.originalHeight;
-              if (Math.sign(oriScale.y) > 0) updatedPt.y = nwY + diffY;
-              break;
+        if (dir !== TransformHandle.ro) {
+          if (el.type === DrawingType.img) {
+            transformImg(
+              el,
+              dir,
+              oriHandles,
+              updatedScale,
+              oriScale,
+              diffY,
+              updatedPt,
+              diffX
+            );
+          } else {
+            // FreeDrawing
           }
-          el.scale = updatedScale;
-          el.points[0] = updatedPt;
-          setSceneData({ ...sceneData });
         } else {
-          // FreeDrawing
+          // rotation
+          if (el.type === DrawingType.img) {
+            const i = el as ImageElement;
+            const rotationCenter = i.polygons[0].box.center;
+            const originalLine = new Line(
+              new PointF(startX, startY),
+              rotationCenter
+            );
+            const currentLine = new Line(new PointF(x, y), rotationCenter);
+            const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
+            i.rotation = deltaRotation + originalRotation;
+
+            const bbx = new Box(
+              i.points[0].x,
+              i.points[0].y + i.originalHeight * i.scale.y,
+              i.points[0].x + i.originalWidth * i.scale.x,
+              i.points[0].y
+            );
+            el.polygons[0] = new Polygon(bbx)
+              .reverse()
+              .rotate(i.rotation, rotationCenter);
+
+            setSceneData({ ...sceneData });
+          }
         }
       }
     },
-    [sceneData, setSceneData]
+    [sceneData, setSceneData, transformImg]
   );
 
   const dragEnd = useCallback(() => {
@@ -414,6 +369,94 @@ function App() {
       )}
     </>
   );
+
+  function transformImg(
+    el: DrawingElement,
+    dir: string,
+    oriHandles: Transform2DOperator,
+    updatedScale: { x: number; y: number },
+    oriScale: Point,
+    diffY: number,
+    updatedPt: { x: number; y: number },
+    diffX: number
+  ) {
+    const img = el as ImageElement;
+    switch (dir) {
+      case TransformHandle.n:
+        const h = oriHandles.handles[dir]!.center.y;
+        updatedScale.y =
+          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        updatedPt.y = h + diffY;
+        break;
+      case TransformHandle.ne:
+        const { x: neX, y: neY } = oriHandles.handles[dir]!.center;
+        updatedScale.y =
+          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        if (Math.sign(oriScale.y) > 0) updatedPt.y = neY + diffY;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) < 0) updatedPt.x = neX + diffX;
+        break;
+      case TransformHandle.e:
+        const r = oriHandles.handles[dir]!.center.x;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) < 0) updatedPt.x = r + diffX;
+        break;
+      case TransformHandle.se:
+        const { x: seX, y: seY } = oriHandles.handles[dir]!.center;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) < 0) updatedPt.x = seX + diffX;
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        if (Math.sign(oriScale.y) < 0) updatedPt.y = seY + diffY;
+        break;
+      case TransformHandle.s:
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        break;
+      case TransformHandle.sw:
+        const { x: swX, y: swY } = oriHandles.handles[dir]!.center;
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        if (Math.sign(oriScale.y) < 0) updatedPt.y = swY + diffY;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) > 0) updatedPt.x = swX + diffX;
+        break;
+      case TransformHandle.w:
+        const l = oriHandles.handles[dir]!.center.x;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) > 0) updatedPt.x = l + diffX;
+        break;
+      case TransformHandle.nw:
+        const { x: nwX, y: nwY } = oriHandles.handles[dir]!.center;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
+          img.originalWidth;
+        if (Math.sign(oriScale.x) > 0) updatedPt.x = nwX + diffX;
+        updatedScale.y =
+          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
+          img.originalHeight;
+        if (Math.sign(oriScale.y) > 0) updatedPt.y = nwY + diffY;
+        break;
+    }
+    el.scale = updatedScale;
+    el.points[0] = updatedPt;
+    setSceneData({ ...sceneData });
+  }
 }
 
 export default App;

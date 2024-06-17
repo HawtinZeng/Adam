@@ -155,6 +155,25 @@ export function ImageInput() {
     [cur, cvsEle, s.updatingElements, s.elements, setSelectedKey]
   );
 
+  const handleEscDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedKey(-1);
+      }
+    },
+    [setSelectedKey]
+  );
+
+  const handleDelDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Delete") {
+        s.updatingElements.forEach((u) => (u.type = "delete"));
+        ss({ ...s });
+      }
+    },
+    [s, ss]
+  );
+
   useEffect(() => {
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", updateDraggableItemPos);
@@ -180,6 +199,16 @@ export function ImageInput() {
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
   }, [handleMouseDown, updateDraggableItemPos]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleEscDown);
+    window.addEventListener("keydown", handleDelDown);
+    return () => {
+      window.removeEventListener("keydown", handleEscDown);
+      window.removeEventListener("keydown", handleDelDown);
+    };
+  }, [handleEscDown, handleDelDown]);
+
   return (
     <>
       {cur === -1 && <span>选择图片中...</span>}
