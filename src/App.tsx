@@ -178,7 +178,7 @@ function App() {
         currentHandle.current = null;
 
         const isHit = ptIsContained(
-          u.ele.polygons,
+          u.ele.polygons.map((p) => p.rotate(u.ele.rotation, p.box.center)),
           u.ele.eraserPolygons,
           new Flatten.Point(e.clientX, e.clientY)
         );
@@ -214,6 +214,7 @@ function App() {
           x: originalPt!.x + offset.x,
           y: originalPt!.y + offset.y,
         };
+
         const bbx = new Box(
           img.points[0].x,
           img.points[0].y + img.originalHeight,
@@ -221,6 +222,7 @@ function App() {
           img.points[0].y
         );
         // const m = new Matrix().translate(img.points[0].x, img.points[0].y);
+        bbx.transform(new Flatten.Matrix());
         img.polygons[0] = new Polygon(bbx).reverse();
 
         setSceneData({ ...sceneData });
