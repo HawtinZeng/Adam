@@ -61,4 +61,15 @@ module.exports = {
       jsx: "react-jsx",
     },
   },
+  eslint: {
+    enable: true /* (default value) */,
+    mode: "extends",
+    configure: (eslintConfig, { env, paths }) => {
+      eslintConfig.rules = {
+        ...eslintConfig.rules,
+        "@typescript-eslint/no-use-before-define": "off",
+      };
+      return eslintConfig;
+    },
+  },
 };

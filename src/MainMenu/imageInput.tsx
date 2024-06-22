@@ -116,12 +116,14 @@ export function ImageInput() {
         isAssignSecPt.current = true;
         const imgEle = cloneDeepGenId(newImgElement);
         imgEle.points[0] = { x: e.clientX, y: e.clientY };
+        imgEle.position = { x: e.clientX, y: e.clientY };
+
         imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
         imgEle.originalWidth = imgEle.image!.width;
         imgEle.originalHeight = imgEle.image!.height;
 
         const updating: UpdatingElement = {
-          type: "scale",
+          type: "addImg",
           ele: imgEle,
           oriImageData: cvsEle!
             .getContext("2d")!
@@ -138,7 +140,7 @@ export function ImageInput() {
           img.points[0].x + img.originalWidth * img.scale.x,
           img.points[0].y
         );
-        img.polygons[0] = new Polygon(bbx).reverse();
+        img.polygons[0] = new Polygon(bbx).rotate(img.rotation);
 
         s.elements.push(img);
         s.updatingElements.length = 0;

@@ -9,7 +9,7 @@ export type Point = {
   pressure?: number; // 0 - 1
   timestamp?: number;
 };
-export type Degree = number;
+export type Degree = number; // 0 - 359
 export type DrawingElement = {
   type: string;
   points: Point[];
@@ -115,3 +115,8 @@ export function ptIsContained(
 
   return false;
 }
+export type TransformTRS = {
+  translate: Point;
+  rotate: Degree;
+  scale: Point;
+};

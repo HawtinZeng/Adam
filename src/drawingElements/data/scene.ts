@@ -11,7 +11,8 @@ export type ActionType =
   | "erase"
   | "transform"
   | "scale"
-  | "delete";
+  | "delete"
+  | "addImg";
 export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;

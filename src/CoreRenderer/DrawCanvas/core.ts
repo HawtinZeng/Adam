@@ -1,4 +1,4 @@
-import { Box, Point as PointF, Vector } from "@flatten-js/core";
+import { Box, Point as PointF, Polygon, Vector } from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
@@ -20,7 +20,11 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { TransformHandles } from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
-import { Scene } from "src/drawingElements/data/scene";
+import {
+  ActionType,
+  Scene,
+  UpdatingElement,
+} from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
 // @ts-ignore
 import SVGPathCommander from "svg-path-commander";
@@ -71,7 +75,10 @@ export function renderDrawCanvas(
   appCanvas: HTMLCanvasElement
 ) {
   const appCtx = appCanvas.getContext("2d")!;
-  const groupedElements = groupBy(sceneData.updatingElements, (up) => up.type);
+  const groupedElements = groupBy<UpdatingElement>(
+    sceneData.updatingElements,
+    (up) => up.type
+  ) as Partial<Record<ActionType, UpdatingElement[]>>;
   groupedElements.addPoints?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(checkUpdating.ele);
@@ -87,9 +94,7 @@ export function renderDrawCanvas(
     }
 
     // 绘制checkUpdating到画布上
-    if (cachedCvs && checkUpdating) {
-      appCtx.drawImage(cachedCvs!, 0, 0);
-    }
+    if (cachedCvs && checkUpdating) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 
   const { elements } = sceneData;
@@ -103,50 +108,50 @@ export function renderDrawCanvas(
       drawEraserOutline(ele, idx, cachedCvs!);
     });
   });
-  if (groupedElements.erase?.length > 0) {
+  if (groupedElements.erase?.length && groupedElements.erase.length > 0) {
     // 重绘全部元素
     redrawAllEles(appCtx, appCanvas, elements);
   }
 
-  // Draw image scaling effect.
-  groupedElements.scale?.forEach((t) => {
-    const { ele } = t;
-    if (t.oriImageData && ele.type === DrawingType.img) {
-      const cachedCvs = createDrawingCvs(ele, appCanvas)!;
-      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+  // create image cache, and draw it to app context
+  if (groupedElements.addImg?.length && groupedElements.addImg.length > 0) {
+    redrawAllEles(appCtx, appCanvas, elements);
+    groupedElements.addImg?.forEach((t) => {
+      const { ele } = t;
+      if (t.oriImageData && ele.type === DrawingType.img) {
+        const cachedCvs = createDrawingCvs(ele, appCanvas)!;
+        drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
 
-      appCtx.putImageData(t.oriImageData, 0, 0);
-      appCtx.drawImage(cachedCvs, 0, 0);
-    }
-  });
+        appCtx.save();
+        appCtx.translate(ele.position.x, ele.position.y);
+        appCtx.scale(ele.scale.x, ele.scale.y);
+        appCtx.drawImage(cachedCvs, 0, 0);
 
-  // Render transform handler
+        appCtx.restore();
+      }
+    });
+  }
+
+  // render transform handler
   groupedElements.transform?.forEach((u) => {
     if (u.ele.type === DrawingType.img) {
       const img = u.ele as ImageElement;
       redrawAllEles(appCtx, appCanvas, elements, u.ele);
 
-      // draw transform handles
-      const xs = [
-        img.points[0].x,
-        img.points[0].x + img.originalWidth * img.scale.x,
-      ].sort((a, b) => a - b);
-      const ys = [
-        img.points[0].y,
-        img.points[0].y + img.originalHeight * img.scale.y,
-      ].sort((a, b) => a - b);
-      const bbx = new Box(xs[0], ys[0], xs[1], ys[1]);
-      const handles = new Transform2DOperator(bbx, img.rotation);
+      const handles = new Transform2DOperator(img.polygons[0], img.rotation);
       u.handles = handles;
+
+      const cornerPolygon = new Polygon(
+        handles.polygon.vertices.filter((_, idx) => idx % 2 === 0)
+      );
 
       drawRectBorder(
         appCtx,
-        bbx,
+        cornerPolygon,
         handles.borderColor,
-        handles.border,
-        img.rotation,
-        handles.overallCenter
+        handles.border
       );
+
       drawHandles(handles, appCtx);
     }
   });
@@ -226,20 +231,31 @@ export function redrawAllEles(
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-    if (el === u) {
-      cachedCvs = createDrawingCvs(el, globalCvs!);
-      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs!);
-      el.eraserPolygons.forEach((_, idx) => {
-        drawEraserOutline(el, idx, cachedCvs!);
-      });
+    if (el.type === DrawingType.img) {
+      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
+      if (el.type === "img") {
+        const c = el.polygons[0]!.box.center;
+        globalAppCtx!.save();
+
+        globalAppCtx!.translate(c.x, c.y);
+        globalAppCtx!.rotate(el.rotation);
+        globalAppCtx!.translate(-c.x, -c.y);
+
+        globalAppCtx!.translate(el.position.x, el.position.y);
+        globalAppCtx!.scale(el.scale.x, el.scale.y);
+        globalAppCtx!.drawImage(cachedCvs, 0, 0);
+
+        globalAppCtx!.restore();
+      }
+    } else {
+      globalAppCtx!.drawImage(
+        cachedCvs!,
+        0,
+        0,
+        cachedCvs!.width,
+        cachedCvs!.height
+      );
     }
-    globalAppCtx!.drawImage(
-      cachedCvs!,
-      0,
-      0,
-      cachedCvs!.width,
-      cachedCvs!.height
-    );
   });
 }
 
@@ -270,7 +286,7 @@ export function createDrawingCvs(
 ) {
   if (ele.points.length === 0) return;
 
-  const canvas = document.createElement("canvas");
+  const canvas = document.createElement("canvas") as HTMLCanvasElement;
   canvas.width = targetCvs.width;
   canvas.height = targetCvs.height;
   const ctx = canvas.getContext("2d")!;
@@ -285,6 +301,15 @@ export function createDrawingCvs(
       ctx.strokeStyle = strokeColor!;
       ctx.lineCap = "round";
       ctx.fillStyle = strokeColor!;
+
+      if (debugShowHandlesPosition) {
+        drawText(
+          ctx,
+          ele.points[0],
+          `x: ${ele.points[0].x}, y: ${ele.points[0].y}`
+        );
+      }
+
       if (strokeOptions?.isCtxStroke) {
         let { size } = strokeOptions;
 
@@ -377,20 +402,9 @@ export function createDrawingCvs(
     case DrawingType.img: {
       const i = ele as ImageElement;
       if (!i.image) return;
-      const c = i.polygons[0]?.box.center;
-      if (c) {
-        ctx.translate(c.x, c.y);
-        ctx.rotate(i.rotation);
-        ctx.translate(-c.x, -c.y);
-      }
 
-      ctx.drawImage(
-        i.image,
-        i.points[0].x,
-        i.points[0].y,
-        i.image.width * i.scale.x,
-        i.image.height * i.scale.y
-      );
+      ctx.drawImage(i.image, 0, 0, i.image.width, i.image.height);
+
       break;
     }
   }
@@ -403,25 +417,30 @@ export function createDrawingCvs(
   return canvas;
 }
 
-function drawText(ctx: CanvasRenderingContext2D, pos: Point, text: string) {
+function drawText(
+  ctx: CanvasRenderingContext2D,
+  pos: Point,
+  text: string,
+  color: string = "red"
+) {
+  ctx.save();
   const fontSize = 30;
   const fontStyle = "Arial";
 
+  ctx.fillStyle = color;
   ctx.font = `${fontSize}px ${fontStyle}`;
   ctx.fillText(text, pos.x, pos.y);
+  ctx.restore();
 }
 
 function drawSvgPathOnCanvas(
   ctx: CanvasRenderingContext2D,
   svgPathData: string,
   color: d3c.Color,
-  ro: Degree,
-  center: Point
+  ro: Degree
 ) {
   ctx.save();
-  ctx.translate(center.x, center.y);
   ctx.rotate(ro);
-  ctx.translate(-center.x, -center.y);
   const path = new Path2D(svgPathData);
   // path
   ctx.fillStyle = color.formatHex();
@@ -491,34 +510,26 @@ export function drawCircle(
 
 function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
   Object.keys(op.handles).forEach((k) => {
-    const h = op.handles[k as keyof TransformHandles] as Box;
+    const h = op.handles[k as keyof TransformHandles] as Polygon;
     const rotationIcon = new SVGPathCommander(
       "M11.031 24a11.033 11.033 0 0 0 1-22.021V0L7.125 4.1 12.033 8V6.007a7.032 7.032 0 0 1-1 13.993A7.032 7.032 0 0 1 4 13H0a11.026 11.026 0 0 0 11.031 11z"
     );
     rotationIcon.transform({
-      translate: [h.center.x - 10, h.center.y - 10],
+      translate: [h.box.center.x - 10, h.box.center.y - 10],
     });
     if (k === TransformHandle.ro) {
       drawSvgPathOnCanvas(
         ctx,
         rotationIcon.toString(),
         op.borderColor,
-        op.rotation,
-        op.overallCenter
+        op.rotation
       );
     } else {
-      drawRect(ctx, h, op.fillColor, op.rotation, op.overallCenter);
-      drawRectBorder(
-        ctx,
-        h,
-        op.borderColor,
-        op.border,
-        op.rotation,
-        op.overallCenter
-      );
-      if (debugShowHandlesPosition) {
-        drawText(ctx, h.center, `x: ${h.center.x}, y: ${h.center.y}`);
-      }
+      drawRect(ctx, h.box, op.fillColor, op.rotation);
+      drawRectBorder(ctx, h, op.borderColor, op.border);
+      // if (debugShowHandlesPosition) {
+      //   drawText(ctx, h.center, `x: ${h.center.x}, y: ${h.center.y}`);
+      // }
     }
   });
 }
@@ -527,14 +538,10 @@ function drawRect(
   ctx: CanvasRenderingContext2D,
   rect: Box,
   color: d3c.Color,
-  ro: Degree,
-  center: Point
+  ro: Degree
 ) {
   ctx.save();
-
-  ctx.translate(center.x, center.y);
   ctx.rotate(ro);
-  ctx.translate(-center.x, -center.y);
 
   ctx.fillStyle = color.formatHex();
   ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
@@ -543,20 +550,26 @@ function drawRect(
 
 function drawRectBorder(
   ctx: CanvasRenderingContext2D,
-  rect: Box,
+  rect: Polygon,
   color: d3c.Color,
-  thickness: number,
-  ro: Degree,
-  center: Point
+  thickness: number
 ) {
   ctx.save();
 
-  ctx.translate(center.x, center.y);
-  ctx.rotate(ro);
-  ctx.translate(-center.x, -center.y);
-
   ctx.strokeStyle = color.formatHex();
   ctx.lineWidth = thickness;
-  ctx.strokeRect(rect.xmin, rect.ymin, rect.width, rect.height);
+
+  const vs = rect.vertices;
+  console.log(vs.length);
+
+  ctx.beginPath();
+  ctx.moveTo(vs[0].x, vs[0].y);
+  ctx.lineTo(vs[1].x, vs[1].y);
+  ctx.lineTo(vs[2].x, vs[2].y);
+  ctx.lineTo(vs[3].x, vs[3].y);
+  ctx.lineTo(vs[0].x, vs[0].y);
+
+  ctx.closePath();
+  ctx.stroke();
   ctx.restore();
 }
