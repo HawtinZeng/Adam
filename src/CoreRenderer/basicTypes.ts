@@ -31,7 +31,7 @@ export type DrawingElement = {
   scale: Point;
   imgSrc?: URL;
 
-  polygons: Flatten.Polygon[]; // stroke outline, intersect
+  polygons: Flatten.Polygon[]; // stroke outline, intersect，the first point locates at the top left.
   eraserPolygons: Flatten.Polygon[]; // stroke exclusion
 };
 

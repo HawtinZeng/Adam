@@ -42,3 +42,19 @@ export function cloneDeepGenId<T extends HasId>(e: T) {
   createdE.id = nanoid();
   return createdE;
 }
+
+export function calculateNormalVector(
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number
+) {
+  let dx = x2 - x1;
+  let dy = y2 - y1;
+  // Left normal
+  let leftNormal = { x: -dy, y: dx };
+  // Right normal
+  let rightNormal = { x: dy, y: -dx };
+
+  return { leftNormal, rightNormal };
+}

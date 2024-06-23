@@ -243,7 +243,7 @@ export function MainMenu() {
 
   const checkHit = useCallback(
     (e: MouseEvent) => {
-      console.time("hit stroke...");
+      // console.time("hit stroke...");
       for (let i = sceneState.elements.length - 1; i >= 0; i--) {
         const ele = sceneState.elements[i];
         const isHit = ptIsContained(
@@ -252,11 +252,11 @@ export function MainMenu() {
           new Flatten.Point(e.clientX, e.clientY)
         );
         if (isHit) {
-          console.timeEnd("hit stroke...");
+          // console.timeEnd("hit stroke...");
           return true;
         }
       }
-      console.timeEnd("hit stroke...");
+      // console.timeEnd("hit stroke...");
     },
     [sceneState.elements]
   );

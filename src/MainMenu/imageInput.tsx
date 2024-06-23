@@ -134,13 +134,7 @@ export function ImageInput() {
         isAssignSecPt.current = false;
         const img = s.updatingElements[0].ele as ImageElement;
 
-        const bbx = new Box(
-          img.points[0].x,
-          img.points[0].y + img.originalHeight * img.scale.y,
-          img.points[0].x + img.originalWidth * img.scale.x,
-          img.points[0].y
-        );
-        img.polygons[0] = new Polygon(bbx).rotate(img.rotation);
+        img.polygons[0] = getBoundryPoly(img);
 
         s.elements.push(img);
         s.updatingElements.length = 0;
@@ -251,4 +245,15 @@ export function ImageInput() {
       ) : null}
     </>
   );
+}
+
+export function getBoundryPoly(img: ImageElement) {
+  const pos = img.position;
+  const xmin = Math.min(pos.x, pos.x + img.originalWidth * img.scale.x);
+  const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
+  const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
+  const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
+  const bbx = new Box(xmin, ymin, xmax, ymax);
+
+  return new Polygon(bbx).rotate(img.rotation, bbx.center);
 }

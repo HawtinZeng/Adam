@@ -1,4 +1,4 @@
-import { Box, Point as PointF, Polygon, Vector } from "@flatten-js/core";
+import { Point as PointF, Polygon, Vector } from "@flatten-js/core";
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
@@ -12,7 +12,7 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import { Degree, DrawingElement, Point } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
@@ -138,11 +138,15 @@ export function renderDrawCanvas(
       const img = u.ele as ImageElement;
       redrawAllEles(appCtx, appCanvas, elements, u.ele);
 
-      const handles = new Transform2DOperator(img.polygons[0], img.rotation);
+      const handles = new Transform2DOperator(
+        img.polygons[0],
+        img.rotation,
+        appCtx
+      );
       u.handles = handles;
 
       const cornerPolygon = new Polygon(
-        handles.polygon.vertices.filter((_, idx) => idx % 2 === 0)
+        handles.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
       );
 
       drawRectBorder(
@@ -436,15 +440,14 @@ function drawText(
 function drawSvgPathOnCanvas(
   ctx: CanvasRenderingContext2D,
   svgPathData: string,
-  color: d3c.Color,
-  ro: Degree
+  color: d3c.Color
 ) {
   ctx.save();
-  ctx.rotate(ro);
+
   const path = new Path2D(svgPathData);
-  // path
   ctx.fillStyle = color.formatHex();
   ctx.fill(path);
+
   ctx.restore();
 }
 
@@ -518,14 +521,9 @@ function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
       translate: [h.box.center.x - 10, h.box.center.y - 10],
     });
     if (k === TransformHandle.ro) {
-      drawSvgPathOnCanvas(
-        ctx,
-        rotationIcon.toString(),
-        op.borderColor,
-        op.rotation
-      );
+      drawSvgPathOnCanvas(ctx, rotationIcon.toString(), op.borderColor);
     } else {
-      drawRect(ctx, h.box, op.fillColor, op.rotation);
+      drawRectFill(ctx, h, op.fillColor);
       drawRectBorder(ctx, h, op.borderColor, op.border);
       // if (debugShowHandlesPosition) {
       //   drawText(ctx, h.center, `x: ${h.center.x}, y: ${h.center.y}`);
@@ -534,17 +532,26 @@ function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
   });
 }
 
-function drawRect(
+function drawRectFill(
   ctx: CanvasRenderingContext2D,
-  rect: Box,
-  color: d3c.Color,
-  ro: Degree
+  rect: Polygon,
+  color: d3c.Color
 ) {
   ctx.save();
-  ctx.rotate(ro);
 
+  const vs = rect.vertices;
   ctx.fillStyle = color.formatHex();
-  ctx.fillRect(rect.xmin, rect.ymin, rect.width, rect.height);
+
+  ctx.beginPath();
+  ctx.moveTo(vs[0].x, vs[0].y);
+  ctx.lineTo(vs[1].x, vs[1].y);
+  ctx.lineTo(vs[2].x, vs[2].y);
+  ctx.lineTo(vs[3].x, vs[3].y);
+  ctx.lineTo(vs[0].x, vs[0].y);
+  ctx.closePath();
+
+  ctx.fill();
+
   ctx.restore();
 }
 
@@ -560,7 +567,6 @@ function drawRectBorder(
   ctx.lineWidth = thickness;
 
   const vs = rect.vertices;
-  console.log(vs.length);
 
   ctx.beginPath();
   ctx.moveTo(vs[0].x, vs[0].y);
@@ -571,5 +577,27 @@ function drawRectBorder(
 
   ctx.closePath();
   ctx.stroke();
+  ctx.restore();
+}
+
+export function drawPolygonPointIndex(
+  ctx: CanvasRenderingContext2D,
+  polygon: Polygon
+) {
+  ctx.save();
+
+  ctx.beginPath();
+  ctx.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
+  polygon.vertices.forEach((pt, i) => {
+    ctx.lineTo(pt.x, pt.y);
+    const fontSize = 20;
+    const fontStyle = "Arial";
+    ctx.fillStyle = "red";
+    ctx.font = `${fontSize}px ${fontStyle}`;
+    ctx.fillText(`${i}`, pt.x, pt.y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
   ctx.restore();
 }

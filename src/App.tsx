@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import Flatten, { Box, Line, Point as PointF, Polygon } from "@flatten-js/core";
+import Flatten, { Line, Point as PointF, Vector } from "@flatten-js/core";
+import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep } from "lodash";
@@ -10,7 +11,7 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import { redrawAllEles } from "src/CoreRenderer/DrawCanvas/core";
+import { redrawAllEles, rotate } from "src/CoreRenderer/DrawCanvas/core";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
   DrawingElement,
@@ -22,6 +23,7 @@ import {
   ImageElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs } from "src/MainMenu";
+import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
@@ -41,6 +43,55 @@ import { setTransparent } from "./commonUtils";
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = true;
 const showDebugPanel = true;
+// @ts-ignore
+window.al = al;
+function eliminateOriginChange(
+  el: DrawingElement,
+  oldOrigin: PointF,
+  newOrigin: PointF
+) {
+  const pos = el.position;
+  /**
+   * 
+  [
+    (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle) + cx,
+    (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
+  ];
+   */
+
+  const finalPos = rotate(pos.x, pos.y, oldOrigin.x, oldOrigin.y, el.rotation);
+  const eq = al.parse(
+    `(x - (${newOrigin.x})) * (${Math.cos(el.rotation)}) - (y - (${
+      newOrigin.y
+    })) * (${Math.sin(el.rotation)}) + (${newOrigin.x}) = (${finalPos[0]})`
+  ) as al.Equation;
+  // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  // const x2 = al.parse(
+  //   `(x - ${newOrigin.x}) * ${Math.sin(el.rotation)} - (y - ${
+  //     newOrigin.y
+  //   }) * ${Math.cos(el.rotation)} + ${newOrigin.y} = ${finalPos[1]}`
+  // ) as al.Equation;
+
+  // var xAnswer = x1.solveFor("x");
+  let xAnswer: string = (eq.lhs._hasVariable("x") &&
+    eq.solveFor("x")?.toString()) as string;
+
+  const eq2 = al.parse(
+    `((${xAnswer}) - (${newOrigin.x})) * (${Math.sin(el.rotation)}) - (y - (${
+      newOrigin.y
+    })) * (${Math.cos(el.rotation)}) + (${newOrigin.y}) = (${finalPos[1]})`
+  ) as al.Equation;
+
+  const yAnswer = eq2.solveFor("y");
+  const xAns = (al.parse(xAnswer) as al.Expression).eval({
+    y: yAnswer,
+  });
+
+  console.log("y = " + eval(yAnswer?.toString()!));
+  console.log("x = " + eval(xAns?.toString()));
+}
+
 function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
@@ -56,7 +107,6 @@ function App() {
     originalHandles?: Transform2DOperator;
     originalPt?: Point;
     originalRotation?: number;
-    originalPols?: Polygon[];
   } | null>(null);
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
@@ -221,13 +271,7 @@ function App() {
           y: originalPt!.y + offset.y,
         };
 
-        const bbx = new Box(
-          img.position.x,
-          img.position.y + img.originalHeight * img.scale.y,
-          img.position.x + img.originalWidth * img.scale.x,
-          img.position.y
-        );
-        img.polygons[0] = new Polygon(bbx).rotate(img.rotation, bbx.center);
+        img.polygons[0] = getBoundryPoly(img);
 
         setSceneData({ ...sceneData });
         return;
@@ -242,7 +286,6 @@ function App() {
         dragInfo.current.originalScale!,
         dragInfo.current.originalHandles!,
         dragInfo.current.originalRotation!,
-        dragInfo.current.originalPols!,
       ];
       let [diffX, diffY] = [x - startX, y - startY];
       const [el, dir] = currentHandle.current!;
@@ -277,13 +320,7 @@ function App() {
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
             i.rotation = deltaRotation + originalRotation;
 
-            const bbx = new Box(
-              i.position.x,
-              i.position.y + i.originalHeight * i.scale.y,
-              i.position.x + i.originalWidth * i.scale.x,
-              i.position.y
-            );
-            el.polygons[0] = new Polygon(bbx).rotate(el.rotation, bbx.center);
+            i.polygons[0] = getBoundryPoly(i);
           }
         }
         setSceneData({ ...sceneData });
@@ -294,19 +331,18 @@ function App() {
 
   const dragEnd = useCallback(() => {
     if (dragInfo.current) {
-      dragInfo.current = null;
       const u = sceneData.updatingElements[0];
       if (u) {
         const img = u.ele as ImageElement;
-        const bbx = new Box(
-          img.position.x,
-          img.position.y + img.originalHeight * img.scale.y,
-          img.position.x + img.originalWidth * img.scale.x,
-          img.position.y
-        );
-        img.polygons[0] = new Polygon(bbx).rotate(img.rotation, bbx.center);
+        const oldOrigin = img.polygons[0].box.center;
+        img.polygons[0] = getBoundryPoly(img);
+        const newOrigin = img.polygons[0].box.center;
+
+        eliminateOriginChange(img, oldOrigin, newOrigin);
+
         setSceneData({ ...sceneData });
       }
+      dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
 
@@ -376,6 +412,7 @@ function App() {
                 <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
                 <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
+                <div>{`handles: ${currentHandle.current?.[1]}`}</div>
               </>
             )}
           </>
@@ -403,13 +440,23 @@ function App() {
     diffX: number
   ) {
     const img = el as ImageElement;
+
     switch (dir) {
       case TransformHandle.n:
-        const h = oriHandles.handles[dir]!.box.center.y;
+        const normal = oriHandles.rect.getNormal(0);
+        const offset = new Vector(diffX, diffY);
+        const delta = offset.dot(normal);
         updatedScale.y =
-          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
+          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * delta) /
           img.originalHeight;
-        updatedPt.y = h + diffY;
+        const originalPos =
+          oriHandles.handles[TransformHandle.nw]?.box.center.clone();
+
+        const finalPos = originalPos!
+          .translate(normal.scale(delta, delta))
+          .rotate(-img.rotation, img.polygons[0].box.center);
+        updatedPt.x = finalPos.x;
+        updatedPt.y = finalPos.y;
         break;
       case TransformHandle.ne:
         const { x: neX, y: neY } = oriHandles.handles[dir]!.box.center;

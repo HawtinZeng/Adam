@@ -150,7 +150,7 @@ export async function gpuReducerSum(sumValues: TypedArray) {
 
   gpuDevice.queue.submit([encoder.finish()]);
 
-  console.time("gpuReducerSum");
+  // console.time("gpuReducerSum");
   // Finally, map and read from the CPU-readable buffer.
   return resBuffer
     .mapAsync(
@@ -164,7 +164,7 @@ export async function gpuReducerSum(sumValues: TypedArray) {
         outputStorageBuffer.size
       );
 
-      console.timeEnd("gpuReducerSum");
+      // console.timeEnd("gpuReducerSum");
       return new Int32Array(copyArrayBuffer)[0];
     });
 }
