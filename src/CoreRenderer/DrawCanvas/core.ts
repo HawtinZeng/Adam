@@ -1,4 +1,4 @@
-import { Point as PointF, Polygon, Vector } from "@flatten-js/core";
+import { Point as PointF, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {

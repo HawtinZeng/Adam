@@ -1,4 +1,4 @@
-import Flatten, { Box, Edge, Polygon } from "@flatten-js/core";
+import Flatten, { Box, Edge, Polygon } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import {
   drawPolygonPointIndex,

@@ -1,4 +1,4 @@
-import Flatten, { Polygon } from "@flatten-js/core";
+import Flatten, { Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";

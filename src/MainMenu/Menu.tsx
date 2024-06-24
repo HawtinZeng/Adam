@@ -1,4 +1,4 @@
-import { Point } from "@flatten-js/core";
+import { Point } from "@zenghawtin/graph2d";
 import { useAtom } from "jotai";
 import React, { useEffect, useRef, useState } from "react";
 import { AStrokeOptions } from "src/CoreRenderer/basicTypes";

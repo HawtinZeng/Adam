@@ -1,6 +1,6 @@
-import Flatten from "@flatten-js/core";
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
+import Flatten from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";

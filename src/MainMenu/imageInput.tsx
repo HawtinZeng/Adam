@@ -1,5 +1,5 @@
-import { Box, Polygon } from "@flatten-js/core";
 import x from "@stylexjs/stylex";
+import { Box, Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useSetAtom } from "jotai";
 import React, {
   ChangeEvent,

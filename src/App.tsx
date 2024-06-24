@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
-import Flatten, { Line, Point as PointF, Vector } from "@flatten-js/core";
+import Flatten, { Line, Point as PointF, Vector } from "@zenghawtin/graph2d";
 import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -49,16 +48,11 @@ function eliminateOriginChange(
   el: DrawingElement,
   oldOrigin: PointF,
   newOrigin: PointF
-) {
+): Point {
   const pos = el.position;
   /**
-   * 
-  [
     (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle) + cx,
-    (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
-  ];
    */
-
   const finalPos = rotate(pos.x, pos.y, oldOrigin.x, oldOrigin.y, el.rotation);
   const eq = al.parse(
     `(x - (${newOrigin.x})) * (${Math.cos(el.rotation)}) - (y - (${
@@ -66,17 +60,13 @@ function eliminateOriginChange(
     })) * (${Math.sin(el.rotation)}) + (${newOrigin.x}) = (${finalPos[0]})`
   ) as al.Equation;
   // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-  // const x2 = al.parse(
-  //   `(x - ${newOrigin.x}) * ${Math.sin(el.rotation)} - (y - ${
-  //     newOrigin.y
-  //   }) * ${Math.cos(el.rotation)} + ${newOrigin.y} = ${finalPos[1]}`
-  // ) as al.Equation;
 
-  // var xAnswer = x1.solveFor("x");
   let xAnswer: string = (eq.lhs._hasVariable("x") &&
     eq.solveFor("x")?.toString()) as string;
 
+  /**
+    (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
+   */
   const eq2 = al.parse(
     `((${xAnswer}) - (${newOrigin.x})) * (${Math.sin(el.rotation)}) - (y - (${
       newOrigin.y
@@ -88,8 +78,10 @@ function eliminateOriginChange(
     y: yAnswer,
   });
 
-  console.log("y = " + eval(yAnswer?.toString()!));
-  console.log("x = " + eval(xAns?.toString()));
+  return {
+    x: eval(xAns!.toString()),
+    y: eval(yAnswer!.toString()),
+  };
 }
 
 function App() {
@@ -334,11 +326,22 @@ function App() {
       const u = sceneData.updatingElements[0];
       if (u) {
         const img = u.ele as ImageElement;
-        const oldOrigin = img.polygons[0].box.center;
-        img.polygons[0] = getBoundryPoly(img);
-        const newOrigin = img.polygons[0].box.center;
+        const c = getBoundryPoly(img).box.center;
+        // const newOrigin = {
+        //   x: Math.round(c.x),
+        //   y: Math.round(c.y),
+        // };
 
-        eliminateOriginChange(img, oldOrigin, newOrigin);
+        const newOrigin = new PointF(c.x, c.y);
+
+        // transformPointZ(newOrigin, new Matrix3().translate());
+
+        const oldPos = new PointF(img.position.x, img.position.y);
+
+        const finalPos = oldPos.transform(newMatrix).transform(newMatrix);
+
+        let newPosX = 0,
+          newPosY = 0;
 
         setSceneData({ ...sceneData });
       }
@@ -524,6 +527,8 @@ function App() {
     }
     el.scale = updatedScale;
     el.position = updatedPt;
+
+    // el.polygons[0] = getBoundryPoly(el as ImageElement);
   }
 }
 

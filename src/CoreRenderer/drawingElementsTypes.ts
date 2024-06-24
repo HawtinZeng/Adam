@@ -1,4 +1,4 @@
-import Flatten from "@flatten-js/core";
+import Flatten from "@zenghawtin/graph2d";
 import {
   AStrokeOptions,
   DrawingElement,

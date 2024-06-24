@@ -1,4 +1,4 @@
-import Flatten from "@flatten-js/core";
+import Flatten from "@zenghawtin/graph2d";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
 import { URL } from "url";

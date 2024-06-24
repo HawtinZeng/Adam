@@ -1,3 +1,4 @@
+import { Matrix3, Point as PointZ } from "@zenghawtin/graph2d";
 import { cloneDeep } from "lodash";
 import { nanoid } from "nanoid";
 import { Point } from "src/CoreRenderer/basicTypes";
@@ -57,4 +58,16 @@ export function calculateNormalVector(
   let rightNormal = { x: dy, y: -dx };
 
   return { leftNormal, rightNormal };
+}
+
+export function transformPointZ(pt: PointZ, m: Matrix3) {
+  const x = pt.x,
+    y = pt.y,
+    z = 0;
+  const e = m.elements;
+
+  const tx = e[0] * x + e[3] * y + e[6] * z,
+    ty = e[1] * x + e[4] * y + e[7] * z;
+
+  return new PointZ(tx, ty);
 }

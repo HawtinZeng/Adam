@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import Flatten, { Polygon } from "@flatten-js/core";
+import Flatten, { Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
 import React, { useEffect, useRef } from "react";
