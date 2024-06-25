@@ -1,6 +1,6 @@
 import { computePosition, flip } from "@floating-ui/dom";
 import stylex from "@stylexjs/stylex";
-import Flatten from "@zenghawtin/graph2d";
+import { Point as PointZ } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -249,7 +249,7 @@ export function MainMenu() {
         const isHit = ptIsContained(
           ele.polygons,
           ele.eraserPolygons,
-          new Flatten.Point(e.clientX, e.clientY)
+          new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
           // console.timeEnd("hit stroke...");

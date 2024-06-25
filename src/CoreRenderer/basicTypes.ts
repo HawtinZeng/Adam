@@ -1,4 +1,10 @@
-import Flatten from "@zenghawtin/graph2d";
+import {
+  Circle,
+  Face,
+  ORIENTATION,
+  Point as PointZ,
+  Polygon,
+} from "@zenghawtin/graph2d";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
 import { URL } from "url";
@@ -31,8 +37,8 @@ export type DrawingElement = {
   scale: Point;
   imgSrc?: URL;
 
-  polygons: Flatten.Polygon[]; // stroke outline, intersect，the first point locates at the top left.
-  eraserPolygons: Flatten.Polygon[]; // stroke exclusion
+  polygons: Polygon[]; // stroke outline, intersect，the first point locates at the top left.
+  eraserPolygons: Polygon[]; // stroke exclusion
 };
 
 export type DomElement = {
@@ -67,14 +73,14 @@ export type AStrokeOptions = StrokeOptions & {
   strokeColor?: string;
 };
 export function isContained(
-  polygons: Flatten.Polygon[],
-  eraserCircle: Flatten.Circle,
+  polygons: Polygon[],
+  eraserCircle: Circle,
   excludeHoles: boolean = false
 ) {
   const solidsAndHoles = partition(polygons, (poly) => {
-    const f = [...poly.faces][0] as Flatten.Face;
+    const f = [...poly.faces][0] as Face;
 
-    return f.orientation() === Flatten.ORIENTATION.CCW;
+    return f.orientation() === ORIENTATION.CCW;
   });
 
   const outer = solidsAndHoles[0][0];
@@ -98,9 +104,9 @@ export function isContained(
 }
 
 export function ptIsContained(
-  incPolygons: Flatten.Polygon[],
-  excPolygons: Flatten.Polygon[],
-  pt: Flatten.Point
+  incPolygons: Polygon[],
+  excPolygons: Polygon[],
+  pt: PointZ
 ) {
   if (!incPolygons || !excPolygons) return;
   for (let i = 0; i < excPolygons.length; i++) {

@@ -1,4 +1,5 @@
-import Flatten, { Line, Point as PointF, Vector } from "@zenghawtin/graph2d";
+import { Button } from "@mui/material";
+import { Circle, Line, Point as PointZ, Vector } from "@zenghawtin/graph2d";
 import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -10,7 +11,11 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import { redrawAllEles, rotate } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  drawCircle,
+  redrawAllEles,
+  rotate,
+} from "src/CoreRenderer/DrawCanvas/core";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
   DrawingElement,
@@ -46,8 +51,8 @@ const showDebugPanel = true;
 window.al = al;
 function eliminateOriginChange(
   el: DrawingElement,
-  oldOrigin: PointF,
-  newOrigin: PointF
+  oldOrigin: PointZ,
+  newOrigin: PointZ
 ): Point {
   const pos = el.position;
   /**
@@ -177,7 +182,7 @@ function App() {
         const isHit = ptIsContained(
           ele.polygons,
           ele.eraserPolygons,
-          new Flatten.Point(e.clientX, e.clientY)
+          new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
           dragStart(e, ele);
@@ -190,7 +195,12 @@ function App() {
           };
           sceneData.updatingElements[0] = updating;
           setSceneData({ ...sceneData });
+          // @ts-ignore
+          window.clickedEle = ele;
           return;
+        } else {
+          // @ts-ignore
+          window.clickedEle = null;
         }
       }
       sceneData.updatingElements = [];
@@ -212,7 +222,7 @@ function App() {
             const isHit = ptIsContained(
               [operator.handles[handles[handleIdx]]!],
               [],
-              new Flatten.Point(e.clientX, e.clientY)
+              new PointZ(e.clientX, e.clientY)
             );
 
             if (isHit) {
@@ -228,7 +238,7 @@ function App() {
         const isHit = ptIsContained(
           u.ele.polygons.map((p) => p.rotate(u.ele.rotation, p.box.center)),
           u.ele.eraserPolygons,
-          new Flatten.Point(e.clientX, e.clientY)
+          new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
           setCursorSvg("move");
@@ -248,7 +258,6 @@ function App() {
   const dragMove = useCallback(
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
-
       // move
       const { type, startPos, originalPt } = dragInfo.current;
       if (type === "move") {
@@ -271,6 +280,7 @@ function App() {
 
       // transform
       if (!currentHandle.current) return;
+
       const [x, y] = [e.clientX, e.clientY];
       const [startX, startY, oriScale, oriHandles, originalRotation] = [
         dragInfo.current.startPos.x,
@@ -286,7 +296,7 @@ function App() {
         const updatedPt = { x: el.position.x, y: el.position.y };
         if (dir !== TransformHandle.ro) {
           if (el.type === DrawingType.img) {
-            transformImg(
+            scalingImg(
               el,
               dir,
               oriHandles,
@@ -305,10 +315,10 @@ function App() {
             const i = el as ImageElement;
             const rotationCenter = i.polygons[0].box.center;
             const originalLine = new Line(
-              new PointF(startX, startY),
+              new PointZ(startX, startY),
               rotationCenter
             );
-            const currentLine = new Line(new PointF(x, y), rotationCenter);
+            const currentLine = new Line(new PointZ(x, y), rotationCenter);
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
             i.rotation = deltaRotation + originalRotation;
 
@@ -318,30 +328,35 @@ function App() {
         setSceneData({ ...sceneData });
       }
     },
-    [sceneData, setSceneData, transformImg]
+    [sceneData, setSceneData, scalingImg]
   );
 
   const dragEnd = useCallback(() => {
     if (dragInfo.current) {
       const u = sceneData.updatingElements[0];
       if (u) {
-        const img = u.ele as ImageElement;
-        const c = getBoundryPoly(img).box.center;
-        // const newOrigin = {
-        //   x: Math.round(c.x),
-        //   y: Math.round(c.y),
-        // };
+        // c = getBoundryPoly(img).box.center,
+        // newOrigin = new PointZ(c.x, c.y);
 
-        const newOrigin = new PointF(c.x, c.y);
+        // const oldPos = new PointZ(img.position.x, img.position.y);
 
-        // transformPointZ(newOrigin, new Matrix3().translate());
+        // const oldOrigin = img.polygons[0].box.center;
+        // // transformPointZ(newOrigin, new Matrix3().translate());
+        // const nM = new Matrix3()
+        //   .translate(-newOrigin.x, -newOrigin.y)
+        //   .scale(img.scale.x, img.scale.y)
+        //   .rotate(img.rotation);
 
-        const oldPos = new PointF(img.position.x, img.position.y);
+        // nM.invert();
 
-        const finalPos = oldPos.transform(newMatrix).transform(newMatrix);
+        // const oM = new Matrix3()
+        //   .translate(-oldOrigin.x, -oldOrigin.y)
+        //   .scale(img.scale.x, img.scale.y)
+        //   .rotate(img.rotation);
 
-        let newPosX = 0,
-          newPosY = 0;
+        // console.log(nM.clone().multiply(oM));
+
+        // img.position = transformPointZ(transformPointZ(oldPos, oM), nM);
 
         setSceneData({ ...sceneData });
       }
@@ -367,10 +382,9 @@ function App() {
   useEffect(() => {
     const div = canvasEventTrigger.current!;
     div.addEventListener("mousedown", detectElesInterceted);
-    div.addEventListener("mousedown", dragStart);
 
-    div.addEventListener("mouseup", dragEnd);
     div.addEventListener("mousedown", dragStart);
+    div.addEventListener("mouseup", dragEnd);
 
     div.addEventListener("mousemove", detectHandles);
     div.addEventListener("mousemove", dragMove);
@@ -416,6 +430,20 @@ function App() {
                 <div>{`elements: ${sceneData.elements.length}`}</div>
                 <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
                 <div>{`handles: ${currentHandle.current?.[1]}`}</div>
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => {
+                    // @ts-ignore
+
+                    window.snapshots = window.snapshots ? window.snapshots : [];
+                    // @ts-ignore
+                    window.snapshots.push(cloneDeep(sceneData.elements));
+                  }}
+                >
+                  保存
+                </Button>
               </>
             )}
           </>
@@ -432,7 +460,7 @@ function App() {
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  function transformImg(
+  function scalingImg(
     el: DrawingElement,
     dir: string,
     oriHandles: Transform2DOperator,
@@ -443,7 +471,8 @@ function App() {
     diffX: number
   ) {
     const img = el as ImageElement;
-
+    let finalPos: PointZ | undefined;
+    let newOrigin: PointZ | undefined;
     switch (dir) {
       case TransformHandle.n:
         const normal = oriHandles.rect.getNormal(0);
@@ -455,11 +484,11 @@ function App() {
         const originalPos =
           oriHandles.handles[TransformHandle.nw]?.box.center.clone();
 
-        const finalPos = originalPos!
-          .translate(normal.scale(delta, delta))
-          .rotate(-img.rotation, img.polygons[0].box.center);
-        updatedPt.x = finalPos.x;
-        updatedPt.y = finalPos.y;
+        const translationVec = normal.scale(delta, delta);
+        finalPos = originalPos!.translate(translationVec);
+        newOrigin = img.polygons[0].box.center.translate(
+          translationVec.scale(0.5, 0.5)
+        );
         break;
       case TransformHandle.ne:
         const { x: neX, y: neY } = oriHandles.handles[dir]!.box.center;
@@ -525,10 +554,41 @@ function App() {
         if (Math.sign(oriScale.y) > 0) updatedPt.y = nwY + diffY;
         break;
     }
-    el.scale = updatedScale;
-    el.position = updatedPt;
 
-    // el.polygons[0] = getBoundryPoly(el as ImageElement);
+    const originalPos = finalPos!.rotate(-img.rotation, newOrigin);
+    drawCircle(null, new Circle(newOrigin!, 10));
+    // drawCircle(null, new Circle(finalPos!, 10));
+    // drawCircle(null, new Circle(originalPos, 10), "green");
+
+    img.position = { x: originalPos.x, y: originalPos.y };
+    img.scale = updatedScale;
+    // img.polygons[0] = getBoundryPoly(img);
+
+    // drawCircle(null, new Circle(newOrigin, 10), "green");
+
+    // const rc = c.rotate(el.rotation, newOrigin);
+    // drawCircle(null, new Circle(finalPos!, 10));
+    // drawCircle(null, new Circle(newOrigin!, 10), "green");
+
+    // transformPointZ(newOrigin, new Matrix3().translate());
+    // const nM = new Matrix3()
+    //   .translate(-newOrigin.x, -newOrigin.y)
+    //   .rotate(-img.rotation)
+    //   .translate(newOrigin.x, newOrigin.y);
+    // const realNM = nM.clone();
+
+    // nM.invert();
+
+    // const oM = new Matrix3()
+    //   .translate(-oldOrigin.x, -oldOrigin.y)
+    //   .rotate(-img.rotation)
+    //   .translate(oldOrigin.x, oldOrigin.y);
+
+    // const correctedPos = transformPointZ(transformPointZ(oldPos, oM), nM);
+    // const transformedPos = transformPointZ(correctedPos, realNM);
+
+    // drawCircle(null, new Circle(transformedPos, 10), "green");
+    // img.position = correctedPos;
   }
 }
 

@@ -1,5 +1,6 @@
 import x from "@stylexjs/stylex";
-import { Box, Polygon } from "@zenghawtin/graph2d";
+import { Box, Circle, Polygon } from "@zenghawtin/graph2d";
+import * as d3c from "d3-color";
 import { useAtom, useSetAtom } from "jotai";
 import React, {
   ChangeEvent,
@@ -9,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import { ReactSVG } from "react-svg";
+import { drawCircle, drawRectBorder } from "src/CoreRenderer/DrawCanvas/core";
 import {
   ImageElement,
   newImgElement,
@@ -249,11 +251,15 @@ export function ImageInput() {
 
 export function getBoundryPoly(img: ImageElement) {
   const pos = img.position;
+
   const xmin = Math.min(pos.x, pos.x + img.originalWidth * img.scale.x);
   const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
   const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
   const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
   const bbx = new Box(xmin, ymin, xmax, ymax);
+
+  drawRectBorder(null, new Polygon(bbx), d3c.rgb("#ffff00"), 2);
+  drawCircle(null, new Circle(new Polygon(bbx).box.center, 10), "#ffff00");
 
   return new Polygon(bbx).rotate(img.rotation, bbx.center);
 }

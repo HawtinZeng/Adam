@@ -63,7 +63,7 @@ export function calculateNormalVector(
 export function transformPointZ(pt: PointZ, m: Matrix3) {
   const x = pt.x,
     y = pt.y,
-    z = 0;
+    z = 1;
   const e = m.elements;
 
   const tx = e[0] * x + e[3] * y + e[6] * z,

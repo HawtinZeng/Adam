@@ -3223,10 +3223,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zenghawtin/graph2d@1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@zenghawtin/graph2d/-/graph2d-1.1.2.tgz#fff14ddd8605ecc36eef9e5c214d5b0d330049bb"
-  integrity sha512-qCzqBlwn14VWCKUKWTaQEMgWE+mdeJAideCOYAUsiv0YjD9vT6Bs8vaN4O6Qtn8Qdge+4aGtCad8WvIP8Jq5OQ==
+"@zenghawtin/graph2d@^1.1.5":
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/@zenghawtin/graph2d/-/graph2d-1.1.5.tgz#a2d215e11b1747f59272b0cb93d291a4f40a0680"
+  integrity sha512-kWLe1I45U1pYh+yk9uPRiZETp9WIpBoF/3vj3WzUYV9zalpQ8hdy/XotcqfXrDeQFIobhi57mI47bCITqpDoRA==
   dependencies:
     "@flatten-js/interval-tree" "^1.0.21"
 

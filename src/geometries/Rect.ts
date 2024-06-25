@@ -1,4 +1,4 @@
-import Flatten from "@zenghawtin/graph2d";
+import { Line } from "@zenghawtin/graph2d";
 
 export class Rect {
   polygon: Flatten.Polygon;
@@ -8,7 +8,7 @@ export class Rect {
   getNormal(edgeIdx: number) {
     const currentPoint = this.polygon.vertices[edgeIdx];
     const nextPoint = this.polygon.vertices[(edgeIdx + 1) % 4];
-    const l = new Flatten.Line(currentPoint, nextPoint);
+    const l = new Line(currentPoint, nextPoint);
 
     return l.norm;
   }

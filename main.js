@@ -8,6 +8,7 @@ const { ipcMain } = require("electron");
 const { app, BrowserWindow } = require("electron/main");
 const path = require("path");
 const isDev = import("electron-is-dev");
+
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
   const win = new BrowserWindow({

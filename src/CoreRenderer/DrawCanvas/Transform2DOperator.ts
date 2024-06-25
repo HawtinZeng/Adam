@@ -1,10 +1,10 @@
-import Flatten, { Box, Edge, Polygon } from "@zenghawtin/graph2d";
+import { Box, Edge, Point, Polygon } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import {
   drawPolygonPointIndex,
   rotate,
 } from "src/CoreRenderer/DrawCanvas/core";
-import { Degree, Point } from "src/CoreRenderer/basicTypes";
+import { Degree } from "src/CoreRenderer/basicTypes";
 import { Rect } from "src/geometries/Rect";
 export enum TransformHandle {
   n = "n",
@@ -73,7 +73,7 @@ export class Transform2DOperator {
     this.rect = new Rect(pol.clone());
 
     [...this.rect.polygon.edges].forEach((e: Edge) => {
-      const midPt = new Flatten.Point(
+      const midPt = new Point(
         (e.start.x + e.end.x) / 2,
         (e.start.y + e.end.y) / 2
       );

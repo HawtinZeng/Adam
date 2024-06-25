@@ -75,6 +75,10 @@ export function renderDrawCanvas(
   appCanvas: HTMLCanvasElement
 ) {
   const appCtx = appCanvas.getContext("2d")!;
+
+  if (appCtx) globalAppCtx = appCtx;
+  if (appCanvas) globalCvs = appCanvas;
+
   const groupedElements = groupBy<UpdatingElement>(
     sceneData.updatingElements,
     (up) => up.type
@@ -226,8 +230,6 @@ export function redrawAllEles(
   elements: DrawingElement[],
   u?: DrawingElement
 ) {
-  if (appCtx) globalAppCtx = appCtx;
-  if (appCanvas) globalCvs = appCanvas;
   if (!globalAppCtx || !globalCvs) {
     console.error("globalAppCtx or globalCvs is not initialized");
     return;
@@ -237,6 +239,8 @@ export function redrawAllEles(
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
     if (el.type === DrawingType.img) {
       const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
+      if (!cachedCvs) return;
+
       if (el.type === "img") {
         const c = el.polygons[0]!.box.center;
         globalAppCtx!.save();
@@ -502,12 +506,14 @@ function drawStrokeLine(
 }
 
 export function drawCircle(
-  ctx: CanvasRenderingContext2D,
-  circle: Flatten.Circle
+  ctx: CanvasRenderingContext2D | null,
+  circle: Flatten.Circle,
+  color?: string
 ) {
+  if (!ctx) ctx = globalAppCtx!;
   ctx.beginPath();
   ctx.arc(circle.center.x, circle.center.y, circle.r, 0, 2 * Math.PI); // Full circle
-  ctx.fillStyle = "red";
+  ctx.fillStyle = color ?? "red";
   ctx.fill();
 }
 
@@ -555,12 +561,13 @@ function drawRectFill(
   ctx.restore();
 }
 
-function drawRectBorder(
-  ctx: CanvasRenderingContext2D,
+export function drawRectBorder(
+  ctx: CanvasRenderingContext2D | null,
   rect: Polygon,
   color: d3c.Color,
   thickness: number
 ) {
+  if (!ctx) ctx = globalAppCtx!;
   ctx.save();
 
   ctx.strokeStyle = color.formatHex();

@@ -1,4 +1,4 @@
-import Flatten, { Polygon } from "@zenghawtin/graph2d";
+import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
@@ -309,9 +309,7 @@ export function getAntArea(
 
   const polygons: Polygon[] = [];
   ptsGrp.forEach((pts) => {
-    const poly = new Polygon(
-      pts.points.map((pt) => new Flatten.Point(pt.x, pt.y))
-    );
+    const poly = new Polygon(pts.points.map((pt) => new PointZ(pt.x, pt.y)));
     polygons.push(poly);
   });
   return polygons;
