@@ -38,6 +38,7 @@ export const DraggableTransparent = forwardRef(
       horizontal?: boolean;
       needBorder?: boolean;
       needPadding?: boolean;
+      customCls?: string;
     },
     ref: Ref<HTMLElement>
   ) => {
@@ -71,7 +72,7 @@ export const DraggableTransparent = forwardRef(
             isDragging = false;
           }
         }}
-        defaultClassName="draggable"
+        defaultClassName={props.customCls ?? "draggable"}
         defaultPosition={defaultPosition}
       >
         <div

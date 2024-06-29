@@ -14,6 +14,7 @@ import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanel } from "src/ShapePanel/index";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
+import { logger } from "src/setup";
 import { sceneAtom } from "src/state/sceneState";
 import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
@@ -243,7 +244,6 @@ export function MainMenu() {
 
   const checkHit = useCallback(
     (e: MouseEvent) => {
-      // console.time("hit stroke...");
       for (let i = sceneState.elements.length - 1; i >= 0; i--) {
         const ele = sceneState.elements[i];
         const isHit = ptIsContained(
@@ -252,7 +252,7 @@ export function MainMenu() {
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
-          // console.timeEnd("hit stroke...");
+          logger.log("hit");
           return true;
         }
       }

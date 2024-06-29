@@ -85,8 +85,8 @@ export function ImageInput() {
         len - 1
       ] as HTMLElement;
       if (el) {
-        el.style.left = e.clientX + 30 + "px";
-        el.style.top = e.clientY + 30 + "px";
+        el.style.left = e.clientX + 15 + "px";
+        el.style.top = e.clientY + 15 + "px";
       }
 
       const updating = s.updatingElements[0];
@@ -152,25 +152,6 @@ export function ImageInput() {
     [cur, cvsEle, s.updatingElements, s.elements, setSelectedKey]
   );
 
-  const handleEscDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedKey(-1);
-      }
-    },
-    [setSelectedKey]
-  );
-
-  const handleDelDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Delete") {
-        s.updatingElements.forEach((u) => (u.type = "delete"));
-        ss({ ...s });
-      }
-    },
-    [s, ss]
-  );
-
   useEffect(() => {
     window.addEventListener("mousedown", handleMouseDown);
     window.addEventListener("mousemove", updateDraggableItemPos);
@@ -196,15 +177,6 @@ export function ImageInput() {
       window.removeEventListener("mousemove", updateDraggableItemPos);
     };
   }, [handleMouseDown, updateDraggableItemPos]);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleEscDown);
-    window.addEventListener("keydown", handleDelDown);
-    return () => {
-      window.removeEventListener("keydown", handleEscDown);
-      window.removeEventListener("keydown", handleDelDown);
-    };
-  }, [handleEscDown, handleDelDown]);
 
   return (
     <>

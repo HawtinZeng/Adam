@@ -3,7 +3,7 @@ import { useAtomValue } from "jotai";
 import React from "react";
 import { NotePanel } from "src/NotePanel";
 import { sceneAtom } from "src/state/sceneState";
-const dom = styleX.create({
+export const dom = styleX.create({
   fixed: {
     position: "fixed",
     display: "flex",

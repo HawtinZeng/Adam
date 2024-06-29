@@ -34,11 +34,12 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
+import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
+import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
-import { setup } from "src/setup";
 import { sceneAtom } from "src/state/sceneState";
 import {
   brushRadius,
@@ -53,7 +54,9 @@ import { setTransparent } from "./commonUtils";
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = true;
 const showDebugPanel = true;
+
 // @ts-ignore
+
 window.al = al;
 function eliminateOriginChange(
   el: DrawingElement,
@@ -95,6 +98,15 @@ function eliminateOriginChange(
   };
 }
 
+function isBevelHandle(hand: TransformHandle) {
+  return [
+    TransformHandle.ne,
+    TransformHandle.nw,
+    TransformHandle.se,
+    TransformHandle.sw,
+  ].includes(hand);
+}
+
 function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
@@ -103,6 +115,8 @@ function App() {
   const [selectedKey] = useAtom(selectedKeyAtom);
   const [sceneData, setSceneData] = useAtom(sceneAtom);
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
+  const isShowShiftTip = useRef<boolean>(false);
+  const [currentKeyboard] = useKeyboard();
   const dragInfo = useRef<{
     type: "move" | "resize" | "rotate";
     startPos: Point;
@@ -246,6 +260,9 @@ function App() {
 
             if (isHit) {
               setCursorSvg(operator.cursorStyle[handleOperator[handleIdx]]);
+
+              isShowShiftTip.current = isBevelHandle(handleOperator[handleIdx]);
+
               currentHandle.current = [u.ele, handleOperator[handleIdx]];
               // console.log(handleOperator[handleIdx]);hovered handle location
               return;
@@ -253,6 +270,7 @@ function App() {
           }
         }
         currentHandle.current = null;
+        isShowShiftTip.current = false;
 
         const isHit = ptIsContained(
           u.ele.polygons.map((p) => p.rotate(u.ele.rotation, p.box.center)),
@@ -380,7 +398,10 @@ function App() {
 
   const deleteEle = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Backspace" && sceneData.updatingElements.length > 0) {
+      if (
+        (e.key === "Backspace" || e.key === "Delete") &&
+        sceneData.updatingElements.length > 0
+      ) {
         sceneData.updatingElements.forEach((u) => {
           const el = u.ele;
           const i = sceneData.elements.findIndex((e) => e === el);
@@ -442,7 +463,13 @@ function App() {
   }, [setTriggerAtom]);
 
   const mousePos = useMousePosition();
-
+  function updateMouseTipPosition(e: MouseEvent) {
+    const el = document.getElementsByClassName("shiftTip")[0] as HTMLElement;
+    if (el) {
+      el.style.left = e.clientX + 15 + "px";
+      el.style.top = e.clientY + 15 + "px";
+    }
+  }
   useEffect(() => {
     const div = canvasEventTrigger.current!;
     div.addEventListener("mousedown", detectElesInterceted);
@@ -454,8 +481,8 @@ function App() {
 
     div.addEventListener("mousemove", detectHandles);
     div.addEventListener("mousemove", dragMove);
+    div.addEventListener("mousemove", updateMouseTipPosition);
 
-    setup();
     return () => {
       div.removeEventListener("mousedown", detectElesInterceted);
       div.removeEventListener("mousedown", dragStart);
@@ -465,6 +492,7 @@ function App() {
 
       div.removeEventListener("mousemove", detectHandles);
       div.removeEventListener("mousemove", dragMove);
+      div.addEventListener("mousemove", updateMouseTipPosition);
     };
   }, [
     detectElesInterceted,
@@ -520,6 +548,16 @@ function App() {
                   保存到window.snapshots
                 </Button>
               </>
+            )}
+            {isShowShiftTip.current && (
+              <DraggableTransparent
+                horizontal={true}
+                needBorder={true}
+                needPadding={true}
+                customCls="shiftTip"
+              >
+                按住Shift键锁定比例
+              </DraggableTransparent>
             )}
           </>
         ),

@@ -305,12 +305,12 @@ export function getAntArea(
     label: number;
     points: Point[];
     initialCount: number;
-  }>; // CCW是外轮廓，CW是洞
+  }>; // CW是外轮廓，CWW是洞
 
   const polygons: Polygon[] = [];
   ptsGrp.forEach((pts) => {
     const poly = new Polygon(pts.points.map((pt) => new PointZ(pt.x, pt.y)));
-    polygons.push(poly);
+    polygons.push(poly.reverse());
   });
   return polygons;
 }
@@ -325,11 +325,11 @@ function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   ctx.clearRect(0, 0, imageInfo.width, imageInfo.height);
   //inner
   ctx.beginPath();
-  for (var i = 0; i < cs.length; i++) {
+  for (let i = 0; i < cs.length; i++) {
     if (!cs[i].inner) continue;
     var ps = cs[i].points;
     ctx.moveTo(ps[0].x, ps[0].y);
-    for (var j = 1; j < ps.length; j++) {
+    for (let j = 1; j < ps.length; j++) {
       ctx.lineTo(ps[j].x, ps[j].y);
     }
   }
@@ -338,11 +338,11 @@ function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   ctx.stroke();
   //outer
   ctx.beginPath();
-  for (var i = 0; i < cs.length; i++) {
+  for (let i = 0; i < cs.length; i++) {
     if (cs[i].inner) continue;
-    var ps = cs[i].points;
+    let ps = cs[i].points;
     ctx.moveTo(ps[0].x, ps[0].y);
-    for (var j = 1; j < ps.length; j++) {
+    for (let j = 1; j < ps.length; j++) {
       ctx.lineTo(ps[j].x, ps[j].y);
     }
   }

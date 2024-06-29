@@ -83,7 +83,7 @@ export function isContained(
   const solidsAndHoles = partition(polygons, (poly) => {
     const f = [...poly.faces][0] as Face;
 
-    return f.orientation() === ORIENTATION.CCW;
+    return f.orientation() === ORIENTATION.CW;
   });
 
   const outer = solidsAndHoles[0][0];

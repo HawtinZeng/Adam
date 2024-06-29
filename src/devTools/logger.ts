@@ -18,9 +18,9 @@ export class Logger {
 
   log(msg: string | Object) {
     if (!this.enable) return;
-
+    this.logCount += 1;
     console.log(
-      cyan(++this.logCount) +
+      cyan(this.logCount) +
         "    |    " +
         yellow(msg) +
         "    |    " +
