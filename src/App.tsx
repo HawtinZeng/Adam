@@ -314,7 +314,10 @@ function App() {
           // rotation
           if (el.type === DrawingType.img) {
             const i = el as ImageElement;
-            const rotationCenter = i.polygons[0].box.center;
+            const rotationCenter = new PointZ(
+              i.rotateOrigin.x,
+              i.rotateOrigin.y
+            );
             const originalLine = new Line(
               new PointZ(startX, startY),
               rotationCenter
@@ -391,16 +394,11 @@ function App() {
         const deltaVec = new Vector(rightBottomPt, realNewOri);
         const realNewPos = realNewOri.translate(deltaVec);
         const newPos = realNewPos.rotate(-img.rotation, newOrigin);
-        // const realNewOrigin = rotate(
-        //   newOrigin.x,
-        //   newOrigin.y,
-        //   oldOrigin.x,
-        //   oldOrigin.y,
-        //   img.rotation
-        drawAPoint(realNewPos);
-        drawAPoint(realNewPos);
-        // );
-        drawAPoint(newPos);
+
+        // todo: 检查一下为何 newOrigin 不是中心点
+        drawAPoint(newOrigin);
+        // drawAPoint(newPos);
+
         img.position = newPos;
         img.polygons[0] = getBoundryPoly(img);
       }
@@ -532,9 +530,13 @@ function App() {
         const originalPos =
           oriHandles.handles[TransformHandle.nw]?.box.center.clone();
 
+        const rotationOrigin = new PointZ(
+          img.rotateOrigin.x,
+          img.rotateOrigin.y
+        );
         const finalPos = originalPos!
           .translate(normal.scale(delta, delta))
-          .rotate(-img.rotation, img.polygons[0].box.center);
+          .rotate(-img.rotation, rotationOrigin);
         updatedPt.x = finalPos.x;
         updatedPt.y = finalPos.y;
         break;
