@@ -17,7 +17,7 @@ const options = {
   },
 
   // how long to live in ms
-  ttl: 1000 * 60 * 5,
+  ttl: 1000 * 60 * 10,
 
   // return stale items before removing from cache?
   allowStale: false,

@@ -164,8 +164,9 @@ export const potrace = function (cvs) {
   }
 
   function loadBm() {
-    var ctx = imgCanvas.getContext("2d");
+    var ctx = imgCanvas.getContext("2d", { willReadFrequently: true })!;
     bm = new Bitmap(imgCanvas.width, imgCanvas.height);
+
     var imgdataobj = ctx.getImageData(0, 0, bm.w, bm.h);
     var l = imgdataobj.data.length,
       i,

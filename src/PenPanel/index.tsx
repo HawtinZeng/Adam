@@ -4,7 +4,7 @@ import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
-import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
+import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { createDrawingCvs } from "src/CoreRenderer/DrawCanvas/core";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 import { Point } from "src/CoreRenderer/basicTypes";
@@ -94,7 +94,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         ele: newFreeElement,
         type: "addPoints",
         oriImageData: cvsEle!
-          .getContext("2d")!
+          .getContext("2d", { willReadFrequently: true })!
           .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
       };
       sceneState.updatingElements.push(newEleUpdating);
@@ -250,7 +250,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         cvs = createDrawingCvs(drawingEle, cvsEle!)!;
       }
 
-      const ctx = cvs.getContext("2d")!;
+      const ctx = cvs.getContext("2d", { willReadFrequently: true })!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theFirstPt = drawingEle.points[0];
 

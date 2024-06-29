@@ -126,7 +126,7 @@ export function ImageInput() {
           type: "addImg",
           ele: imgEle,
           oriImageData: cvsEle!
-            .getContext("2d")!
+            .getContext("2d", { willReadFrequently: true })!
             .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
         };
         s.updatingElements[0] = updating;

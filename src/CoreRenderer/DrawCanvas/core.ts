@@ -7,11 +7,11 @@ import {
   getStrokePoints,
 } from "perfect-freehand";
 import { debugShowEleId, debugShowHandlesPosition } from "src/App";
-import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/DrawingCanvas";
 import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
+import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -140,8 +140,6 @@ export function renderDrawCanvas(
   groupedElements.transform?.forEach((u) => {
     if (u.ele.type === DrawingType.img) {
       const img = u.ele as ImageElement;
-      redrawAllEles(appCtx, appCanvas, elements, u.ele);
-
       const handleOperator = new Transform2DOperator(
         img.polygons[0],
         img.rotation,
@@ -149,19 +147,28 @@ export function renderDrawCanvas(
         Math.sign(u.ele.scale.y) === -1
       );
       u.handleOperator = handleOperator;
+      function drawCurrentUpdatingHandle() {
+        const cornerPolygon = new Polygon(
+          handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
+        );
 
-      const cornerPolygon = new Polygon(
-        handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
-      );
+        drawRectBorder(
+          appCtx,
+          cornerPolygon,
+          handleOperator.borderColor,
+          handleOperator.border
+        );
 
-      drawRectBorder(
+        drawHandles(handleOperator, appCtx, img);
+      }
+
+      redrawAllEles(
         appCtx,
-        cornerPolygon,
-        handleOperator.borderColor,
-        handleOperator.border
+        appCanvas,
+        elements,
+        u.ele,
+        drawCurrentUpdatingHandle
       );
-
-      drawHandles(handleOperator, appCtx, img);
     }
   });
 }
@@ -229,7 +236,8 @@ export function redrawAllEles(
   appCtx: CanvasRenderingContext2D | undefined,
   appCanvas: HTMLCanvasElement | undefined,
   elements: DrawingElement[],
-  u?: DrawingElement
+  uE?: DrawingElement,
+  drawCurrentUpdatingHandle?: () => void
 ) {
   if (!globalAppCtx || !globalCvs) {
     console.error("globalAppCtx or globalCvs is not initialized");
@@ -238,11 +246,13 @@ export function redrawAllEles(
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
+    // If the cached canvas is reset, then create a new one.
+    if (!cachedCvs) cachedCvs = createDrawingCvs(el, globalCvs!)!;
+    drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
+
+    // For image element.
     if (el.type === DrawingType.img) {
       const img = el as ImageElement;
-      const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
-      if (!cachedCvs) return;
-
       if (el.type === "img") {
         const rotateOrigin = img.rotateOrigin;
         globalAppCtx!.save();
@@ -257,7 +267,7 @@ export function redrawAllEles(
 
         globalAppCtx!.restore();
       }
-    } else if (cachedCvs) {
+    } else {
       globalAppCtx!.drawImage(
         cachedCvs!,
         0,
@@ -265,17 +275,10 @@ export function redrawAllEles(
         cachedCvs!.width,
         cachedCvs!.height
       );
-    } else if (!cachedCvs) {
-      // 一般来说一定存在cachedCvs， 加这个分支只是为了debug
-      const cachedCvs = createDrawingCvs(el, globalCvs!)!;
-      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
-      globalAppCtx!.drawImage(
-        cachedCvs!,
-        0,
-        0,
-        cachedCvs!.width,
-        cachedCvs!.height
-      );
+    }
+
+    if (el === uE) {
+      drawCurrentUpdatingHandle?.();
     }
   });
 }
