@@ -44,6 +44,7 @@ export const newFreeDrawingElement: FreeDrawing = {
     x: 0,
     y: 0,
   },
+  rotateOrigin: { x: 0, y: 0 },
 };
 export type ImageElement = DrawingElement & {
   image: HTMLImageElement | undefined;
@@ -75,4 +76,5 @@ export const newImgElement: ImageElement = {
   image: undefined,
   originalHeight: 0,
   originalWidth: 0,
+  rotateOrigin: { x: 0, y: 0 },
 };

@@ -1,9 +1,10 @@
 import { Button } from "@mui/material";
-import { Circle, Line, Point as PointZ, Vector } from "@zenghawtin/graph2d";
+import { Box, Line, Point as PointZ, Vector } from "@zenghawtin/graph2d";
 import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep } from "lodash";
+import { cloneDeep, merge } from "lodash";
+import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
@@ -11,11 +12,7 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import {
-  drawCircle,
-  redrawAllEles,
-  rotate,
-} from "src/CoreRenderer/DrawCanvas/core";
+import { redrawAllEles, rotate } from "src/CoreRenderer/DrawCanvas/core";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
   DrawingElement,
@@ -24,9 +21,11 @@ import {
 } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
+  FreeDrawing,
   ImageElement,
+  newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import MainMenu, { colorConfigs } from "src/MainMenu";
+import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useMousePosition } from "src/hooks/mouseHooks";
@@ -98,12 +97,13 @@ function App() {
   const [sceneData, setSceneData] = useAtom(sceneAtom);
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const dragInfo = useRef<{
-    type: "move" | "resize";
+    type: "move" | "resize" | "rotate";
     startPos: Point;
     originalScale?: Point;
     originalHandles?: Transform2DOperator;
     originalPt?: Point;
     originalRotation?: number;
+    originalRotateOrigin?: Point;
   } | null>(null);
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
@@ -140,6 +140,7 @@ function App() {
     (e: MouseEvent, ele?: DrawingElement) => {
       if (selectedKey !== 2) return;
       const u = sceneData.updatingElements[0];
+
       if (currentHandle.current === null && ele) {
         dragInfo.current = {
           type: "move",
@@ -150,11 +151,11 @@ function App() {
         return;
       }
 
-      if (!dragInfo.current && u?.handles) {
+      if (!dragInfo.current && u?.handles && currentHandle.current) {
         const img = u.ele as ImageElement;
-
+        const [_, dir] = currentHandle.current!;
         dragInfo.current = {
-          type: "resize",
+          type: dir === TransformHandle.ro ? "rotate" : "resize",
           startPos: { x: e.clientX, y: e.clientY },
           originalScale: { ...img.scale },
           originalRotation: img.rotation,
@@ -330,36 +331,80 @@ function App() {
     },
     [sceneData, setSceneData, scalingImg]
   );
+  const drawAPoint = (p: Point) => {
+    const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
+      id: nanoid(),
+      position: { x: p.x, y: p.y },
+      points: [{ x: p.x, y: p.y }],
+    } as FreeDrawing);
+
+    // default property
+    const subMenuStrokeOption =
+      menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
+    newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
+
+    // updated property, size是ui控件的直径
+    newFreeElement.strokeOptions.size = size / 4;
+    newFreeElement.strokeOptions.strokeColor =
+      colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+
+    sceneData.elements.push(newFreeElement);
+  };
+
+  const deleteEle = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Backspace" && sceneData.updatingElements.length > 0) {
+        sceneData.updatingElements.forEach((u) => {
+          const el = u.ele;
+          const i = sceneData.elements.findIndex((e) => e === el);
+          sceneData.elements.splice(i, 1);
+        });
+        sceneData.updatingElements.length = 0;
+        redrawAllEles(undefined, undefined, sceneData.elements);
+      }
+    },
+    [sceneData, setSceneData]
+  );
 
   const dragEnd = useCallback(() => {
     if (dragInfo.current) {
       const u = sceneData.updatingElements[0];
-      if (u) {
-        // c = getBoundryPoly(img).box.center,
-        // newOrigin = new PointZ(c.x, c.y);
+      if (
+        u &&
+        u.ele.type === DrawingType.img &&
+        dragInfo.current.type === "resize"
+      ) {
+        const img = u.ele as ImageElement;
+        const oldOrigin = dragInfo.current.originalHandles!.rect.center;
 
-        // const oldPos = new PointZ(img.position.x, img.position.y);
-
-        // const oldOrigin = img.polygons[0].box.center;
-        // // transformPointZ(newOrigin, new Matrix3().translate());
-        // const nM = new Matrix3()
-        //   .translate(-newOrigin.x, -newOrigin.y)
-        //   .scale(img.scale.x, img.scale.y)
-        //   .rotate(img.rotation);
-
-        // nM.invert();
-
-        // const oM = new Matrix3()
-        //   .translate(-oldOrigin.x, -oldOrigin.y)
-        //   .scale(img.scale.x, img.scale.y)
-        //   .rotate(img.rotation);
-
-        // console.log(nM.clone().multiply(oM));
-
-        // img.position = transformPointZ(transformPointZ(oldPos, oM), nM);
-
-        setSceneData({ ...sceneData });
+        const pos = img.position;
+        const xmin = Math.min(pos.x, pos.x + img.originalWidth * img.scale.x);
+        const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
+        const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
+        const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
+        const bbx = new Box(xmin, ymin, xmax, ymax);
+        const newOrigin = bbx.center;
+        const realNewOri = newOrigin.rotate(img.rotation, oldOrigin);
+        const rightBottomPt =
+          dragInfo.current!.originalHandles!.handles[TransformHandle.se]!.box
+            .center;
+        const deltaVec = new Vector(rightBottomPt, realNewOri);
+        const realNewPos = realNewOri.translate(deltaVec);
+        const newPos = realNewPos.rotate(-img.rotation, newOrigin);
+        // const realNewOrigin = rotate(
+        //   newOrigin.x,
+        //   newOrigin.y,
+        //   oldOrigin.x,
+        //   oldOrigin.y,
+        //   img.rotation
+        drawAPoint(realNewPos);
+        drawAPoint(realNewPos);
+        // );
+        drawAPoint(newPos);
+        img.position = newPos;
+        img.polygons[0] = getBoundryPoly(img);
       }
+      setSceneData({ ...sceneData });
       dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
@@ -386,14 +431,18 @@ function App() {
     div.addEventListener("mousedown", dragStart);
     div.addEventListener("mouseup", dragEnd);
 
+    window.addEventListener("keydown", deleteEle);
+
     div.addEventListener("mousemove", detectHandles);
     div.addEventListener("mousemove", dragMove);
+
     setup();
     return () => {
       div.removeEventListener("mousedown", detectElesInterceted);
       div.removeEventListener("mousedown", dragStart);
 
       div.removeEventListener("mouseup", dragEnd);
+      window.removeEventListener("keydown", deleteEle);
 
       div.removeEventListener("mousemove", detectHandles);
       div.removeEventListener("mousemove", dragMove);
@@ -442,7 +491,7 @@ function App() {
                     window.snapshots.push(cloneDeep(sceneData.elements));
                   }}
                 >
-                  保存
+                  保存到window.snapshots
                 </Button>
               </>
             )}
@@ -472,7 +521,6 @@ function App() {
   ) {
     const img = el as ImageElement;
     let finalPos: PointZ | undefined;
-    let newOrigin: PointZ | undefined;
     switch (dir) {
       case TransformHandle.n:
         const normal = oriHandles.rect.getNormal(0);
@@ -484,11 +532,11 @@ function App() {
         const originalPos =
           oriHandles.handles[TransformHandle.nw]?.box.center.clone();
 
-        const translationVec = normal.scale(delta, delta);
-        finalPos = originalPos!.translate(translationVec);
-        newOrigin = img.polygons[0].box.center.translate(
-          translationVec.scale(0.5, 0.5)
-        );
+        const finalPos = originalPos!
+          .translate(normal.scale(delta, delta))
+          .rotate(-img.rotation, img.polygons[0].box.center);
+        updatedPt.x = finalPos.x;
+        updatedPt.y = finalPos.y;
         break;
       case TransformHandle.ne:
         const { x: neX, y: neY } = oriHandles.handles[dir]!.box.center;
@@ -555,40 +603,17 @@ function App() {
         break;
     }
 
-    const originalPos = finalPos!.rotate(-img.rotation, newOrigin);
-    drawCircle(null, new Circle(newOrigin!, 10));
-    // drawCircle(null, new Circle(finalPos!, 10));
-    // drawCircle(null, new Circle(originalPos, 10), "green");
-
-    img.position = { x: originalPos.x, y: originalPos.y };
+    img.position = { x: updatedPt!.x, y: updatedPt!.y };
     img.scale = updatedScale;
-    // img.polygons[0] = getBoundryPoly(img);
 
-    // drawCircle(null, new Circle(newOrigin, 10), "green");
-
-    // const rc = c.rotate(el.rotation, newOrigin);
-    // drawCircle(null, new Circle(finalPos!, 10));
-    // drawCircle(null, new Circle(newOrigin!, 10), "green");
-
-    // transformPointZ(newOrigin, new Matrix3().translate());
-    // const nM = new Matrix3()
-    //   .translate(-newOrigin.x, -newOrigin.y)
-    //   .rotate(-img.rotation)
-    //   .translate(newOrigin.x, newOrigin.y);
-    // const realNM = nM.clone();
-
-    // nM.invert();
-
-    // const oM = new Matrix3()
-    //   .translate(-oldOrigin.x, -oldOrigin.y)
-    //   .rotate(-img.rotation)
-    //   .translate(oldOrigin.x, oldOrigin.y);
-
-    // const correctedPos = transformPointZ(transformPointZ(oldPos, oM), nM);
-    // const transformedPos = transformPointZ(correctedPos, realNM);
-
-    // drawCircle(null, new Circle(transformedPos, 10), "green");
-    // img.position = correctedPos;
+    // const realNewOrigin = rotate(
+    //   newOrigin.x,
+    //   newOrigin.y,
+    //   oldOrigin.x,
+    //   oldOrigin.y,
+    //   img.rotation
+    // );
+    // drawCircle(null, new Circle(newPos, 10));
   }
 }
 

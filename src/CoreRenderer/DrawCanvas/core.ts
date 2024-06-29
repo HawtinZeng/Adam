@@ -255,7 +255,18 @@ export function redrawAllEles(
 
         globalAppCtx!.restore();
       }
-    } else {
+    } else if (cachedCvs) {
+      globalAppCtx!.drawImage(
+        cachedCvs!,
+        0,
+        0,
+        cachedCvs!.width,
+        cachedCvs!.height
+      );
+    } else if (!cachedCvs) {
+      // 一般来说一定存在cachedCvs， 加这个分支只是为了debug
+      const cachedCvs = createDrawingCvs(el, globalCvs!)!;
+      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
       globalAppCtx!.drawImage(
         cachedCvs!,
         0,

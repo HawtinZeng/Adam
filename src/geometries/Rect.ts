@@ -12,4 +12,7 @@ export class Rect {
 
     return l.norm;
   }
+  get center() {
+    return this.polygon.box.center;
+  }
 }

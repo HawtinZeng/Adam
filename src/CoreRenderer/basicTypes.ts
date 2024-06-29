@@ -39,6 +39,9 @@ export type DrawingElement = {
 
   polygons: Polygon[]; // stroke outline, intersect，the first point locates at the top left.
   eraserPolygons: Polygon[]; // stroke exclusion
+
+  // 位置和缩放的中心均位于左上角
+  rotateOrigin: Point; // 旋转中心
 };
 
 export type DomElement = {
