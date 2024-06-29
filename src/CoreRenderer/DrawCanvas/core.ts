@@ -238,16 +238,17 @@ export function redrawAllEles(
   elements.forEach((el) => {
     let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
     if (el.type === DrawingType.img) {
+      const img = el as ImageElement;
       const cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
       if (!cachedCvs) return;
 
       if (el.type === "img") {
-        const c = el.polygons[0]!.box.center;
+        const rotateOrigin = img.rotateOrigin;
         globalAppCtx!.save();
 
-        globalAppCtx!.translate(c.x, c.y);
+        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
-        globalAppCtx!.translate(-c.x, -c.y);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
         globalAppCtx!.translate(el.position.x, el.position.y);
         globalAppCtx!.scale(el.scale.x, el.scale.y);

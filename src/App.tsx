@@ -1,5 +1,11 @@
 import { Button } from "@mui/material";
-import { Box, Line, Point as PointZ, Vector } from "@zenghawtin/graph2d";
+import {
+  Box,
+  Line,
+  Point as PointZ,
+  Polygon,
+  Vector,
+} from "@zenghawtin/graph2d";
 import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -104,6 +110,7 @@ function App() {
     originalPt?: Point;
     originalRotation?: number;
     originalRotateOrigin?: Point;
+    originalBoundary?: Polygon;
   } | null>(null);
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
@@ -160,6 +167,7 @@ function App() {
           originalScale: { ...img.scale },
           originalRotation: img.rotation,
           originalHandles: cloneDeep(u.handles)!,
+          originalBoundary: cloneDeep(img.polygons[0]),
         };
         return;
       }
@@ -387,19 +395,17 @@ function App() {
         const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
         const bbx = new Box(xmin, ymin, xmax, ymax);
         const newOrigin = bbx.center;
+
         const realNewOri = newOrigin.rotate(img.rotation, oldOrigin);
         const rightBottomPt =
           dragInfo.current!.originalHandles!.handles[TransformHandle.se]!.box
             .center;
         const deltaVec = new Vector(rightBottomPt, realNewOri);
         const realNewPos = realNewOri.translate(deltaVec);
-        const newPos = realNewPos.rotate(-img.rotation, newOrigin);
-
-        // todo: 检查一下为何 newOrigin 不是中心点
-        drawAPoint(newOrigin);
-        // drawAPoint(newPos);
+        const newPos = realNewPos.rotate(-img.rotation, realNewOri);
 
         img.position = newPos;
+        img.rotateOrigin = realNewOri;
         img.polygons[0] = getBoundryPoly(img);
       }
       setSceneData({ ...sceneData });
@@ -474,6 +480,7 @@ function App() {
                 <div>{`updatingEle position: ${sceneData.updatingElements[0]?.ele.position.x}, ${sceneData.updatingElements[0]?.ele.position.y}`}</div>
                 <div>{`updatingEle scale: ${sceneData.updatingElements[0]?.ele.scale.x}, ${sceneData.updatingElements[0]?.ele.scale.y}`}</div>
                 <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
+                <div>{`updatingEle rotationOrigin: ${sceneData.updatingElements[0]?.ele.rotateOrigin.x}, ${sceneData.updatingElements[0]?.ele.rotateOrigin.y}`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
                 <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
                 <div>{`handles: ${currentHandle.current?.[1]}`}</div>
@@ -518,12 +525,13 @@ function App() {
     diffX: number
   ) {
     const img = el as ImageElement;
-    let finalPos: PointZ | undefined;
+    const offset = new Vector(diffX, diffY);
+    let deltaVec: Vector;
     switch (dir) {
       case TransformHandle.n:
         const normal = oriHandles.rect.getNormal(0);
-        const offset = new Vector(diffX, diffY);
         const delta = offset.dot(normal);
+        deltaVec = normal.scale(delta, delta);
         updatedScale.y =
           (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * delta) /
           img.originalHeight;
@@ -608,14 +616,11 @@ function App() {
     img.position = { x: updatedPt!.x, y: updatedPt!.y };
     img.scale = updatedScale;
 
-    // const realNewOrigin = rotate(
-    //   newOrigin.x,
-    //   newOrigin.y,
-    //   oldOrigin.x,
-    //   oldOrigin.y,
-    //   img.rotation
-    // );
-    // drawCircle(null, new Circle(newPos, 10));
+    const pts = dragInfo.current!.originalBoundary!.vertices;
+    pts[0] = pts[0].translate(deltaVec!);
+    pts[1] = pts[1].translate(deltaVec!);
+
+    img.polygons[0] = new Polygon(pts);
   }
 }
 
