@@ -3224,9 +3224,9 @@
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
 "@zenghawtin/graph2d@^1.1.5":
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@zenghawtin/graph2d/-/graph2d-1.1.5.tgz#a2d215e11b1747f59272b0cb93d291a4f40a0680"
-  integrity sha512-kWLe1I45U1pYh+yk9uPRiZETp9WIpBoF/3vj3WzUYV9zalpQ8hdy/XotcqfXrDeQFIobhi57mI47bCITqpDoRA==
+  version "1.1.14"
+  resolved "https://registry.yarnpkg.com/@zenghawtin/graph2d/-/graph2d-1.1.14.tgz#b20f9a5e398582b1ad6d77b904e63a562bc70e1e"
+  integrity sha512-k2LkzOXMFvVtvfAu1MFNRtQSssG2Q8ASD5EIYbG1l7ntdtrPUmNHEwD14O/y28UmI8bnPi7Q6AZ1z6z0KYWVLg==
   dependencies:
     "@flatten-js/interval-tree" "^1.0.21"
 
