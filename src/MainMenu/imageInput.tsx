@@ -251,11 +251,16 @@ export function ImageInput() {
 export function getBoundryPoly(img: ImageElement) {
   const pos = img.position;
 
-  const xmin = Math.min(pos.x, pos.x + img.originalWidth * img.scale.x);
-  const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
-  const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
-  const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
-  const bbx = new Box(xmin, ymin, xmax, ymax);
+  // const xmin = Math.min(, pos.x + img.originalWidth * img.scale.x);
+  // const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
+  // const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
+  // const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
+  const bbx = new Box(
+    pos.x,
+    pos.y,
+    pos.x + img.originalWidth * img.scale.x,
+    pos.y + img.originalHeight * img.scale.y
+  );
 
   return new Polygon(bbx).rotate(img.rotation, bbx.center);
 }

@@ -47,7 +47,7 @@ export function sortPoints(pts: Point[]) {
   return pts;
 }
 export class Transform2DOperator {
-  handles: TransformHandles = {};
+  handleOperator: TransformHandles = {};
   ctx: CanvasRenderingContext2D;
   cursorStyle: { [T in TransformHandle]: string } = {
     [TransformHandle.n]: "n-resize",
@@ -67,7 +67,12 @@ export class Transform2DOperator {
   rotation: Degree;
   rect: Rect;
 
-  constructor(pol: Polygon, rotation: Degree, ctx: CanvasRenderingContext2D) {
+  constructor(
+    pol: Polygon,
+    rotation: Degree,
+    ctx: CanvasRenderingContext2D,
+    revertYDirection: boolean
+  ) {
     this.ctx = ctx;
     this.rotation = rotation;
     this.rect = new Rect(pol.clone());
@@ -86,7 +91,7 @@ export class Transform2DOperator {
     drawPolygonPointIndex(this.ctx, this.rect.polygon);
 
     const referenceWN = pts[0];
-    this.handles[TransformHandle.nw] = new Polygon(
+    this.handleOperator[TransformHandle.nw] = new Polygon(
       new Box(
         referenceWN.x - offsetAlignDiagonal,
         referenceWN.y - offsetAlignDiagonal,
@@ -100,7 +105,7 @@ export class Transform2DOperator {
     );
 
     const referenceN = pts[1];
-    this.handles[TransformHandle.n] = new Polygon(
+    this.handleOperator[TransformHandle.n] = new Polygon(
       new Box(
         referenceN.x - offsetAlignDiagonal,
         referenceN.y - offsetAlignDiagonal,
@@ -112,7 +117,7 @@ export class Transform2DOperator {
     );
 
     const referenceNe = pts[2];
-    this.handles[TransformHandle.ne] = new Polygon(
+    this.handleOperator[TransformHandle.ne] = new Polygon(
       new Box(
         referenceNe.x - offsetAlignDiagonal,
         referenceNe.y - offsetAlignDiagonal,
@@ -126,7 +131,7 @@ export class Transform2DOperator {
     );
 
     const referenceE = pts[3];
-    this.handles[TransformHandle.e] = new Polygon(
+    this.handleOperator[TransformHandle.e] = new Polygon(
       new Box(
         referenceE.x - offsetAlignDiagonal,
         referenceE.y - offsetAlignDiagonal,
@@ -138,7 +143,7 @@ export class Transform2DOperator {
     );
 
     const referenceES = pts[4];
-    this.handles[TransformHandle.se] = new Polygon(
+    this.handleOperator[TransformHandle.se] = new Polygon(
       new Box(
         referenceES.x - offsetAlignDiagonal,
         referenceES.y - offsetAlignDiagonal,
@@ -152,7 +157,7 @@ export class Transform2DOperator {
     );
 
     const referenceS = pts[5];
-    this.handles[TransformHandle.s] = new Polygon(
+    this.handleOperator[TransformHandle.s] = new Polygon(
       new Box(
         referenceS.x - offsetAlignDiagonal,
         referenceS.y - offsetAlignDiagonal,
@@ -164,7 +169,7 @@ export class Transform2DOperator {
     );
 
     const referenceSW = pts[6];
-    this.handles[TransformHandle.sw] = new Polygon(
+    this.handleOperator[TransformHandle.sw] = new Polygon(
       new Box(
         referenceSW.x - offsetAlignDiagonal,
         referenceSW.y - offsetAlignDiagonal,
@@ -178,7 +183,7 @@ export class Transform2DOperator {
     );
 
     const referenceW = pts[7];
-    this.handles[TransformHandle.w] = new Polygon(
+    this.handleOperator[TransformHandle.w] = new Polygon(
       new Box(
         referenceW.x - offsetAlignDiagonal,
         referenceW.y - offsetAlignDiagonal,
@@ -189,11 +194,12 @@ export class Transform2DOperator {
         .map((p) => rotate(p.x, p.y, referenceW.x, referenceW.y, this.rotation))
     );
 
+    // referenceNE
     const referenceRotation = {
       x: pts[1].x,
-      y: pts[1].y - 30,
+      y: revertYDirection ? pts[1].y + 30 : pts[1].y - 30,
     };
-    this.handles[TransformHandle.ro] = new Polygon(
+    this.handleOperator[TransformHandle.ro] = new Polygon(
       new Box(
         referenceRotation.x - (offsetAlignDiagonal + 5),
         referenceRotation.y - (offsetAlignDiagonal + 5),

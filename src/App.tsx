@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 import {
   Box,
+  Edge,
   Line,
   Point as PointZ,
   Polygon,
@@ -161,7 +162,7 @@ function App() {
       }
 
       // drag handler
-      if (!dragInfo.current && u?.handles && currentHandle.current) {
+      if (!dragInfo.current && u?.handleOperator && currentHandle.current) {
         const img = u.ele as ImageElement;
         const [_, dir] = currentHandle.current!;
         dragInfo.current = {
@@ -169,7 +170,7 @@ function App() {
           startPos: { x: e.clientX, y: e.clientY },
           originalScale: { ...img.scale },
           originalRotation: img.rotation,
-          originalHandles: cloneDeep(u.handles)!,
+          originalHandles: cloneDeep(u.handleOperator)!,
           originalBoundary: cloneDeep(img.polygons[0]),
         };
         return;
@@ -227,20 +228,26 @@ function App() {
       if (dragInfo.current) return;
       for (let i = 0; i < sceneData.updatingElements.length; i++) {
         const u = sceneData.updatingElements[i];
-        const operator = u.handles;
+        const operator = u.handleOperator;
         if (operator) {
-          const handles = Object.keys(operator.handles) as TransformHandle[];
-          for (let handleIdx = 0; handleIdx < handles.length; handleIdx++) {
+          const handleOperator = Object.keys(
+            operator.handleOperator
+          ) as TransformHandle[];
+          for (
+            let handleIdx = 0;
+            handleIdx < handleOperator.length;
+            handleIdx++
+          ) {
             const isHit = ptIsContained(
-              [operator.handles[handles[handleIdx]]!],
+              [operator.handleOperator[handleOperator[handleIdx]]!],
               [],
               new PointZ(e.clientX, e.clientY)
             );
 
             if (isHit) {
-              setCursorSvg(operator.cursorStyle[handles[handleIdx]]);
-              currentHandle.current = [u.ele, handles[handleIdx]];
-              // console.log(handles[handleIdx]);hovered handle location
+              setCursorSvg(operator.cursorStyle[handleOperator[handleIdx]]);
+              currentHandle.current = [u.ele, handleOperator[handleIdx]];
+              // console.log(handleOperator[handleIdx]);hovered handle location
               return;
             }
           }
@@ -395,20 +402,19 @@ function App() {
         dragInfo.current.type === "resize"
       ) {
         const img = u.ele as ImageElement;
+        // drawAPoint(img.position);
         const oldOrigin = dragInfo.current.originalHandles!.rect.center;
-
         const pos = img.position;
-        const xmin = Math.min(pos.x, pos.x + img.originalWidth * img.scale.x);
-        const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
-        const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
-        const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
-        const bbx = new Box(xmin, ymin, xmax, ymax);
+        const bbx = new Box(
+          pos.x,
+          pos.y,
+          pos.x + img.originalWidth * img.scale.x,
+          pos.y + img.originalHeight * img.scale.y
+        );
         const newOrigin = bbx.center;
 
         const realNewOri = newOrigin.rotate(img.rotation, oldOrigin);
-        const rightBottomPt =
-          dragInfo.current!.originalHandles!.handles[TransformHandle.se]!.box
-            .center;
+        const rightBottomPt = img.polygons[0].vertices[2];
         const deltaVec = new Vector(rightBottomPt, realNewOri);
         const realNewPos = realNewOri.translate(deltaVec);
         const newPos = realNewPos.rotate(-img.rotation, realNewOri);
@@ -491,10 +497,15 @@ function App() {
                 <div>{`updatingEle scale: ${sceneData.updatingElements[0]?.ele.scale.x}, ${sceneData.updatingElements[0]?.ele.scale.y}`}</div>
                 <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
                 <div>{`updatingEle rotationOrigin: ${sceneData.updatingElements[0]?.ele.rotateOrigin.x}, ${sceneData.updatingElements[0]?.ele.rotateOrigin.y}`}</div>
+                <div>{`updatingEle polygon[0] orientation: ${
+                  sceneData.updatingElements[0]?.ele.polygons[0] &&
+                  [
+                    ...sceneData.updatingElements[0]?.ele.polygons[0].faces,
+                  ][0].orientation()
+                }`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
                 <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
-                <div>{`handles: ${currentHandle.current?.[1]}`}</div>
-
+                <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
                 <Button
                   variant="contained"
                   size="large"
@@ -539,9 +550,12 @@ function App() {
     let deltaVec: Vector;
     switch (dir) {
       case TransformHandle.n: {
-        const normal = oriHandles.rect.computeNormal(0);
-        const delta = offset.dot(normal);
-        deltaVec = normal.scale(delta, delta);
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+        const dir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
 
         // change the boundary of scaling image.
         const pts = dragInfo.current!.originalBoundary!.vertices;
@@ -550,17 +564,17 @@ function App() {
         img.polygons[0] = new Polygon(pts);
 
         updatedScale.y =
-          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * delta) /
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * delta) /
           img.originalHeight;
         const originalPos =
-          oriHandles.handles[TransformHandle.nw]?.box.center.clone();
+          oriHandles.handleOperator[TransformHandle.nw]?.box.center.clone();
 
         const rotationOrigin = new PointZ(
           img.rotateOrigin.x,
           img.rotateOrigin.y
         );
         const finalPos = originalPos!
-          .translate(normal.scale(delta, delta))
+          .translate(dir.scale(delta, delta))
           .rotate(-img.rotation, rotationOrigin);
         updatedPt.x = finalPos.x;
         updatedPt.y = finalPos.y;
@@ -568,109 +582,233 @@ function App() {
       }
 
       case TransformHandle.ne: {
-        // deltaVec = normal.scale(delta, delta);
-
         // change the boundary of scaling image.
         const pts = dragInfo.current!.originalBoundary!.vertices;
         pts[1] = pts[1].translate(offset);
 
-        const normalEdge0 =
-          dragInfo.current!.originalBoundary!.computeNormal(0);
-        const scalar0 = offset.dot(normalEdge0);
-        pts[0] = pts[0].translate(normalEdge0.scale(scalar0, scalar0));
+        const zerothEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
 
-        const normalEdge1 =
-          dragInfo.current!.originalBoundary!.computeNormal(1);
-        console.log(normalEdge0);
-        console.log(normalEdge1);
-        const scalar1 = offset.dot(normalEdge1);
-        pts[2] = pts[2].translate(normalEdge1.scale(scalar1, scalar1));
+        const zeroDir = new Vector(
+          zerothEdge.start,
+          zerothEdge.end
+        ).normalize();
+        const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
+
+        const scalar3 = offset.dot(thirdDir);
+        pts[0] = pts[0].translate(thirdDir.scale(scalar3, scalar3));
+
+        const scalar0 = offset.dot(zeroDir);
+        pts[2] = pts[2].translate(zeroDir.scale(scalar0, scalar0));
+
+        img.polygons[0] = new Polygon(pts);
+        // change the image element
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
+          img.originalHeight;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
+          img.originalWidth;
+
+        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
+        const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
+        const finalPos = originalPos!
+          .translate(thirdDir.scale(scalar3, scalar3))
+          .rotate(-img.rotation, rotateOrigin);
+        updatedPt.x = finalPos.x;
+        updatedPt.y = finalPos.y;
+        break;
+      }
+
+      case TransformHandle.e: {
+        const zorothEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const dir = new Vector(zorothEdge.start, zorothEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[1] = pts[1].translate(deltaVec!);
+        pts[2] = pts[2].translate(deltaVec!);
+        img.polygons[0] = new Polygon(pts);
+
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * delta) /
+          img.originalWidth;
+        break;
+      }
+
+      case TransformHandle.se: {
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[2] = pts[2].translate(offset);
+
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+
+        const zeroDir = new Vector(
+          secondEdge.start,
+          secondEdge.end
+        ).normalize();
+        const thirdDir = new Vector(thirdEdge.end, thirdEdge.start).normalize();
+
+        const scalar0 = offset.dot(zeroDir);
+        pts[1] = pts[1].translate(zeroDir.scale(scalar0, scalar0));
+
+        const scalar3 = offset.dot(thirdDir);
+        pts[3] = pts[3].translate(thirdDir.scale(scalar3, scalar3));
+
+        img.polygons[0] = new Polygon(pts);
+        // change the image element
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
+          img.originalHeight;
+        updatedScale.x =
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
+          img.originalWidth;
+        break;
+      }
+
+      case TransformHandle.s: {
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][1] as Edge;
+        const dir = new Vector(secondEdge.start, secondEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[2] = pts[2].translate(deltaVec!);
+        pts[3] = pts[3].translate(deltaVec!);
+        img.polygons[0] = new Polygon(pts);
+
+        updatedScale.y =
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * delta) /
+          img.originalHeight;
+        break;
+      }
+
+      case TransformHandle.sw: {
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[3] = pts[3].translate(offset);
+
+        const firstEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][1] as Edge;
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][2] as Edge;
+
+        const firstDir = new Vector(firstEdge.start, firstEdge.end).normalize();
+        const secondDir = new Vector(
+          secondEdge.start,
+          secondEdge.end
+        ).normalize();
+
+        const scalar1 = offset.dot(firstDir);
+        pts[2] = pts[2].translate(firstDir.scale(scalar1, scalar1));
+
+        const scalar2 = offset.dot(secondDir);
+        pts[0] = pts[0].translate(secondDir.scale(scalar2, scalar2));
 
         img.polygons[0] = new Polygon(pts);
 
         updatedScale.y =
-          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * scalar0) /
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar1) /
           img.originalHeight;
         updatedScale.x =
-          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * scalar1) /
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar2) /
           img.originalWidth;
-        console.log(Math.sign(oriScale.x) * scalar1);
-        const originalPos =
-          oriHandles.handles[TransformHandle.nw]?.box.center.clone();
 
-        // const rotationOrigin = new PointZ(
-        //   img.rotateOrigin.x,
-        //   img.rotateOrigin.y
-        // );
-        // const finalPos = originalPos!
-        //   .translate(normal.scale(delta, delta))
-        //   .rotate(-img.rotation, rotationOrigin);
-        // updatedPt.x = finalPos.x;
-        // updatedPt.y = finalPos.y;
+        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
+        const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
+        const finalPos = originalPos!
+          .translate(secondDir.scale(scalar2, scalar2))
+          .rotate(-img.rotation, rotateOrigin);
+        updatedPt.x = finalPos.x;
+        updatedPt.y = finalPos.y;
 
-        // const { x: neX, y: neY } = oriHandles.handles[dir]!.box.center;
-        // updatedScale.y =
-        //   (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
-        //   img.originalHeight;
-        // if (Math.sign(oriScale.y) > 0) updatedPt.y = neY + diffY;
-        // updatedScale.x =
-        //   (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
-        //   img.originalWidth;
-        // if (Math.sign(oriScale.x) < 0) updatedPt.x = neX + diffX;
         break;
       }
-      case TransformHandle.e:
-        const r = oriHandles.handles[dir]!.box.center.x;
+
+      case TransformHandle.w: {
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][2] as Edge;
+        const dir = new Vector(secondEdge.start, secondEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[0] = pts[0].translate(deltaVec!);
+        pts[3] = pts[3].translate(deltaVec!);
+        img.polygons[0] = new Polygon(pts);
+
         updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * delta) /
           img.originalWidth;
-        if (Math.sign(oriScale.x) < 0) updatedPt.x = r + diffX;
+        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
+        const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
+        const finalPos = originalPos!
+          .translate(dir.scale(delta, delta))
+          .rotate(-img.rotation, rotateOrigin);
+        updatedPt.x = finalPos.x;
         break;
-      case TransformHandle.se:
-        const { x: seX, y: seY } = oriHandles.handles[dir]!.box.center;
-        updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * diffX) /
-          img.originalWidth;
-        if (Math.sign(oriScale.x) < 0) updatedPt.x = seX + diffX;
+      }
+
+      case TransformHandle.nw: {
+        // change the boundary of scaling image.
+        const pts = dragInfo.current!.originalBoundary!.vertices;
+        pts[0] = pts[0].translate(offset);
+
+        const zeroEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+
+        const zeroDir = new Vector(zeroEdge.end, zeroEdge.start).normalize();
+        const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
+
+        const scalar0 = offset.dot(zeroDir);
+        pts[3] = pts[3].translate(zeroDir.scale(scalar0, scalar0));
+
+        const scalar3 = offset.dot(thirdDir);
+        pts[1] = pts[1].translate(thirdDir.scale(scalar3, scalar3));
+
+        img.polygons[0] = new Polygon(pts);
+
         updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
+          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
           img.originalHeight;
-        if (Math.sign(oriScale.y) < 0) updatedPt.y = seY + diffY;
-        break;
-      case TransformHandle.s:
-        updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
-          img.originalHeight;
-        break;
-      case TransformHandle.sw:
-        const { x: swX, y: swY } = oriHandles.handles[dir]!.box.center;
-        updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * diffY) /
-          img.originalHeight;
-        if (Math.sign(oriScale.y) < 0) updatedPt.y = swY + diffY;
         updatedScale.x =
-          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
+          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
           img.originalWidth;
-        if (Math.sign(oriScale.x) > 0) updatedPt.x = swX + diffX;
+
+        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
+        const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
+        const finalPos = originalPos!
+          .translate(offset)
+          .rotate(-img.rotation, rotateOrigin);
+        updatedPt.x = finalPos.x;
+        updatedPt.y = finalPos.y;
+
         break;
-      case TransformHandle.w:
-        const l = oriHandles.handles[dir]!.box.center.x;
-        updatedScale.x =
-          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
-          img.originalWidth;
-        if (Math.sign(oriScale.x) > 0) updatedPt.x = l + diffX;
-        break;
-      case TransformHandle.nw:
-        const { x: nwX, y: nwY } = oriHandles.handles[dir]!.box.center;
-        updatedScale.x =
-          (img.originalWidth * oriScale.x - Math.sign(oriScale.x) * diffX) /
-          img.originalWidth;
-        if (Math.sign(oriScale.x) > 0) updatedPt.x = nwX + diffX;
-        updatedScale.y =
-          (img.originalHeight * oriScale.y - Math.sign(oriScale.y) * diffY) /
-          img.originalHeight;
-        if (Math.sign(oriScale.y) > 0) updatedPt.y = nwY + diffY;
-        break;
+      }
     }
 
     img.position = { x: updatedPt!.x, y: updatedPt!.y };

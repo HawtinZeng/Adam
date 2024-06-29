@@ -17,7 +17,7 @@ export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;
   oriImageData?: ImageData; // addPoints 操作启动之前的整个画布绘图数据
-  handles?: Transform2DOperator;
+  handleOperator?: Transform2DOperator;
 };
 export class Scene {
   elements: DrawingElement[] = [];

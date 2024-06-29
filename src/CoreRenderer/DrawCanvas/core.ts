@@ -113,7 +113,7 @@ export function renderDrawCanvas(
     });
   });
   if (groupedElements.erase?.length && groupedElements.erase.length > 0) {
-    // 重绘全部元素
+    // forcely redraw all elements with cache
     redrawAllEles(appCtx, appCanvas, elements);
   }
 
@@ -142,25 +142,26 @@ export function renderDrawCanvas(
       const img = u.ele as ImageElement;
       redrawAllEles(appCtx, appCanvas, elements, u.ele);
 
-      const handles = new Transform2DOperator(
+      const handleOperator = new Transform2DOperator(
         img.polygons[0],
         img.rotation,
-        appCtx
+        appCtx,
+        Math.sign(u.ele.scale.y) === -1
       );
-      u.handles = handles;
+      u.handleOperator = handleOperator;
 
       const cornerPolygon = new Polygon(
-        handles.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
+        handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
       );
 
       drawRectBorder(
         appCtx,
         cornerPolygon,
-        handles.borderColor,
-        handles.border
+        handleOperator.borderColor,
+        handleOperator.border
       );
 
-      drawHandles(handles, appCtx);
+      drawHandles(handleOperator, appCtx, img);
     }
   });
 }
@@ -529,9 +530,13 @@ export function drawCircle(
   ctx.fill();
 }
 
-function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
-  Object.keys(op.handles).forEach((k) => {
-    const h = op.handles[k as keyof TransformHandles] as Polygon;
+function drawHandles(
+  op: Transform2DOperator,
+  ctx: CanvasRenderingContext2D,
+  img: DrawingElement
+) {
+  Object.keys(op.handleOperator).forEach((k) => {
+    const h = op.handleOperator[k as keyof TransformHandles] as Polygon;
     const rotationIcon = new SVGPathCommander(
       "M11.031 24a11.033 11.033 0 0 0 1-22.021V0L7.125 4.1 12.033 8V6.007a7.032 7.032 0 0 1-1 13.993A7.032 7.032 0 0 1 4 13H0a11.026 11.026 0 0 0 11.031 11z"
     );
@@ -543,9 +548,6 @@ function drawHandles(op: Transform2DOperator, ctx: CanvasRenderingContext2D) {
     } else {
       drawRectFill(ctx, h, op.fillColor);
       drawRectBorder(ctx, h, op.borderColor, op.border);
-      // if (debugShowHandlesPosition) {
-      //   drawText(ctx, h.center, `x: ${h.center.x}, y: ${h.center.y}`);
-      // }
     }
   });
 }
