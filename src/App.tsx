@@ -53,7 +53,8 @@ import { setTransparent } from "./commonUtils";
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = true;
 const showDebugPanel = true;
-function isBevelHandle(hand: TransformHandle) {
+function isBevelHandle(hand: TransformHandle | undefined) {
+  if (!hand) return false;
   return [
     TransformHandle.ne,
     TransformHandle.nw,
@@ -331,7 +332,7 @@ function App() {
         setSceneData({ ...sceneData });
       }
     },
-    [sceneData, setSceneData, scalingImg]
+    [sceneData, setSceneData, currentKeyboard]
   );
   const drawAPoint = (p: Point) => {
     const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
@@ -579,8 +580,7 @@ function App() {
 
       case TransformHandle.ne: {
         // change the boundary of scaling image.
-        const pts = dragInfo.current!.originalBoundary!.vertices;
-        pts[1] = pts[1].translate(offset);
+        let pts = dragInfo.current!.originalBoundary!.vertices;
 
         const zerothEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
@@ -596,25 +596,53 @@ function App() {
         const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
 
         const scalar3 = offset.dot(thirdDir);
-        pts[0] = pts[0].translate(thirdDir.scale(scalar3, scalar3));
 
         const scalar0 = offset.dot(zeroDir);
-        pts[2] = pts[2].translate(zeroDir.scale(scalar0, scalar0));
+
+        if (lockScale) {
+          const leftBottom = cloneDeep(pts[3]);
+          const scaleY =
+            (thirdDir.scale(scalar3, scalar3).length * Math.sign(scalar3) +
+              thirdEdge.length) /
+            thirdEdge.length;
+          pts = pts
+            .map((p) => p.translate(-leftBottom.x, -leftBottom.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleY, scaleY))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(leftBottom.x, leftBottom.y));
+        } else {
+          pts[1] = pts[1].translate(offset);
+          pts[0] = pts[0].translate(thirdDir.scale(scalar3, scalar3));
+          pts[2] = pts[2].translate(zeroDir.scale(scalar0, scalar0));
+        }
 
         img.polygons[0] = new Polygon(pts);
+
         // change the image element
+
+        const rightEdge = [...img.polygons[0].edges][1] as Edge;
+        const bottomEdge = [...img.polygons[0].edges][2] as Edge;
         updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
+          (rightEdge.length *
+            Math.sign(
+              rightEdge.end.rotate(-img.rotation).y -
+                rightEdge.start.rotate(-img.rotation).y
+            )) /
           img.originalHeight;
         updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
+          (bottomEdge.length *
+            Math.sign(
+              bottomEdge.start.rotate(-img.rotation).x -
+                bottomEdge.end.rotate(-img.rotation).x
+            )) /
           img.originalWidth;
 
-        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
         const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
-        const finalPos = originalPos!
-          .translate(thirdDir.scale(scalar3, scalar3))
-          .rotate(-img.rotation, rotateOrigin);
+        const finalPos = img.polygons[0].vertices[0].rotate(
+          -img.rotation,
+          rotateOrigin
+        );
         updatedPt.x = finalPos.x;
         updatedPt.y = finalPos.y;
         break;
@@ -661,13 +689,16 @@ function App() {
         const scalar3 = offset.dot(thirdDir);
         if (lockScale) {
           const leftTopPt = cloneDeep(pts[0]);
-          console.log(`${leftTopPt.x}, ${leftTopPt.y}`);
           const scaleY =
-            (offset.y + pts[2].y - leftTopPt.y) / (pts[2].y - leftTopPt.y);
+            (thirdDir.scale(scalar3, scalar3).length * Math.sign(scalar3) +
+              thirdEdge.length) /
+            thirdEdge.length;
           pts = pts
             .map((p) => p.translate(-leftTopPt.x, -leftTopPt.y))
             .map((p) => p.rotate(-img.rotation))
-            .map((p) => p.scale(scaleY, scaleY));
+            .map((p) => p.scale(scaleY, scaleY))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(leftTopPt.x, leftTopPt.y));
         } else {
           pts[2] = pts[2].translate(offset);
           pts[1] = pts[1].translate(zeroDir.scale(scalar0, scalar0));
@@ -676,13 +707,24 @@ function App() {
 
         img.polygons[0] = new Polygon(pts);
         // change the image element
+
+        const rightEdge = [...img.polygons[0].edges][1] as Edge;
+        const bottomEdge = [...img.polygons[0].edges][2] as Edge;
         updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
+          (rightEdge.length *
+            Math.sign(
+              rightEdge.end.rotate(-img.rotation).y -
+                rightEdge.start.rotate(-img.rotation).y
+            )) /
           img.originalHeight;
-        updatedScale.x = lockScale
-          ? updatedScale.y
-          : (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
-            img.originalWidth;
+        updatedScale.x =
+          (bottomEdge.length *
+            Math.sign(
+              bottomEdge.start.rotate(-img.rotation).x -
+                bottomEdge.end.rotate(-img.rotation).x
+            )) /
+          img.originalWidth;
+
         break;
       }
 
@@ -708,8 +750,7 @@ function App() {
 
       case TransformHandle.sw: {
         // change the boundary of scaling image.
-        const pts = dragInfo.current!.originalBoundary!.vertices;
-        pts[3] = pts[3].translate(offset);
+        let pts = dragInfo.current!.originalBoundary!.vertices;
 
         const firstEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
@@ -725,27 +766,63 @@ function App() {
         ).normalize();
 
         const scalar1 = offset.dot(firstDir);
-        pts[2] = pts[2].translate(firstDir.scale(scalar1, scalar1));
 
         const scalar2 = offset.dot(secondDir);
-        pts[0] = pts[0].translate(secondDir.scale(scalar2, scalar2));
+
+        if (lockScale) {
+          const rightTop = cloneDeep(pts[1]);
+          const scaleY =
+            (firstDir.scale(scalar1, scalar1).length * Math.sign(scalar1) +
+              firstEdge.length) /
+            firstEdge.length;
+          pts = pts
+            .map((p) => p.translate(-rightTop.x, -rightTop.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleY, scaleY))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(rightTop.x, rightTop.y));
+        } else {
+          pts[0] = pts[0].translate(secondDir.scale(scalar2, scalar2));
+          pts[2] = pts[2].translate(firstDir.scale(scalar1, scalar1));
+          pts[3] = pts[3].translate(offset);
+        }
 
         img.polygons[0] = new Polygon(pts);
 
+        const rightEdge = [...img.polygons[0].edges][1] as Edge;
+        const bottomEdge = [...img.polygons[0].edges][2] as Edge;
         updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar1) /
+          (rightEdge.length *
+            Math.sign(
+              rightEdge.end.rotate(-img.rotation).y -
+                rightEdge.start.rotate(-img.rotation).y
+            )) /
           img.originalHeight;
         updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar2) /
+          (bottomEdge.length *
+            Math.sign(
+              bottomEdge.start.rotate(-img.rotation).x -
+                bottomEdge.end.rotate(-img.rotation).x
+            )) /
           img.originalWidth;
 
         const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
         const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
-        const finalPos = originalPos!
-          .translate(secondDir.scale(scalar2, scalar2))
-          .rotate(-img.rotation, rotateOrigin);
-        updatedPt.x = finalPos.x;
-        updatedPt.y = finalPos.y;
+        if (lockScale) {
+          // todo: merge these same logics
+          const finalPos = img.polygons[0].vertices[0].rotate(
+            -img.rotation,
+            rotateOrigin
+          );
+          updatedPt.x = finalPos.x;
+          updatedPt.y = finalPos.y;
+        } else {
+          const finalPos = originalPos!
+            .translate(secondDir.scale(scalar2, scalar2))
+            .rotate(-img.rotation, rotateOrigin);
+          updatedPt.x = finalPos.x;
+          updatedPt.y = finalPos.y;
+        }
 
         break;
       }
@@ -778,8 +855,7 @@ function App() {
 
       case TransformHandle.nw: {
         // change the boundary of scaling image.
-        const pts = dragInfo.current!.originalBoundary!.vertices;
-        pts[0] = pts[0].translate(offset);
+        let pts = dragInfo.current!.originalBoundary!.vertices;
 
         const zeroEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
@@ -792,28 +868,53 @@ function App() {
         const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
 
         const scalar0 = offset.dot(zeroDir);
-        pts[3] = pts[3].translate(zeroDir.scale(scalar0, scalar0));
 
         const scalar3 = offset.dot(thirdDir);
-        pts[1] = pts[1].translate(thirdDir.scale(scalar3, scalar3));
+
+        if (lockScale) {
+          const rightBottom = cloneDeep(pts[2]);
+          const scaleY =
+            (thirdDir.scale(scalar3, scalar3).length * Math.sign(scalar3) +
+              thirdEdge.length) /
+            thirdEdge.length;
+          pts = pts
+            .map((p) => p.translate(-rightBottom.x, -rightBottom.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleY, scaleY))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(rightBottom.x, rightBottom.y));
+        } else {
+          pts[0] = pts[0].translate(offset);
+          pts[3] = pts[3].translate(zeroDir.scale(scalar0, scalar0));
+          pts[1] = pts[1].translate(thirdDir.scale(scalar3, scalar3));
+        }
 
         img.polygons[0] = new Polygon(pts);
 
+        const rightEdge = [...img.polygons[0].edges][1] as Edge;
+        const bottomEdge = [...img.polygons[0].edges][2] as Edge;
         updatedScale.y =
-          (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
+          (rightEdge.length *
+            Math.sign(
+              rightEdge.end.rotate(-img.rotation).y -
+                rightEdge.start.rotate(-img.rotation).y
+            )) /
           img.originalHeight;
         updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
+          (bottomEdge.length *
+            Math.sign(
+              bottomEdge.start.rotate(-img.rotation).x -
+                bottomEdge.end.rotate(-img.rotation).x
+            )) /
           img.originalWidth;
 
-        const originalPos = dragInfo.current!.originalBoundary!.vertices[0];
         const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
-        const finalPos = originalPos!
-          .translate(offset)
-          .rotate(-img.rotation, rotateOrigin);
+        const finalPos = img.polygons[0].vertices[0].rotate(
+          -img.rotation,
+          rotateOrigin
+        );
         updatedPt.x = finalPos.x;
         updatedPt.y = finalPos.y;
-
         break;
       }
     }
