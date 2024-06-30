@@ -7,7 +7,6 @@ import {
   Polygon,
   Vector,
 } from "@zenghawtin/graph2d";
-import al from "algebra.js";
 import * as d3c from "d3-color";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, merge } from "lodash";
@@ -19,7 +18,7 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import { redrawAllEles, rotate } from "src/CoreRenderer/DrawCanvas/core";
+import { redrawAllEles } from "src/CoreRenderer/DrawCanvas/core";
 import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
   DrawingElement,
@@ -54,50 +53,6 @@ import { setTransparent } from "./commonUtils";
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = true;
 const showDebugPanel = true;
-
-// @ts-ignore
-
-window.al = al;
-function eliminateOriginChange(
-  el: DrawingElement,
-  oldOrigin: PointZ,
-  newOrigin: PointZ
-): Point {
-  const pos = el.position;
-  /**
-    (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle) + cx,
-   */
-  const finalPos = rotate(pos.x, pos.y, oldOrigin.x, oldOrigin.y, el.rotation);
-  const eq = al.parse(
-    `(x - (${newOrigin.x})) * (${Math.cos(el.rotation)}) - (y - (${
-      newOrigin.y
-    })) * (${Math.sin(el.rotation)}) + (${newOrigin.x}) = (${finalPos[0]})`
-  ) as al.Equation;
-  // @ts-ignore
-
-  let xAnswer: string = (eq.lhs._hasVariable("x") &&
-    eq.solveFor("x")?.toString()) as string;
-
-  /**
-    (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle) + cy,
-   */
-  const eq2 = al.parse(
-    `((${xAnswer}) - (${newOrigin.x})) * (${Math.sin(el.rotation)}) - (y - (${
-      newOrigin.y
-    })) * (${Math.cos(el.rotation)}) + (${newOrigin.y}) = (${finalPos[1]})`
-  ) as al.Equation;
-
-  const yAnswer = eq2.solveFor("y");
-  const xAns = (al.parse(xAnswer) as al.Expression).eval({
-    y: yAnswer,
-  });
-
-  return {
-    x: eval(xAns!.toString()),
-    y: eval(yAnswer!.toString()),
-  };
-}
-
 function isBevelHandle(hand: TransformHandle) {
   return [
     TransformHandle.ne,
@@ -337,6 +292,7 @@ function App() {
       if (el && dir) {
         const updatedScale = { x: oriScale.x, y: oriScale.y };
         const updatedPt = { x: el.position.x, y: el.position.y };
+        const lockScale = isShowShiftTip.current && currentKeyboard === "Shift";
         if (dir !== TransformHandle.ro) {
           if (el.type === DrawingType.img) {
             scalingImg(
@@ -347,7 +303,8 @@ function App() {
               oriScale,
               diffY,
               updatedPt,
-              diffX
+              diffX,
+              lockScale
             );
           } else {
             // FreeDrawing
@@ -581,7 +538,8 @@ function App() {
     oriScale: Point,
     diffY: number,
     updatedPt: { x: number; y: number },
-    diffX: number
+    diffX: number,
+    lockScale: boolean
   ) {
     const img = el as ImageElement;
     const offset = new Vector(diffX, diffY);
@@ -684,8 +642,7 @@ function App() {
 
       case TransformHandle.se: {
         // change the boundary of scaling image.
-        const pts = dragInfo.current!.originalBoundary!.vertices;
-        pts[2] = pts[2].translate(offset);
+        let pts = dragInfo.current!.originalBoundary!.vertices;
 
         const secondEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
@@ -701,19 +658,31 @@ function App() {
         const thirdDir = new Vector(thirdEdge.end, thirdEdge.start).normalize();
 
         const scalar0 = offset.dot(zeroDir);
-        pts[1] = pts[1].translate(zeroDir.scale(scalar0, scalar0));
-
         const scalar3 = offset.dot(thirdDir);
-        pts[3] = pts[3].translate(thirdDir.scale(scalar3, scalar3));
+        if (lockScale) {
+          const leftTopPt = cloneDeep(pts[0]);
+          console.log(`${leftTopPt.x}, ${leftTopPt.y}`);
+          const scaleY =
+            (offset.y + pts[2].y - leftTopPt.y) / (pts[2].y - leftTopPt.y);
+          pts = pts
+            .map((p) => p.translate(-leftTopPt.x, -leftTopPt.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleY, scaleY));
+        } else {
+          pts[2] = pts[2].translate(offset);
+          pts[1] = pts[1].translate(zeroDir.scale(scalar0, scalar0));
+          pts[3] = pts[3].translate(thirdDir.scale(scalar3, scalar3));
+        }
 
         img.polygons[0] = new Polygon(pts);
         // change the image element
         updatedScale.y =
           (img.originalHeight * oriScale.y + Math.sign(oriScale.y) * scalar3) /
           img.originalHeight;
-        updatedScale.x =
-          (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
-          img.originalWidth;
+        updatedScale.x = lockScale
+          ? updatedScale.y
+          : (img.originalWidth * oriScale.x + Math.sign(oriScale.x) * scalar0) /
+            img.originalWidth;
         break;
       }
 
