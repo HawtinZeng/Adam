@@ -65,9 +65,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
   );
 
   useEffect(() => {
-    // cvsTrigger!.addEventListener("mousedown", penPanelMousedown);
-    // cvsTrigger!.addEventListener("mousemove", penPanelMousemove);
-    // cvsTrigger!.addEventListener("mouseup", strokeOutlineStopCurrentDrawing);
+    if (!cvsEle) return;
     cvsEle!.addEventListener("mousedown", mouseClick);
     cvsEle!.addEventListener("mousedown", mouseMove);
     cvsEle!.addEventListener("mousemove", () =>

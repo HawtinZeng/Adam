@@ -27,6 +27,10 @@ export function DrawCanvas() {
   // initialize canvas
   useEffect(() => {
     setCvsAtom(innerCvsRef.current);
+    innerCvsRef.current?.addEventListener("click", () =>
+      console.log("mousemove...")
+    );
+
     throttledRenderDC(sceneData, innerCvsRef.current!);
   }, [sceneData, setCvsAtom]);
 
