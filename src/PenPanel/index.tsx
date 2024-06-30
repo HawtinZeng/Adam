@@ -24,7 +24,7 @@ import {
   customColor,
   disableDrawingAtom,
   selectedKeyAtom,
-  selectedKeyAtomSubMenu,
+  subMenuIdx,
 } from "src/state/uiState";
 import { Btn } from "../components/Btn";
 type ImageInfo = {
@@ -53,7 +53,7 @@ async function* nextFrame(fps: number) {
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
   // 全局状态
-  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtomSubMenu);
+  const [selectedKey, setSelectedKey] = useAtom(subMenuIdx);
   const [cvsEle] = useAtom(canvasAtom);
 
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
@@ -255,7 +255,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const theFirstPt = drawingEle.points[0];
 
       if (theFirstPt)
-        drawingEle.polygons =
+        drawingEle.boundary =
           getAntArea(theFirstPt.x, theFirstPt.y, {
             width: cvs.width,
             height: cvs.height,

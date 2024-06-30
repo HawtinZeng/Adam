@@ -22,7 +22,7 @@ export type DrawingElement = {
   id: string;
   strokeColor: string;
   strokeStyle: "solid" | "dashed";
-  fillStyle: "solid" | "hachuo" | "cross-hatch";
+  fillStyle: "solid" | "hachuo" | "cross-hatch" | "none";
   opacity: number;
 
   belongedFrame: string;
@@ -37,10 +37,10 @@ export type DrawingElement = {
   scale: Point;
   imgSrc?: URL;
 
-  polygons: Polygon[]; // stroke outline, intersect，the first point locates at the top left.
-  eraserPolygons: Polygon[]; // stroke exclusion
+  boundary: Polygon[];
+  excludeArea: Polygon[];
+  needCacheCanvas: boolean;
 
-  // 位置和缩放的中心均位于左上角
   rotateOrigin: Point; // 旋转中心
 };
 

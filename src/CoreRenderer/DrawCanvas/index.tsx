@@ -3,7 +3,7 @@ import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef } from "react";
 import { throttledRenderDC } from "src/CoreRenderer/DrawCanvas/core";
 import { sceneAtom } from "src/state/sceneState";
-import { canvasAtom, cursorSvgAtom } from "src/state/uiState";
+import { canvasAtom } from "src/state/uiState";
 
 const staticCvsSte = stylex.create({
   container: {

@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import React from "react";
 import { ReactSVG } from "react-svg";
 import { BtnConfigs } from "src/MainMenu/Menu";
-import { selectedKeyAtomSubMenu } from "src/state/uiState";
+import { subMenuIdx } from "src/state/uiState";
 
 export const btn = stylex.create({
   btnArea: {
@@ -71,7 +71,7 @@ export function Btn(
 ) {
   const btnsMark: JSX.Element[] = [];
   const nodes: HTMLDivElement[] = [];
-  const [selectedSueMenuState] = useAtom(selectedKeyAtomSubMenu);
+  const [selectedSueMenuState] = useAtom(subMenuIdx);
 
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
@@ -107,15 +107,23 @@ export function Btn(
               src={
                 isSubMenu
                   ? btnConfigs[i].svg
-                  : btnConfigs[i].btnConfigs?.[selectedSueMenuState]?.svg ??
-                    btnConfigs[i].svg
+                  : (selectedKey === i
+                      ? btnConfigs[i].btnConfigs?.[selectedSueMenuState]?.svg
+                      : undefined) ?? btnConfigs[i].svg
               }
               useRequestCache={true}
               beforeInjection={(svg) => {
                 if (selectedKey === i && !isSubMenu) {
-                  svg
-                    .getElementsByTagName("path")[0]
-                    .setAttribute("fill", "#ffffff");
+                  let path = svg.getElementsByTagName("path")[0];
+                  if (path === undefined) {
+                    path = svg.getElementsByTagName("rect")[0];
+                  }
+
+                  if (path.getAttribute("stroke")) {
+                    path.setAttribute("stroke", "#ffffff");
+                  } else {
+                    path.setAttribute("fill", "#ffffff");
+                  }
                 }
               }}
             />

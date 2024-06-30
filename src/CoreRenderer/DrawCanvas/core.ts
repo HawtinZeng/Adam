@@ -14,6 +14,7 @@ import {
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
+  ArrowShapeElement,
   DrawingType,
   FreeDrawing,
   ImageElement,
@@ -85,20 +86,21 @@ export function renderDrawCanvas(
   ) as Partial<Record<ActionType, UpdatingElement[]>>;
   groupedElements.addPoints?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
-    let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(checkUpdating.ele);
-    cachedCvs = createDrawingCvs(ele, appCanvas);
+    if (ele.needCacheCanvas) {
+      let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(
+        checkUpdating.ele
+      );
+      cachedCvs = createDrawingCvs(ele, appCanvas);
 
-    ele.eraserPolygons.forEach((_, idx) => {
-      drawEraserOutline(ele, idx, cachedCvs!);
-    });
+      appCtx.putImageData(checkUpdating.oriImageData!, 0, 0);
+      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs!);
 
-    if (cachedCvs && checkUpdating?.oriImageData) {
-      appCtx.putImageData(checkUpdating.oriImageData, 0, 0);
-      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
+      // 绘制checkUpdating到画布上
+      appCtx.drawImage(cachedCvs!, 0, 0);
+    } else {
+      appCtx.putImageData(checkUpdating.oriImageData!, 0, 0);
+      drawNeedntCacheEle(ele);
     }
-
-    // 绘制checkUpdating到画布上
-    if (cachedCvs && checkUpdating) appCtx.drawImage(cachedCvs!, 0, 0);
   });
 
   const { elements } = sceneData;
@@ -108,7 +110,7 @@ export function renderDrawCanvas(
     const cachedCvs = createDrawingCvs(ele, appCanvas)!;
     drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs);
 
-    checkUpdating.ele.eraserPolygons.forEach((_, idx) => {
+    checkUpdating.ele.excludeArea.forEach((_, idx) => {
       drawEraserOutline(ele, idx, cachedCvs!);
     });
   });
@@ -141,7 +143,7 @@ export function renderDrawCanvas(
     if (u.ele.type === DrawingType.img) {
       const img = u.ele as ImageElement;
       const handleOperator = new Transform2DOperator(
-        img.polygons[0],
+        img.boundary[0],
         img.rotation,
         appCtx,
         Math.sign(u.ele.scale.y) === -1
@@ -245,42 +247,64 @@ export function redrawAllEles(
   }
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
   elements.forEach((el) => {
-    let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
-    // If the cached canvas is reset, then create a new one.
-    if (!cachedCvs) cachedCvs = createDrawingCvs(el, globalCvs!)!;
-    drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
+    if (el.needCacheCanvas) {
+      let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
 
-    // For image element.
-    if (el.type === DrawingType.img) {
-      const img = el as ImageElement;
-      if (el.type === "img") {
-        const rotateOrigin = img.rotateOrigin;
-        globalAppCtx!.save();
+      if (!cachedCvs) cachedCvs = createDrawingCvs(el, globalCvs!)!;
+      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
 
-        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
-        globalAppCtx!.rotate(el.rotation);
-        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+      // For image element.
+      if (el.type === DrawingType.img) {
+        const img = el as ImageElement;
+        if (el.type === "img") {
+          const rotateOrigin = img.rotateOrigin;
+          globalAppCtx!.save();
 
-        globalAppCtx!.translate(el.position.x, el.position.y);
-        globalAppCtx!.scale(el.scale.x, el.scale.y);
-        globalAppCtx!.drawImage(cachedCvs, 0, 0);
+          globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+          globalAppCtx!.rotate(el.rotation);
+          globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
-        globalAppCtx!.restore();
+          globalAppCtx!.translate(el.position.x, el.position.y);
+          globalAppCtx!.scale(el.scale.x, el.scale.y);
+          globalAppCtx!.drawImage(cachedCvs, 0, 0);
+
+          globalAppCtx!.restore();
+        }
+      } else {
+        globalAppCtx!.drawImage(
+          cachedCvs!,
+          0,
+          0,
+          cachedCvs!.width,
+          cachedCvs!.height
+        );
       }
     } else {
-      globalAppCtx!.drawImage(
-        cachedCvs!,
-        0,
-        0,
-        cachedCvs!.width,
-        cachedCvs!.height
-      );
+      drawNeedntCacheEle(el);
     }
 
     if (el === uE) {
       drawCurrentUpdatingHandle?.();
     }
   });
+}
+
+function drawNeedntCacheEle(el: DrawingElement) {
+  if (!globalAppCtx) return;
+  if (el.type === DrawingType.arrow) {
+    const a = el as ArrowShapeElement;
+    globalAppCtx!.save();
+
+    globalAppCtx!.beginPath();
+    globalAppCtx!.moveTo(a.points[0].x, a.points[0].y);
+    globalAppCtx!.lineTo(a.points[1].x, a.points[1].y);
+
+    globalAppCtx!.lineWidth = a.strokeWidth;
+    globalAppCtx!.strokeStyle = a.strokeColor;
+    globalAppCtx!.stroke();
+
+    globalAppCtx!.restore();
+  }
 }
 
 export function removeBlankEle(
@@ -431,6 +455,11 @@ export function createDrawingCvs(
 
       break;
     }
+
+    case DrawingType.arrow: {
+      const a = ele as ArrowShapeElement;
+      const lw = a.strokeWidth;
+    }
   }
 
   if (debugShowEleId) {
@@ -476,7 +505,7 @@ function drawEraserOutline(
   updatingEraser: number,
   canvas: HTMLCanvasElement
 ) {
-  const eraserOutlinePoints = ele.eraserPolygons;
+  const eraserOutlinePoints = ele.excludeArea;
   const ctx = canvas.getContext("2d")!;
 
   ctx.globalCompositeOperation = "destination-out";

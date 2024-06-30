@@ -48,7 +48,7 @@ export function Eraser() {
     const hitedEles: DrawingElement[] = [];
     sceneState.elements.forEach((ele) => {
       const isHit = isContained(
-        ele.polygons,
+        ele.boundary,
         new Circle(new PointZ(e.clientX, e.clientY), eraserSize),
         true
       );
@@ -101,7 +101,7 @@ export function Eraser() {
     });
 
     sceneState.updatingElements.forEach((up) => {
-      up.ele.eraserPolygons.push(
+      up.ele.excludeArea.push(
         new Polygon(eraserOutlinePoints.map((pt) => new PointZ(pt.x, pt.y)))
       );
     });

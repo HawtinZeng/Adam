@@ -19,7 +19,7 @@ import { sceneAtom } from "src/state/sceneState";
 import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
-import circle from "../images/svgs/circle.svg";
+import { default as circleShape } from "../images/svgs/circle.svg";
 import eraser from "../images/svgs/eraser.svg";
 import highlighterPen from "../images/svgs/highlighterPen.svg";
 import image from "../images/svgs/iamge.svg";
@@ -28,6 +28,9 @@ import note from "../images/svgs/note.svg";
 import pen from "../images/svgs/pen.svg";
 import screenShot from "../images/svgs/screenShot.svg";
 import settings from "../images/svgs/settings.svg";
+import arrowShape from "../images/svgs/shapeIcon/arrowShape.svg";
+import lineShape from "../images/svgs/shapeIcon/lineShape.svg";
+import squareShape from "../images/svgs/shapeIcon/squareShape.svg";
 import textArea from "../images/svgs/textArea.svg";
 
 export const mainMenu = stylex.create({
@@ -155,25 +158,26 @@ export const penConfigs: BtnConfigs = [
     },
   },
 ];
+
 export const shapeConfigs: BtnConfigs = [
   {
     label: "箭头",
-    svg: highlighterPen,
+    svg: arrowShape,
     key: "arrow",
   },
   {
     label: "直线",
-    svg: highlighterPen,
+    svg: lineShape,
     key: "line",
   },
   {
     label: "圆形",
-    svg: highlighterPen,
+    svg: circleShape,
     key: "circle",
   },
   {
     label: "矩形",
-    svg: highlighterPen,
+    svg: squareShape,
     key: "square",
   },
 ];
@@ -211,10 +215,11 @@ export const menuConfigs: BtnConfigs = [
     subMenu: <ImageInput />,
   },
   {
-    label: "圆圈",
-    svg: circle,
-    key: "circle",
+    label: "形状",
+    svg: arrowShape,
+    key: "shape",
     subMenu: <ShapePanelCompose />,
+    btnConfigs: shapeConfigs,
   },
   {
     label: "文字",
@@ -269,8 +274,8 @@ export function MainMenu() {
       for (let i = sceneState.elements.length - 1; i >= 0; i--) {
         const ele = sceneState.elements[i];
         const isHit = ptIsContained(
-          ele.polygons,
-          ele.eraserPolygons,
+          ele.boundary,
+          ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {

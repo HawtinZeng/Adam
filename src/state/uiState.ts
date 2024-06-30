@@ -3,7 +3,7 @@ import { atomEffect } from "jotai-effect";
 import { DomElement } from "src/CoreRenderer/basicTypes";
 import { setTransparentOption, unsetTransparent } from "src/commonUtils";
 export const selectedKeyAtom = atom(-1);
-export const selectedKeyAtomSubMenu = atom(0);
+export const subMenuIdx = atom(0);
 
 export const selectedSubEffectAtom = atomEffect((get, set) => {
   // runs on mount or whenever someAtom changes

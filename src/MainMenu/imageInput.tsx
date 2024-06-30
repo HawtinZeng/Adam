@@ -134,8 +134,8 @@ export function ImageInput() {
         isAssignSecPt.current = false;
         const img = s.updatingElements[0].ele as ImageElement;
 
-        img.polygons[0] = getBoundryPoly(img);
-        img.rotateOrigin = img.polygons[0].box.center;
+        img.boundary[0] = getBoundryPoly(img);
+        img.rotateOrigin = img.boundary[0].box.center;
 
         s.elements.push(img);
         s.updatingElements.length = 0;

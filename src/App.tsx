@@ -141,7 +141,7 @@ function App() {
           originalScale: { ...img.scale },
           originalRotation: img.rotation,
           originalHandles: cloneDeep(u.handleOperator)!,
-          originalBoundary: cloneDeep(img.polygons[0]),
+          originalBoundary: cloneDeep(img.boundary[0]),
         };
         return;
       }
@@ -163,8 +163,8 @@ function App() {
         // console.time("isHit");
         const ele = sceneData.elements[i];
         const isHit = ptIsContained(
-          ele.polygons,
-          ele.eraserPolygons,
+          ele.boundary,
+          ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
@@ -229,8 +229,8 @@ function App() {
         isShowShiftTip.current = false;
 
         const isHit = ptIsContained(
-          u.ele.polygons.map((p) => p.rotate(u.ele.rotation, p.box.center)),
-          u.ele.eraserPolygons,
+          u.ele.boundary.map((p) => p.rotate(u.ele.rotation, p.box.center)),
+          u.ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
@@ -271,7 +271,7 @@ function App() {
           y: originalRotateOrigin!.y + offset.y,
         };
 
-        img.polygons[0] = getBoundryPoly(img);
+        img.boundary[0] = getBoundryPoly(img);
 
         setSceneData({ ...sceneData });
         return;
@@ -326,7 +326,7 @@ function App() {
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
             i.rotation = deltaRotation + originalRotation;
 
-            i.polygons[0] = getBoundryPoly(i);
+            i.boundary[0] = getBoundryPoly(i);
           }
         }
         setSceneData({ ...sceneData });
@@ -393,14 +393,14 @@ function App() {
         const newOrigin = bbx.center;
 
         const realNewOri = newOrigin.rotate(img.rotation, oldOrigin);
-        const rightBottomPt = img.polygons[0].vertices[2];
+        const rightBottomPt = img.boundary[0].vertices[2];
         const deltaVec = new Vector(rightBottomPt, realNewOri);
         const realNewPos = realNewOri.translate(deltaVec);
         const newPos = realNewPos.rotate(-img.rotation, realNewOri);
 
         img.position = newPos;
         img.rotateOrigin = realNewOri;
-        img.polygons[0] = getBoundryPoly(img);
+        img.boundary[0] = getBoundryPoly(img);
       }
       setSceneData({ ...sceneData });
       dragInfo.current = null;
@@ -429,28 +429,28 @@ function App() {
     }
   }
   useEffect(() => {
-    const div = canvasEventTrigger.current!;
-    div.addEventListener("mousedown", detectElesInterceted);
+    const wrapper = canvasEventTrigger.current!;
+    wrapper.addEventListener("mousedown", detectElesInterceted);
 
-    div.addEventListener("mousedown", dragStart);
-    div.addEventListener("mouseup", dragEnd);
+    wrapper.addEventListener("mousedown", dragStart);
+    wrapper.addEventListener("mouseup", dragEnd);
 
     window.addEventListener("keydown", deleteEle);
 
-    div.addEventListener("mousemove", detectHandles);
-    div.addEventListener("mousemove", dragMove);
-    div.addEventListener("mousemove", updateMouseTipPosition);
+    wrapper.addEventListener("mousemove", detectHandles);
+    wrapper.addEventListener("mousemove", dragMove);
+    wrapper.addEventListener("mousemove", updateMouseTipPosition);
 
     return () => {
-      div.removeEventListener("mousedown", detectElesInterceted);
-      div.removeEventListener("mousedown", dragStart);
+      wrapper.removeEventListener("mousedown", detectElesInterceted);
+      wrapper.removeEventListener("mousedown", dragStart);
 
-      div.removeEventListener("mouseup", dragEnd);
+      wrapper.removeEventListener("mouseup", dragEnd);
       window.removeEventListener("keydown", deleteEle);
 
-      div.removeEventListener("mousemove", detectHandles);
-      div.removeEventListener("mousemove", dragMove);
-      div.addEventListener("mousemove", updateMouseTipPosition);
+      wrapper.removeEventListener("mousemove", detectHandles);
+      wrapper.removeEventListener("mousemove", dragMove);
+      wrapper.addEventListener("mousemove", updateMouseTipPosition);
     };
   }, [
     detectElesInterceted,
@@ -484,9 +484,9 @@ function App() {
                 <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
                 <div>{`updatingEle rotationOrigin: ${sceneData.updatingElements[0]?.ele.rotateOrigin.x}, ${sceneData.updatingElements[0]?.ele.rotateOrigin.y}`}</div>
                 <div>{`updatingEle polygon[0] orientation: ${
-                  sceneData.updatingElements[0]?.ele.polygons[0] &&
+                  sceneData.updatingElements[0]?.ele.boundary[0] &&
                   [
-                    ...sceneData.updatingElements[0]?.ele.polygons[0].faces,
+                    ...sceneData.updatingElements[0]?.ele.boundary[0].faces,
                   ][0].orientation()
                 }`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
@@ -760,10 +760,10 @@ function App() {
       }
     }
 
-    img.polygons[0] = new Polygon(pts);
+    img.boundary[0] = new Polygon(pts);
 
-    const rightEdge = [...img.polygons[0].edges][1] as Edge;
-    const bottomEdge = [...img.polygons[0].edges][2] as Edge;
+    const rightEdge = [...img.boundary[0].edges][1] as Edge;
+    const bottomEdge = [...img.boundary[0].edges][2] as Edge;
     updatedScale.y =
       (rightEdge.length *
         Math.sign(
@@ -780,7 +780,7 @@ function App() {
       img.originalWidth;
 
     const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
-    const finalPos = img.polygons[0].vertices[0].rotate(
+    const finalPos = img.boundary[0].vertices[0].rotate(
       -img.rotation,
       rotateOrigin
     );
