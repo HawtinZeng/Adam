@@ -12,7 +12,7 @@ import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
 import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
-import { ShapePanel } from "src/ShapePanel/index";
+import { ShapePanelCompose } from "src/ShapePanel/shapePanelCompose";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { logger } from "src/setup";
 import { sceneAtom } from "src/state/sceneState";
@@ -155,6 +155,28 @@ export const penConfigs: BtnConfigs = [
     },
   },
 ];
+export const shapeConfigs: BtnConfigs = [
+  {
+    label: "箭头",
+    svg: highlighterPen,
+    key: "arrow",
+  },
+  {
+    label: "直线",
+    svg: highlighterPen,
+    key: "line",
+  },
+  {
+    label: "圆形",
+    svg: highlighterPen,
+    key: "circle",
+  },
+  {
+    label: "矩形",
+    svg: highlighterPen,
+    key: "square",
+  },
+];
 export const menuConfigs: BtnConfigs = [
   {
     label: "画笔",
@@ -192,7 +214,7 @@ export const menuConfigs: BtnConfigs = [
     label: "圆圈",
     svg: circle,
     key: "circle",
-    subMenu: <ShapePanel />,
+    subMenu: <ShapePanelCompose />,
   },
   {
     label: "文字",
