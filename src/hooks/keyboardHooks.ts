@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 export const useKeyboard = () => {
   const [currentKeyboard, setCurrentKeyboard] = useState("");
+  const [lastKey, setLastKey] = useState("");
   // press one keybaord key
   const assignKey = (e: KeyboardEvent) => {
     setCurrentKeyboard(e.key);
   };
 
   const unAssignKey = (e: KeyboardEvent) => {
+    setLastKey(currentKeyboard);
     setCurrentKeyboard("");
   };
   // const log = () => console.log(currentKeyboard);
@@ -20,5 +22,5 @@ export const useKeyboard = () => {
       // window.removeEventListener("mousemove", log);
     };
   }, [unAssignKey, assignKey, currentKeyboard]);
-  return [currentKeyboard, setCurrentKeyboard];
+  return [currentKeyboard, lastKey];
 };

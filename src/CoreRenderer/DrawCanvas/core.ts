@@ -175,20 +175,10 @@ export function renderDrawCanvas(
   });
 }
 
-export const fillCircle = (
-  context: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  radius: number,
-  stroke = true
-) => {
-  context.beginPath();
-  context.arc(cx, cy, radius, 0, Math.PI * 2);
-  context.fill();
-  if (stroke) {
-    context.stroke();
-  }
-};
+export function restoreOriginalmage(u: UpdatingElement) {
+  if (!globalAppCtx) return;
+  globalAppCtx!.putImageData(u.oriImageData!, 0, 0);
+}
 
 export const rotate = (
   // target point to rotate
@@ -293,17 +283,44 @@ function drawNeedntCacheEle(el: DrawingElement) {
   if (!globalAppCtx) return;
   if (el.type === DrawingType.arrow) {
     const a = el as ArrowShapeElement;
-    globalAppCtx!.save();
 
-    globalAppCtx!.beginPath();
-    globalAppCtx!.moveTo(a.points[0].x, a.points[0].y);
-    globalAppCtx!.lineTo(a.points[1].x, a.points[1].y);
+    if (a.points.length === 2) {
+      globalAppCtx!.save();
 
-    globalAppCtx!.lineWidth = a.strokeWidth;
-    globalAppCtx!.strokeStyle = a.strokeColor;
-    globalAppCtx!.stroke();
+      globalAppCtx!.beginPath();
+      globalAppCtx!.moveTo(a.points[0].x, a.points[0].y);
+      globalAppCtx!.lineTo(a.points[1].x, a.points[1].y);
 
-    globalAppCtx!.restore();
+      globalAppCtx!.lineCap = "round";
+      globalAppCtx!.lineWidth = a.strokeWidth;
+      globalAppCtx!.strokeStyle = a.strokeColor;
+      if (a.strokeStyle === "dashed") {
+        globalAppCtx!.setLineDash([1, 8]);
+        globalAppCtx!.lineWidth = 5;
+      }
+
+      globalAppCtx!.stroke();
+      globalAppCtx!.restore();
+
+      const endPos = a.points[1];
+      const startPos = a.points[0];
+      const reverseDir = new Vector(
+        startPos.x - endPos.x,
+        startPos.y - endPos.y
+      );
+      const verticalToBottom = new Vector(0, 1);
+      const rotation = reverseDir.angleTo(verticalToBottom);
+
+      drawTriangleWithHeight(
+        globalAppCtx!,
+        endPos.x,
+        endPos.y,
+        a.strokeWidth * 4,
+        a.strokeColor,
+        -rotation,
+        a.strokeStyle
+      );
+    }
   }
 }
 
@@ -326,6 +343,50 @@ export function removeBlankEle(
         logger.log(`removed ${prevLen - sceneState.elements.length} elements`);
     });
   });
+}
+
+function drawTriangleWithHeight(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  height: number,
+  color: string,
+  rotation: number = 0,
+  lineStyle: "dashed" | "solid" = "solid"
+) {
+  const width = (height * Math.sqrt(3)) / 2; // Calculate the base width of the equilateral triangle
+
+  const x1 = x - width / 2;
+  const y1 = y;
+
+  const x2 = x + width / 2;
+  const y2 = y;
+
+  const x3 = x;
+  const y3 = y - height;
+
+  const [rx1, ry1] = rotate(x1, y1, x, y, rotation);
+  const [rx2, ry2] = rotate(x2, y2, x, y, rotation);
+  const [rx3, ry3] = rotate(x3, y3, x, y, rotation);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(rx1, ry1);
+  ctx.lineTo(rx2, ry2);
+  ctx.lineTo(rx3, ry3);
+  ctx.closePath();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  if (lineStyle === "dashed") {
+    ctx.setLineDash([1, 10]);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 export function createDrawingCvs(

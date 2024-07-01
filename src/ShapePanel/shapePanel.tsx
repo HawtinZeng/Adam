@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from "jotai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
+import { restoreOriginalmage } from "src/CoreRenderer/DrawCanvas/core";
 import {
   DrawingType,
   newArrowShapeElement,
@@ -8,6 +9,7 @@ import { BtnConfigs } from "src/MainMenu/Menu";
 import { cloneDeepGenId } from "src/common/utils";
 import { Btn } from "src/components/Btn";
 import { UpdatingElement } from "src/drawingElements/data/scene";
+import { useKeyboard } from "src/hooks/keyboardHooks";
 import { sceneAtom } from "src/state/sceneState";
 import {
   canvasAtom,
@@ -19,18 +21,17 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
 
   const [selectedKey, setSelectedKey] = useAtom(subMenuIdx);
-  const mouseDownCount = useRef<number>(0);
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
 
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
+  const [_, lastKey] = useKeyboard();
 
   const mouseClick = useCallback(
     (e: MouseEvent) => {
       const currentShape = btnConfigs[selectedKey].key;
-      mouseDownCount.current++;
       if (currentShape === DrawingType.arrow) {
-        if (mouseDownCount.current === 1) {
+        if (s.updatingElements.length === 0) {
           const newArrow = cloneDeepGenId(newArrowShapeElement);
           newArrow.points.push({ x: e.clientX, y: e.clientY });
 
@@ -43,9 +44,15 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           };
           s.updatingElements.push(newEleUpdating);
           ss({ ...s });
-        } else if (mouseDownCount.current === 2) {
+        } else if (
+          s.updatingElements.length === 1 &&
+          s.updatingElements[0].ele.points.length === 2
+        ) {
           const a = s.updatingElements[0].ele;
           s.elements.push(a);
+
+          s.updatingElements.length = 0;
+
           ss({ ...s });
         }
       }
@@ -63,19 +70,22 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
     },
     [s, ss]
   );
+  useEffect(() => {
+    if (lastKey === "Escape" && s.updatingElements.length > 0) {
+      restoreOriginalmage(s.updatingElements[0]);
+      s.updatingElements.length = 0;
+    }
+  }, [lastKey, s.updatingElements]);
 
   useEffect(() => {
-    if (!cvsEle) return;
-    cvsEle!.addEventListener("mousedown", mouseClick);
-    cvsEle!.addEventListener("mousedown", mouseMove);
-    cvsEle!.addEventListener("mousemove", () =>
-      console.log("mouse move event triggered...")
-    );
+    if (!cvsTrigger) return;
+    cvsTrigger!.addEventListener("mousedown", mouseClick);
+    cvsTrigger!.addEventListener("mousemove", mouseMove);
     return () => {
-      cvsEle!.removeEventListener("mousedown", mouseClick);
-      cvsEle!.removeEventListener("mousemove", mouseMove);
+      cvsTrigger!.removeEventListener("mousedown", mouseClick);
+      cvsTrigger!.removeEventListener("mousemove", mouseMove);
     };
-  }, [cvsEle, mouseClick, mouseMove]);
+  }, [cvsTrigger, mouseClick, mouseMove]);
 
   return Btn(
     setSelectedKey,

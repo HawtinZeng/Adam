@@ -91,7 +91,7 @@ export const newImgElement: ImageElement = {
 };
 
 export const newArrowShapeElement: ArrowShapeElement = {
-  strokeStyle: "solid",
+  strokeStyle: "dashed",
   arrowTriangle: new Polygon(),
   needCacheCanvas: false,
 
