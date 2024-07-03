@@ -19,7 +19,6 @@ import {
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { redrawAllEles } from "src/CoreRenderer/DrawCanvas/core";
-import { DynamicCanvas } from "src/CoreRenderer/DynamicCanvas";
 import {
   DrawingElement,
   Point,
@@ -33,6 +32,7 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
+import { setTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
@@ -49,10 +49,11 @@ import {
   eraserRadius,
   selectedKeyAtom,
 } from "src/state/uiState";
-import { setTransparent } from "./commonUtils";
+
 export const debugShowEleId = false;
-export const debugShowHandlesPosition = true;
-const showDebugPanel = true;
+export const debugShowHandlesPosition = false;
+const showDebugPanel = false;
+
 function isBevelHandle(hand: TransformHandle | undefined) {
   if (!hand) return false;
   return [
@@ -86,7 +87,6 @@ function App() {
 
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
-  setTransparent();
   useDrawingOperator();
   const size = useAtomValue(brushRadius) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
@@ -408,6 +408,10 @@ function App() {
   }, [sceneData, setSceneData]);
 
   useEffect(() => {
+    setTransparent();
+  }, []);
+
+  useEffect(() => {
     sceneData.updatingElements = [];
     setSceneData({ ...sceneData });
     if (selectedKey !== 2) {
@@ -472,7 +476,7 @@ function App() {
               style={{ cursor: cursorSvg ?? "default" }}
             >
               <DrawCanvas />
-              <DynamicCanvas />
+              {/* <DynamicCanvas /> */}
               <DomElements />
             </div>
             <MainMenu />

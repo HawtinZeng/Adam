@@ -309,6 +309,7 @@ export function getAntArea(
 
   const polygons: Polygon[] = [];
   ptsGrp.forEach((pts) => {
+    if (pts.points.length < 3) return; // TODO, 将点判空逻辑挪到Graph2D中去
     const poly = new Polygon(pts.points.map((pt) => new PointZ(pt.x, pt.y)));
     polygons.push(poly.reverse());
   });

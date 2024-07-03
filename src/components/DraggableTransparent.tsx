@@ -1,8 +1,10 @@
 import stylex from "@stylexjs/stylex";
+import { useAtomValue } from "jotai";
 import React, { ReactNode, Ref, forwardRef, useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import { Point } from "src/Utils/Data/geometry";
-import { setTransparent, unsetTransparent } from "../commonUtils";
+import { setTransparent, unsetTransparent } from "src/commonUtils";
+import { selectedKeyAtom } from "src/state/uiState";
 export const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
@@ -47,6 +49,9 @@ export const DraggableTransparent = forwardRef(
     const needBorder = props.needBorder ?? true;
     const needPadding = props.needPadding ?? true;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
+    const selectedKey = useAtomValue(selectedKeyAtom);
+    const [trans, setTrans] = useState(false);
+
     const onDrag = props.onDrag;
     const [hasIni, setHasIni] = useState(false);
     useEffect(() => {
@@ -76,8 +81,6 @@ export const DraggableTransparent = forwardRef(
         defaultPosition={defaultPosition}
       >
         <div
-          onMouseEnter={unsetTransparent}
-          onMouseLeave={() => !isDragging && setTransparent()}
           {...stylex.props(
             menuContainer.flexContent,
             isHorizontal && {
@@ -93,7 +96,20 @@ export const DraggableTransparent = forwardRef(
           )}
           ref={ref as Ref<HTMLDivElement>}
           style={hasIni ? { visibility: "visible" } : { visibility: "hidden" }}
+          onMouseEnter={() => {
+            setTrans(false);
+
+            unsetTransparent();
+            console.log("unsetTransparent");
+          }}
+          onMouseLeave={() => {
+            if (selectedKey === -1) {
+              setTrans(true);
+              setTransparent();
+            }
+          }}
         >
+          <span>{trans}</span>
           {props.children}
         </div>
       </Draggable>

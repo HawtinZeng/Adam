@@ -8,10 +8,11 @@ const { ipcMain } = require("electron");
 const { app, BrowserWindow } = require("electron/main");
 const path = require("path");
 const isDev = import("electron-is-dev");
+let win;
 
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width,
     height,
     frame: false,
@@ -33,7 +34,7 @@ const createWindow = () => {
 };
 
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
+  // const win = BrowserWindow.fromWebContents(event.sender);
   win.setIgnoreMouseEvents(ignore, options);
 });
 

@@ -240,7 +240,7 @@ export const menuConfigs: BtnConfigs = [
   },
 ];
 
-export function MainMenu() {
+function MainMenu() {
   const btnRefs = useRef<Array<HTMLDivElement>>([]);
   // console.log("re-render main menu");
   const canvasTrigger = useAtomValue(canvasEventTriggerAtom);
@@ -299,8 +299,6 @@ export function MainMenu() {
   useEffect(() => {
     if (selectedKey === 2) {
       canvasTrigger?.addEventListener("mousedown", checkHit);
-
-      // mergePolygonsAndEraserPolygons(sceneState.elements);
     }
 
     return () => {
