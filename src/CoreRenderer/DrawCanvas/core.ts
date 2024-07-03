@@ -285,6 +285,15 @@ function drawNeedntCacheEle(el: DrawingElement) {
     const a = el as ArrowShapeElement;
 
     if (a.points.length === 2) {
+      const endPos = a.points[1];
+      const startPos = a.points[0];
+      const reverseDir = new Vector(
+        startPos.x - endPos.x,
+        startPos.y - endPos.y
+      );
+      const verticalToBottom = new Vector(0, 1);
+      if (reverseDir.length === 0 || verticalToBottom.length === 0) return;
+
       globalAppCtx!.save();
 
       globalAppCtx!.beginPath();
@@ -302,15 +311,7 @@ function drawNeedntCacheEle(el: DrawingElement) {
       globalAppCtx!.stroke();
       globalAppCtx!.restore();
 
-      const endPos = a.points[1];
-      const startPos = a.points[0];
-      const reverseDir = new Vector(
-        startPos.x - endPos.x,
-        startPos.y - endPos.y
-      );
-      const verticalToBottom = new Vector(0, 1);
       const rotation = reverseDir.angleTo(verticalToBottom);
-
       drawTriangleWithHeight(
         globalAppCtx!,
         endPos.x,
