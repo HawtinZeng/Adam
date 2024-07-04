@@ -499,9 +499,9 @@ export function createDrawingCvs(
       const freeDrawing = ele as FreeDrawing;
       const strokeOptions = freeDrawing.strokeOptions;
 
-      const { strokeColor } = strokeOptions;
+      const { strokeColor } = freeDrawing;
       const { points } = freeDrawing;
-      ctx.strokeStyle = strokeColor!;
+      ctx.strokeStyle = strokeColor;
       ctx.lineCap = "round";
       ctx.fillStyle = strokeColor!;
 

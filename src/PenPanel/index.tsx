@@ -12,7 +12,7 @@ import {
   FreeDrawing,
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import { menuConfigs } from "src/MainMenu";
+import { colorConfigs, menuConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
@@ -81,7 +81,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const subMenuStrokeOption =
         menuConfigs[menuKey]?.btnConfigs?.[selectedKey]?.strokeOptions;
       newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
-
+      newFreeElement.strokeColor =
+        colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
       // updated property, size是ui控件的直径
       newFreeElement.strokeOptions.size = size / 4;
 

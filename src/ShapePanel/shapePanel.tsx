@@ -74,17 +74,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
       if (currentShape === DrawingType.arrow) {
         if (s.updatingElements.length === 0) {
           const newArrow = cloneDeepGenId(newArrowShapeElement);
-          newArrow.points.push(newPt);
-
-          const newEleUpdating: UpdatingElement = {
-            ele: newArrow,
-            type: "addPoints",
-            oriImageData: cvsEle!
-              .getContext("2d", { willReadFrequently: true })!
-              .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
-          };
-          s.updatingElements.push(newEleUpdating);
-          ss({ ...s });
+          createUpdatingElement(newArrow);
         } else if (
           s.updatingElements.length === 1 &&
           s.updatingElements[0].ele.points.length === 2 // 结束arrow的绘制
