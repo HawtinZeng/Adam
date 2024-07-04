@@ -26,6 +26,7 @@ import {
   Scene,
   UpdatingElement,
 } from "src/drawingElements/data/scene";
+import { coreThreadPool, logger } from "src/setup";
 // @ts-ignore
 import SVGPathCommander from "svg-path-commander";
 
@@ -336,13 +337,13 @@ export function removeBlankEle(
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
     const ctx = elCvs.getContext("2d", { willReadFrequently: true })!;
     const imageData = ctx.getImageData(0, 0, elCvs.width, elCvs.height);
-    // coreThreadPool.exec(getIsDeletedFlag, [imageData.data]).then((r) => {
-    // el.isDeleted = r;
-    //   sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
-    //   updateAtomStatus();
-    //   if (prevLen - sceneState.elements.length > 0)
-    //     logger.log(`removed ${prevLen - sceneState.elements.length} elements`);
-    // });
+    coreThreadPool.exec(getIsDeletedFlag, [imageData.data]).then((r) => {
+      el.isDeleted = r;
+      sceneState.elements = sceneState.elements.filter((el) => !el.isDeleted);
+      updateAtomStatus();
+      if (prevLen - sceneState.elements.length > 0)
+        logger.log(`removed ${prevLen - sceneState.elements.length} elements`);
+    });
   });
 }
 

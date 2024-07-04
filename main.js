@@ -20,11 +20,13 @@ const createWindow = () => {
     transparent: true,
     alwaysOnTop: true,
     webPreferences: {
-      nodeIntegration: true,
+      // nodeIntegration: true,
+      nodeIntegrationInWorker: true,
       contextIsolation: false,
       preload: path.join(__dirname, "./preload.js"),
     },
   });
+
   const servePort = process.env.PORT ?? 3000;
   const startURL = isDev
     ? `http://localhost:${servePort}`
