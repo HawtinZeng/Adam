@@ -53,6 +53,7 @@ import {
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
+export const showElePtLength = false;
 
 function isBevelHandle(hand: TransformHandle | undefined) {
   if (!hand) return false;
@@ -256,22 +257,22 @@ function App() {
         dragInfo.current;
       if (type === "move") {
         const u = sceneData.updatingElements[0];
-        const img = u!.ele as ImageElement;
+        const ele = u!.ele;
         const offset = {
           x: e.clientX - startPos.x,
           y: e.clientY - startPos.y,
         };
-        img.position = {
+        ele.position = {
           x: originalPt!.x + offset.x,
           y: originalPt!.y + offset.y,
         };
 
-        img.rotateOrigin = {
+        ele.rotateOrigin = {
           x: originalRotateOrigin!.x + offset.x,
           y: originalRotateOrigin!.y + offset.y,
         };
 
-        img.boundary[0] = getBoundryPoly(img);
+        ele.boundary[0] = getBoundryPoly(ele);
 
         setSceneData({ ...sceneData });
         return;
@@ -312,11 +313,13 @@ function App() {
           }
         } else {
           // rotation
-          if (el.type === DrawingType.img) {
-            const i = el as ImageElement;
+          if (
+            el.type === DrawingType.img ||
+            el.type === DrawingType.rectangle
+          ) {
             const rotationCenter = new PointZ(
-              i.rotateOrigin.x,
-              i.rotateOrigin.y
+              el.rotateOrigin.x,
+              el.rotateOrigin.y
             );
             const originalLine = new Line(
               new PointZ(startX, startY),
@@ -324,9 +327,9 @@ function App() {
             );
             const currentLine = new Line(new PointZ(x, y), rotationCenter);
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
-            i.rotation = deltaRotation + originalRotation;
+            el.rotation = deltaRotation + originalRotation;
 
-            i.boundary[0] = getBoundryPoly(i);
+            el.boundary[0] = getBoundryPoly(el);
           }
         }
         setSceneData({ ...sceneData });
@@ -387,8 +390,8 @@ function App() {
         const bbx = new Box(
           pos.x,
           pos.y,
-          pos.x + img.originalWidth * img.scale.x,
-          pos.y + img.originalHeight * img.scale.y
+          pos.x + img.width * img.scale.x,
+          pos.y + img.height * img.scale.y
         );
         const newOrigin = bbx.center;
 
@@ -439,7 +442,7 @@ function App() {
     wrapper.addEventListener("mousedown", dragStart);
     wrapper.addEventListener("mouseup", dragEnd);
 
-    window.addEventListener("keydown", deleteEle);
+    wrapper.addEventListener("keydown", deleteEle);
 
     wrapper.addEventListener("mousemove", detectHandles);
     wrapper.addEventListener("mousemove", dragMove);
@@ -774,14 +777,14 @@ function App() {
           rightEdge.end.rotate(-img.rotation).y -
             rightEdge.start.rotate(-img.rotation).y
         )) /
-      img.originalHeight;
+      img.height;
     updatedScale.x =
       (bottomEdge.length *
         Math.sign(
           bottomEdge.start.rotate(-img.rotation).x -
             bottomEdge.end.rotate(-img.rotation).x
         )) /
-      img.originalWidth;
+      img.width;
 
     const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
     const finalPos = img.boundary[0].vertices[0].rotate(

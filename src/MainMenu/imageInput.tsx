@@ -9,7 +9,9 @@ import React, {
   useState,
 } from "react";
 import { ReactSVG } from "react-svg";
+import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
+  DrawingType,
   ImageElement,
   newImgElement,
 } from "src/CoreRenderer/drawingElementsTypes";
@@ -119,8 +121,8 @@ export function ImageInput() {
         imgEle.position = { x: e.clientX, y: e.clientY };
 
         imgEle.image = htmlImgs.current.get(fileListRef.current?.[cur]);
-        imgEle.originalWidth = imgEle.image!.width;
-        imgEle.originalHeight = imgEle.image!.height;
+        imgEle.width = imgEle.image!.width;
+        imgEle.height = imgEle.image!.height;
 
         const updating: UpdatingElement = {
           type: "addImg",
@@ -220,19 +222,32 @@ export function ImageInput() {
   );
 }
 
-export function getBoundryPoly(img: ImageElement) {
-  const pos = img.position;
+export function getBoundryPoly(ele: DrawingElement) {
+  let bbx: Box = new Box();
+  if (ele.type === DrawingType.img) {
+    const img = ele as ImageElement;
+    const pos = img.position;
 
-  // const xmin = Math.min(, pos.x + img.originalWidth * img.scale.x);
-  // const xmax = Math.max(pos.x, pos.x + img.originalWidth * img.scale.x);
-  // const ymin = Math.min(pos.y, pos.y + img.originalHeight * img.scale.y);
-  // const ymax = Math.max(pos.y, pos.y + img.originalHeight * img.scale.y);
-  const bbx = new Box(
-    pos.x,
-    pos.y,
-    pos.x + img.originalWidth * img.scale.x,
-    pos.y + img.originalHeight * img.scale.y
-  );
+    bbx = new Box(
+      pos.x,
+      pos.y,
+      pos.x + img.width * img.scale.x,
+      pos.y + img.height * img.scale.y
+    );
+    return new Polygon(bbx).rotate(ele.rotation, bbx.center);
+  } else if (ele.type === DrawingType.rectangle) {
+    const leftTop = ele.points[0];
+    ele.boundary[0] = new Polygon(
+      new Box(
+        leftTop.x + ele.position.x,
+        leftTop.y + ele.height * ele.scale.x + ele.position.y,
+        leftTop.x + ele.width * ele.scale.y + ele.position.x,
+        leftTop.y + ele.position.y
+      )
+    );
 
-  return new Polygon(bbx).rotate(img.rotation, bbx.center);
+    return ele.boundary[0].rotate(ele.rotation, ele.boundary[0].box.center);
+  } else {
+    return new Polygon();
+  }
 }

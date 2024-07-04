@@ -12,7 +12,7 @@ import {
   FreeDrawing,
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import { colorConfigs, menuConfigs } from "src/MainMenu";
+import { menuConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
@@ -84,8 +84,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       // updated property, size是ui控件的直径
       newFreeElement.strokeOptions.size = size / 4;
-      newFreeElement.strokeOptions.strokeColor =
-        colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
 
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
@@ -249,6 +247,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       if (!cvs) {
         cvs = createDrawingCvs(drawingEle, cvsEle!)!;
       }
+
+      if (!cvs) return; // for laser brush
 
       const ctx = cvs.getContext("2d", { willReadFrequently: true })!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);

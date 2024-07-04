@@ -17,6 +17,9 @@ export enum DrawingType {
   eraser = "eraser",
   img = "img",
   arrow = "arrow",
+  polyline = "polyline",
+  circle = "circle",
+  rectangle = "rectangle",
 }
 
 export const newFreeDrawingElement: FreeDrawing = {
@@ -42,20 +45,40 @@ export const newFreeDrawingElement: FreeDrawing = {
   strokeOptions: {} as AStrokeOptions,
   boundary: [] as Flatten.Polygon[],
   scale: {
-    x: 0,
-    y: 0,
+    x: 1,
+    y: 1,
   },
   rotateOrigin: { x: 0, y: 0 },
   needCacheCanvas: true,
 };
 export type ImageElement = DrawingElement & {
   image: HTMLImageElement | undefined;
-  originalHeight: number;
-  originalWidth: number;
+  height: number;
+  width: number;
 };
 
 export type ArrowShapeElement = DrawingElement & {
   arrowTriangle: Polygon;
+  strokeWidth: number;
+};
+
+export type Shape =
+  | ArrowShapeElement
+  | PolylineShapeElement
+  | CircleShapeElement;
+
+export type PolylineShapeElement = DrawingElement & {
+  strokeWidth: number;
+};
+
+export type CircleShapeElement = DrawingElement & {
+  strokeWidth: number;
+  radius: number;
+};
+
+export type RectangleShapeElement = DrawingElement & {
+  width: number;
+  height: number;
   strokeWidth: number;
 };
 
@@ -83,15 +106,15 @@ export const newImgElement: ImageElement = {
   boundary: [],
   excludeArea: [],
   image: undefined,
-  originalHeight: 0,
-  originalWidth: 0,
+  height: 0,
+  width: 0,
   // 位置和缩放的中心均位于左上角
   rotateOrigin: { x: 0, y: 0 },
   needCacheCanvas: true,
 };
 
 export const newArrowShapeElement: ArrowShapeElement = {
-  strokeStyle: "dashed",
+  strokeStyle: "solid",
   arrowTriangle: new Polygon(),
   needCacheCanvas: false,
 
@@ -116,5 +139,95 @@ export const newArrowShapeElement: ArrowShapeElement = {
   boundary: [],
   excludeArea: [],
   // 默认为箭头线的中点
+  rotateOrigin: { x: 0, y: 0 },
+};
+
+export const newPolylineShapeElement: PolylineShapeElement = {
+  strokeStyle: "dashed",
+  needCacheCanvas: false,
+
+  type: DrawingType.polyline,
+  points: [],
+  id: "will be overwritten",
+  strokeColor: "#000000",
+  strokeWidth: 10,
+  fillStyle: "none",
+  opacity: 1,
+
+  belongedFrame: "defaultFrameId",
+  belongedGroup: "defaultGrp",
+
+  status: "notLocked",
+  isDeleted: false,
+
+  position: { x: 0, y: 0 }, // 没有意义
+  rotation: 0, // 以rotateOrigin为中心
+  scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
+
+  boundary: [],
+  excludeArea: [],
+  // 默认包围盒的中心
+  rotateOrigin: { x: 0, y: 0 },
+};
+
+export const newCircleShapeElement: CircleShapeElement = {
+  strokeStyle: "dashed",
+  needCacheCanvas: false,
+
+  type: DrawingType.circle,
+  points: [],
+  id: "will be overwritten",
+  strokeColor: "#000000",
+  strokeWidth: 10,
+
+  radius: 10,
+
+  fillStyle: "none",
+  opacity: 1,
+
+  belongedFrame: "defaultFrameId",
+  belongedGroup: "defaultGrp",
+
+  status: "notLocked",
+  isDeleted: false,
+
+  position: { x: 0, y: 0 }, // 没有意义
+  rotation: 0, // 以rotateOrigin为中心
+  scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
+
+  boundary: [],
+  excludeArea: [],
+  // 默认包围盒的中心
+  rotateOrigin: { x: 0, y: 0 },
+};
+export const newRectangleShapeElement: RectangleShapeElement = {
+  width: 10,
+  height: 10,
+  strokeWidth: 10,
+
+  strokeStyle: "dashed",
+  needCacheCanvas: false,
+
+  type: DrawingType.rectangle,
+  points: [],
+  id: "will be overwritten",
+  strokeColor: "#000000",
+
+  fillStyle: "none",
+  opacity: 1,
+
+  belongedFrame: "defaultFrameId",
+  belongedGroup: "defaultGrp",
+
+  status: "notLocked",
+  isDeleted: false,
+
+  position: { x: 0, y: 0 }, // 没有意义
+  rotation: 0, // 以rotateOrigin为中心
+  scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
+
+  boundary: [],
+  excludeArea: [],
+  // 默认包围盒的中心
   rotateOrigin: { x: 0, y: 0 },
 };

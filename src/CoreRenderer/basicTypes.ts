@@ -17,6 +17,7 @@ export type Point = {
 };
 export type Degree = number; // 0 - 359
 export type DrawingElement = {
+  [x: string]: any;
   type: string;
   points: Point[];
   id: string;

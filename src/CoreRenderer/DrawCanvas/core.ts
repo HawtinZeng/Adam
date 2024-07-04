@@ -1,12 +1,16 @@
 import { Point as PointF, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
-import { groupBy } from "lodash";
+import { cloneDeep, groupBy } from "lodash";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
   getStrokePoints,
 } from "perfect-freehand";
-import { debugShowEleId, debugShowHandlesPosition } from "src/App";
+import {
+  debugShowEleId,
+  debugShowHandlesPosition,
+  showElePtLength,
+} from "src/App";
 import {
   Transform2DOperator,
   TransformHandle,
@@ -15,9 +19,12 @@ import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   ArrowShapeElement,
+  CircleShapeElement,
   DrawingType,
   FreeDrawing,
   ImageElement,
+  PolylineShapeElement,
+  RectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import { TransformHandles } from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
@@ -141,38 +148,36 @@ export function renderDrawCanvas(
 
   // render transform handler
   groupedElements.transform?.forEach((u) => {
-    if (u.ele.type === DrawingType.img) {
-      const img = u.ele as ImageElement;
-      const handleOperator = new Transform2DOperator(
-        img.boundary[0],
-        img.rotation,
-        appCtx,
-        Math.sign(u.ele.scale.y) === -1
+    const img = u.ele as ImageElement;
+    const handleOperator = new Transform2DOperator(
+      img.boundary[0],
+      img.rotation,
+      appCtx,
+      Math.sign(u.ele.scale.y) === -1
+    );
+    u.handleOperator = handleOperator;
+    function drawCurrentUpdatingHandle() {
+      const cornerPolygon = new Polygon(
+        handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
       );
-      u.handleOperator = handleOperator;
-      function drawCurrentUpdatingHandle() {
-        const cornerPolygon = new Polygon(
-          handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
-        );
 
-        drawRectBorder(
-          appCtx,
-          cornerPolygon,
-          handleOperator.borderColor,
-          handleOperator.border
-        );
-
-        drawHandles(handleOperator, appCtx, img);
-      }
-
-      redrawAllEles(
+      drawRectBorder(
         appCtx,
-        appCanvas,
-        elements,
-        u.ele,
-        drawCurrentUpdatingHandle
+        cornerPolygon,
+        handleOperator.borderColor,
+        handleOperator.border
       );
+
+      drawHandles(handleOperator, appCtx, img);
     }
+
+    redrawAllEles(
+      appCtx,
+      appCanvas,
+      elements,
+      u.ele,
+      drawCurrentUpdatingHandle
+    );
   });
 }
 
@@ -277,6 +282,16 @@ export function redrawAllEles(
     if (el === uE) {
       drawCurrentUpdatingHandle?.();
     }
+
+    if (showElePtLength) {
+      const textPos = el.points[0];
+      drawText(globalAppCtx!, textPos, el.points.length.toString());
+    }
+
+    if (debugShowEleId) {
+      const textPos = el.points[0];
+      drawText(globalAppCtx!, textPos, el.id);
+    }
   });
 }
 
@@ -323,6 +338,83 @@ function drawNeedntCacheEle(el: DrawingElement) {
         a.strokeStyle
       );
     }
+  } else if (el.type === DrawingType.polyline) {
+    const polylineShape = el as PolylineShapeElement;
+    const pts = polylineShape.points;
+    if (pts.length < 2) return;
+
+    globalAppCtx!.save();
+    globalAppCtx!.beginPath();
+    const firtPos = pts[0];
+    globalAppCtx!.moveTo(firtPos.x, firtPos.y);
+
+    pts.slice(1).forEach((p, idx) => {
+      globalAppCtx!.lineTo(p.x, p.y);
+    });
+
+    globalAppCtx!.strokeStyle = polylineShape.strokeColor;
+    globalAppCtx!.lineWidth = polylineShape.strokeWidth;
+    globalAppCtx!.stroke();
+    globalAppCtx!.restore();
+  } else if (el.type === DrawingType.circle) {
+    const circle = el as CircleShapeElement;
+    const circleCenter = circle.points[0];
+    if (!circleCenter) return;
+
+    globalAppCtx!.save();
+    globalAppCtx!.beginPath();
+    globalAppCtx!.arc(
+      circleCenter.x,
+      circleCenter.y,
+      circle.radius,
+      0,
+      2 * Math.PI
+    );
+
+    globalAppCtx!.strokeStyle = circle.strokeColor;
+    globalAppCtx!.lineWidth = circle.strokeWidth;
+    globalAppCtx!.stroke();
+    globalAppCtx!.restore();
+  } else if (el.type === DrawingType.rectangle) {
+    const rect = el as RectangleShapeElement;
+    const leftTop = cloneDeep(rect.points[0]);
+    if (!leftTop) return;
+
+    leftTop.x += rect.position.x;
+    leftTop.y += rect.position.y;
+
+    globalAppCtx!.save();
+    globalAppCtx!.strokeStyle = rect.strokeColor;
+    globalAppCtx!.lineWidth = rect.strokeWidth;
+
+    const innerRectWidth =
+      rect.width > 0
+        ? rect.width * rect.scale.x - rect.strokeWidth
+        : rect.width * rect.scale.x + rect.strokeWidth;
+    const innerRectHeight =
+      rect.height > 0
+        ? rect.height * rect.scale.y - rect.strokeWidth
+        : rect.height * rect.scale.y + rect.strokeWidth;
+
+    globalAppCtx!.save();
+
+    const rotateOrigin = el.rotateOrigin;
+
+    globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+    globalAppCtx!.rotate(el.rotation);
+    globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+
+    globalAppCtx!.translate(el.position.x, el.position.y);
+    globalAppCtx!.scale(el.scale.x, el.scale.y);
+
+    globalAppCtx!.strokeRect(
+      leftTop.x + rect.strokeWidth / 2,
+      leftTop.y + rect.strokeWidth / 2,
+      innerRectWidth,
+      innerRectHeight
+    );
+
+    globalAppCtx!.restore();
   }
 }
 
@@ -518,16 +610,6 @@ export function createDrawingCvs(
 
       break;
     }
-
-    case DrawingType.arrow: {
-      const a = ele as ArrowShapeElement;
-      const lw = a.strokeWidth;
-    }
-  }
-
-  if (debugShowEleId) {
-    const textPos = ele.points[0];
-    drawText(ctx, textPos, ele.id);
   }
 
   return canvas;
@@ -716,4 +798,22 @@ export function drawPolygonPointIndex(
   ctx.stroke();
 
   ctx.restore();
+}
+
+export function onlyRedrawOneElement(
+  ele: DrawingElement,
+  originalImg: ImageData
+) {
+  globalAppCtx!.putImageData(originalImg, 0, 0);
+  drawNeedntCacheEle(ele);
+
+  if (showElePtLength) {
+    const textPos = ele.points[0];
+    drawText(globalAppCtx!, textPos, ele.points.length.toString());
+  }
+
+  if (debugShowEleId) {
+    const textPos = ele.points[0];
+    drawText(globalAppCtx!, textPos, ele.id);
+  }
 }

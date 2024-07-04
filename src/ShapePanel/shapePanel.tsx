@@ -1,10 +1,21 @@
+import { Box, Point, Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
-import { restoreOriginalmage } from "src/CoreRenderer/DrawCanvas/core";
 import {
+  onlyRedrawOneElement,
+  restoreOriginalmage,
+} from "src/CoreRenderer/DrawCanvas/core";
+import {
+  CircleShapeElement,
   DrawingType,
+  RectangleShapeElement,
+  Shape,
   newArrowShapeElement,
+  newCircleShapeElement,
+  newPolylineShapeElement,
+  newRectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTypes";
+import { colorConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { cloneDeepGenId } from "src/common/utils";
 import { Btn } from "src/components/Btn";
@@ -12,8 +23,11 @@ import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { sceneAtom } from "src/state/sceneState";
 import {
+  brushRadius,
   canvasAtom,
   canvasEventTriggerAtom,
+  colorAtom,
+  customColor,
   subMenuIdx,
 } from "src/state/uiState";
 
@@ -23,17 +37,44 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
   const [selectedKey, setSelectedKey] = useAtom(subMenuIdx);
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
+  const colorIdx = useAtomValue(colorAtom);
+  const color = useAtomValue(customColor);
+
+  const strokeWidth = useAtomValue(brushRadius) / 5;
 
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
-  const [_, lastKey] = useKeyboard();
+  const [_, lastKey, clearLastKey] = useKeyboard();
 
+  // 将newEle存入updatingElements中
+  const createUpdatingElement = useCallback(
+    (newEle: Shape) => {
+      const newEleUpdating: UpdatingElement = {
+        ele: newEle,
+        type: "addPoints",
+        oriImageData: cvsEle!
+          .getContext("2d", { willReadFrequently: true })!
+          .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
+      };
+      s.updatingElements.push(newEleUpdating);
+
+      newEle.strokeColor = colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+      newEle.strokeWidth = strokeWidth;
+
+      ss({ ...s });
+    },
+    [color, colorIdx, cvsEle, s, ss, strokeWidth]
+  );
+  // core
   const mouseClick = useCallback(
     (e: MouseEvent) => {
-      const currentShape = btnConfigs[selectedKey].key;
+      const currentShape = btnConfigs[selectedKey]?.key;
+      if (!currentShape) return;
+
+      const newPt = { x: e.clientX, y: e.clientY };
       if (currentShape === DrawingType.arrow) {
         if (s.updatingElements.length === 0) {
           const newArrow = cloneDeepGenId(newArrowShapeElement);
-          newArrow.points.push({ x: e.clientX, y: e.clientY });
+          newArrow.points.push(newPt);
 
           const newEleUpdating: UpdatingElement = {
             ele: newArrow,
@@ -46,46 +87,143 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           ss({ ...s });
         } else if (
           s.updatingElements.length === 1 &&
-          s.updatingElements[0].ele.points.length === 2
+          s.updatingElements[0].ele.points.length === 2 // 结束arrow的绘制
         ) {
           const a = s.updatingElements[0].ele;
           s.elements.push(a);
+          s.updatingElements.length = 0;
 
+          ss({ ...s });
+        }
+      } else if (currentShape === DrawingType.polyline) {
+        if (s.updatingElements.length === 0) {
+          const newPolyline = cloneDeepGenId(newPolylineShapeElement);
+          createUpdatingElement(newPolyline);
+        } else {
+          const a = s.updatingElements[0].ele;
+          a.points.push(newPt);
+          ss({ ...s });
+        }
+      } else if (currentShape === DrawingType.circle) {
+        if (s.updatingElements.length === 0) {
+          const circle = cloneDeepGenId(newCircleShapeElement);
+          circle.points.push(newPt);
+          createUpdatingElement(circle);
+        } else {
+          const a = s.updatingElements[0].ele;
+          s.elements.push(a);
+          s.updatingElements.length = 0;
+
+          ss({ ...s });
+        }
+      } else if (currentShape === DrawingType.rectangle) {
+        if (s.updatingElements.length === 0) {
+          const rectangle = cloneDeepGenId(newRectangleShapeElement);
+
+          rectangle.points.push(newPt);
+
+          createUpdatingElement(rectangle);
+        } else {
+          const rectangle = s.updatingElements[0].ele as RectangleShapeElement;
+          const leftTop = rectangle.points[0];
+          rectangle.boundary.push(
+            new Polygon(
+              new Box(
+                leftTop.x,
+                leftTop.y + rectangle.height,
+                leftTop.x + rectangle.width,
+                leftTop.y
+              )
+            )
+          );
+          rectangle.rotateOrigin = rectangle.boundary[0].box.center;
+          s.elements.push(rectangle);
           s.updatingElements.length = 0;
 
           ss({ ...s });
         }
       }
     },
-    [btnConfigs, cvsEle, s, selectedKey, ss]
+    [btnConfigs, createUpdatingElement, cvsEle, s, selectedKey, ss]
   );
 
   const mouseMove = useCallback(
     (e: MouseEvent) => {
       if (s.updatingElements.length > 0) {
+        const newPoint = { x: e.clientX, y: e.clientY };
         const creatingShape = s.updatingElements[0].ele;
-        creatingShape.points[1] = { x: e.clientX, y: e.clientY };
+
+        if (creatingShape.points.length === 1) {
+          creatingShape.points.push(newPoint);
+        } else {
+          creatingShape.points.splice(-1, 1, newPoint);
+        }
+
+        if (creatingShape.type === DrawingType.arrow) {
+          creatingShape.points[1] = newPoint;
+        } else if (creatingShape.type === DrawingType.polyline) {
+          creatingShape.points.splice(-1, 1, newPoint);
+        } else if (creatingShape.type === DrawingType.circle) {
+          const circle = creatingShape as CircleShapeElement;
+          const center = circle.points[0];
+          circle.radius = new Point(newPoint.x, newPoint.y).distanceTo(
+            new Point(center.x, center.y)
+          )[0];
+        } else if (creatingShape.type === DrawingType.rectangle) {
+          const rect = creatingShape as RectangleShapeElement;
+          const leftTop = creatingShape.points[0];
+          rect.width = newPoint.x - leftTop.x;
+          rect.height = newPoint.y - leftTop.y;
+        }
+
         ss({ ...s });
       }
     },
     [s, ss]
   );
+
+  const spaceEnsureAdd = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.key !== "Space" || !s.updatingElements[0]) return;
+    },
+    [s, ss]
+  );
+
   useEffect(() => {
     if (lastKey === "Escape" && s.updatingElements.length > 0) {
       restoreOriginalmage(s.updatingElements[0]);
       s.updatingElements.length = 0;
+    } else if (lastKey === " " && s.updatingElements.length > 0) {
+      const a = s.updatingElements[0].ele;
+      const u = s.updatingElements[0];
+
+      a.points.splice(-1, 1);
+      if (a.points.length >= 2) {
+        s.elements.push(a);
+      }
+      onlyRedrawOneElement(a, u.oriImageData!);
+
+      s.updatingElements.length = 0;
     }
-  }, [lastKey, s.updatingElements]);
+    clearLastKey();
+  }, [clearLastKey, lastKey, s]);
 
   useEffect(() => {
     if (!cvsTrigger) return;
     cvsTrigger!.addEventListener("mousedown", mouseClick);
     cvsTrigger!.addEventListener("mousemove", mouseMove);
+    window.addEventListener("keydown", spaceEnsureAdd);
     return () => {
       cvsTrigger!.removeEventListener("mousedown", mouseClick);
       cvsTrigger!.removeEventListener("mousemove", mouseMove);
+      window.removeEventListener("keydown", spaceEnsureAdd);
     };
-  }, [cvsTrigger, mouseClick, mouseMove]);
+  }, [cvsTrigger, mouseClick, mouseMove, spaceEnsureAdd]);
+
+  useEffect(() => {
+    window.addEventListener("keydown", spaceEnsureAdd);
+    return () => window.removeEventListener("keydown", spaceEnsureAdd);
+  }, [spaceEnsureAdd]);
 
   return Btn(
     setSelectedKey,

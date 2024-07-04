@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-export const useKeyboard = () => {
+export const useKeyboard = (): [string, string, () => void] => {
   const [currentKeyboard, setCurrentKeyboard] = useState("");
   const [lastKey, setLastKey] = useState("");
   // press one keybaord key
@@ -11,16 +11,17 @@ export const useKeyboard = () => {
     setLastKey(currentKeyboard);
     setCurrentKeyboard("");
   };
-  // const log = () => console.log(currentKeyboard);
+
+  const clearLastKey = () => {
+    setLastKey("");
+  };
   useEffect(() => {
     window.addEventListener("keydown", assignKey);
     window.addEventListener("keyup", unAssignKey);
-    // window.addEventListener("mousemove", log);
     return () => {
       window.removeEventListener("keydown", assignKey);
       window.removeEventListener("keyup", unAssignKey);
-      // window.removeEventListener("mousemove", log);
     };
   }, [unAssignKey, assignKey, currentKeyboard]);
-  return [currentKeyboard, lastKey];
+  return [currentKeyboard, lastKey, clearLastKey];
 };

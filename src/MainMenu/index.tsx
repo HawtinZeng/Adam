@@ -5,6 +5,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ptIsContained } from "src/CoreRenderer/basicTypes";
+import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { ImageInput } from "src/MainMenu/imageInput";
@@ -163,22 +164,22 @@ export const shapeConfigs: BtnConfigs = [
   {
     label: "箭头",
     svg: arrowShape,
-    key: "arrow",
+    key: DrawingType.arrow,
   },
   {
     label: "直线",
     svg: lineShape,
-    key: "line",
+    key: DrawingType.polyline,
   },
   {
     label: "圆形",
     svg: circleShape,
-    key: "circle",
+    key: DrawingType.circle,
   },
   {
     label: "矩形",
     svg: squareShape,
-    key: "square",
+    key: DrawingType.rectangle,
   },
 ];
 export const menuConfigs: BtnConfigs = [
