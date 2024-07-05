@@ -11,6 +11,7 @@ import React, {
 import { ReactSVG } from "react-svg";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
+  CircleShapeElement,
   DrawingType,
   ImageElement,
   newImgElement,
@@ -136,7 +137,7 @@ export function ImageInput() {
         isAssignSecPt.current = false;
         const img = s.updatingElements[0].ele as ImageElement;
 
-        img.boundary[0] = getBoundryPoly(img);
+        img.boundary[0] = getBoundryPoly(img)!;
         img.rotateOrigin = img.boundary[0].box.center;
 
         s.elements.push(img);
@@ -224,29 +225,26 @@ export function ImageInput() {
 
 export function getBoundryPoly(ele: DrawingElement) {
   let bbx: Box = new Box();
-  if (ele.type === DrawingType.img) {
-    const img = ele as ImageElement;
-    const pos = img.position;
+  if (ele.type === DrawingType.img || ele.type === DrawingType.rectangle) {
+    const pos = ele.position;
 
     bbx = new Box(
       pos.x,
       pos.y,
-      pos.x + img.width * img.scale.x,
-      pos.y + img.height * img.scale.y
+      pos.x + ele.width * ele.scale.x,
+      pos.y + ele.height * ele.scale.y
     );
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
-  } else if (ele.type === DrawingType.rectangle) {
-    const leftTop = ele.points[0];
+  } else if (ele.type === DrawingType.circle) {
+    const circle = ele as CircleShapeElement;
+    const pos = circle.position;
 
-    const bbx = new Box(
-      leftTop.x + ele.position.x,
-      leftTop.y + ele.position.y,
-      leftTop.x + ele.width * ele.scale.x + ele.position.x,
-      leftTop.y + ele.height * ele.scale.y + ele.position.y
+    bbx = new Box(
+      pos.x,
+      pos.y,
+      pos.x + circle.radius * 2 * circle.scale.x,
+      pos.y + circle.radius * 2 * circle.scale.y
     );
-
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
-  } else {
-    return new Polygon();
   }
 }

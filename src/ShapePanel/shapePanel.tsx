@@ -102,21 +102,24 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           createUpdatingElement(circle);
         } else {
           const a = s.updatingElements[0].ele;
+          a.rotateOrigin = a.points[0];
+          a.points.length = 0;
+
+          a.boundary[0] = getBoundryPoly(a)!;
           s.elements.push(a);
           s.updatingElements.length = 0;
-
           ss({ ...s });
         }
       } else if (currentShape === DrawingType.rectangle) {
         if (s.updatingElements.length === 0) {
           const rectangle = cloneDeepGenId(newRectangleShapeElement);
 
-          rectangle.points.push(newPt);
+          rectangle.position = newPt;
 
           createUpdatingElement(rectangle);
         } else {
           const rectangle = s.updatingElements[0].ele as RectangleShapeElement;
-          rectangle.boundary[0] = getBoundryPoly(rectangle);
+          rectangle.boundary[0] = getBoundryPoly(rectangle)!;
           rectangle.rotateOrigin = rectangle.boundary[0].box.center;
           s.elements.push(rectangle);
           s.updatingElements.length = 0;
@@ -150,9 +153,15 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           circle.radius = new Point(newPoint.x, newPoint.y).distanceTo(
             new Point(center.x, center.y)
           )[0];
+          circle.position = {
+            x: center.x - circle.radius,
+            y: center.y - circle.radius,
+          };
+          circle.width = circle.radius * 2;
+          circle.height = circle.radius * 2;
         } else if (creatingShape.type === DrawingType.rectangle) {
           const rect = creatingShape as RectangleShapeElement;
-          const leftTop = creatingShape.points[0];
+          const leftTop = rect.position;
           rect.width = newPoint.x - leftTop.x;
           rect.height = newPoint.y - leftTop.y;
         }

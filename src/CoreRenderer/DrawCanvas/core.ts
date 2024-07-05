@@ -358,28 +358,50 @@ function drawNeedntCacheEle(el: DrawingElement) {
     globalAppCtx!.restore();
   } else if (el.type === DrawingType.circle) {
     const circle = el as CircleShapeElement;
-    const circleCenter = circle.points[0];
-    if (!circleCenter) return;
+    if (circle.radius - circle.strokeWidth / 2 <= 0) return;
+    let circleCenter = circle.points[0];
 
     globalAppCtx!.save();
     globalAppCtx!.beginPath();
-    globalAppCtx!.arc(
-      circleCenter.x,
-      circleCenter.y,
-      circle.radius,
-      0,
-      2 * Math.PI
-    );
+
+    if (circleCenter) {
+      globalAppCtx!.arc(
+        circleCenter.x,
+        circleCenter.y,
+        circle.radius - circle.strokeWidth / 2,
+        0,
+        2 * Math.PI
+      );
+    } else {
+      const rotateOrigin = el.rotateOrigin;
+
+      globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+      globalAppCtx!.rotate(el.rotation);
+      globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+
+      globalAppCtx!.translate(el.position.x, el.position.y);
+
+      globalAppCtx!.scale(el.scale.x, el.scale.y);
+
+      globalAppCtx!.translate(circle.radius, circle.radius);
+      globalAppCtx!.arc(
+        0,
+        0,
+        circle.radius - circle.strokeWidth / 2,
+        0,
+        2 * Math.PI
+      );
+    }
 
     globalAppCtx!.strokeStyle = circle.strokeColor;
     globalAppCtx!.lineWidth = circle.strokeWidth;
     globalAppCtx!.stroke();
+
     globalAppCtx!.restore();
   } else if (el.type === DrawingType.rectangle) {
     const rect = el as RectangleShapeElement;
-    const leftTop = rect.points[0];
+    const leftTop = rect.position;
     if (!leftTop) return;
-
     globalAppCtx!.save();
     globalAppCtx!.strokeStyle = rect.strokeColor;
     globalAppCtx!.lineWidth = rect.strokeWidth;
@@ -402,11 +424,10 @@ function drawNeedntCacheEle(el: DrawingElement) {
     globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
     globalAppCtx!.translate(el.position.x, el.position.y);
-    globalAppCtx!.scale(el.scale.x, el.scale.y);
 
     globalAppCtx!.strokeRect(
-      leftTop.x + rect.strokeWidth / 2,
-      leftTop.y + rect.strokeWidth / 2,
+      rect.strokeWidth / 2,
+      rect.strokeWidth / 2,
       innerRectWidth,
       innerRectHeight
     );

@@ -160,7 +160,7 @@ export const newPolylineShapeElement: PolylineShapeElement = {
   status: "notLocked",
   isDeleted: false,
 
-  position: { x: 0, y: 0 }, // 没有意义
+  position: { x: 0, y: 0 },
   rotation: 0, // 以rotateOrigin为中心
   scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
 
@@ -191,7 +191,7 @@ export const newCircleShapeElement: CircleShapeElement = {
   status: "notLocked",
   isDeleted: false,
 
-  position: { x: 0, y: 0 }, // 没有意义
+  position: { x: 0, y: 0 },
   rotation: 0, // 以rotateOrigin为中心
   scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
 
@@ -222,7 +222,7 @@ export const newRectangleShapeElement: RectangleShapeElement = {
   status: "notLocked",
   isDeleted: false,
 
-  position: { x: 0, y: 0 }, // 没有意义
+  position: { x: 0, y: 0 },
   rotation: 0, // 以rotateOrigin为中心
   scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
 

@@ -28,7 +28,6 @@ import {
   DrawingType,
   FreeDrawing,
   ImageElement,
-  RectangleShapeElement,
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
@@ -121,7 +120,7 @@ function App() {
       if (selectedKey !== 2) return;
       const u = sceneData.updatingElements[0];
 
-      // drag image itself
+      // drag  itself
       if (currentHandle.current === null && ele) {
         dragInfo.current = {
           type: "move",
@@ -273,7 +272,7 @@ function App() {
           y: originalRotateOrigin!.y + offset.y,
         };
 
-        ele.boundary[0] = getBoundryPoly(ele);
+        ele.boundary[0] = getBoundryPoly(ele)!;
 
         setSceneData({ ...sceneData });
         return;
@@ -299,7 +298,8 @@ function App() {
         if (dir !== TransformHandle.ro) {
           if (
             el.type === DrawingType.img ||
-            el.type === DrawingType.rectangle
+            el.type === DrawingType.rectangle ||
+            el.type === DrawingType.circle
           ) {
             scalingImg(
               el,
@@ -319,7 +319,8 @@ function App() {
           // rotation
           if (
             el.type === DrawingType.img ||
-            el.type === DrawingType.rectangle
+            el.type === DrawingType.rectangle ||
+            el.type === DrawingType.circle
           ) {
             const rotationCenter = new PointZ(
               el.rotateOrigin.x,
@@ -333,7 +334,7 @@ function App() {
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
             el.rotation = deltaRotation + originalRotation;
 
-            el.boundary[0] = getBoundryPoly(el);
+            el.boundary[0] = getBoundryPoly(el)!;
           }
         }
         setSceneData({ ...sceneData });
@@ -385,58 +386,32 @@ function App() {
       if (
         u &&
         (u.ele.type === DrawingType.img ||
-          u.ele.type === DrawingType.rectangle) &&
+          u.ele.type === DrawingType.rectangle ||
+          u.ele.type === DrawingType.circle) &&
         dragInfo.current.type === "resize"
       ) {
-        const img = u.ele as ImageElement;
-        // drawAPoint(img.position);
+        const el = u.ele;
         const oldOrigin = dragInfo.current.originalHandles!.rect.center;
-        const pos = img.position;
+        const pos = el.position;
         const bbx = new Box(
           pos.x,
           pos.y,
-          pos.x + img.width * img.scale.x,
-          pos.y + img.height * img.scale.y
+          pos.x + el.width * el.scale.x,
+          pos.y + el.height * el.scale.y
         );
         const newOrigin = bbx.center;
 
-        const realNewOri = newOrigin.rotate(img.rotation, oldOrigin);
-        const rightBottomPt = img.boundary[0].vertices[2];
+        const realNewOri = newOrigin.rotate(el.rotation, oldOrigin);
+        const rightBottomPt = el.boundary[0].vertices[2];
         const deltaVec = new Vector(rightBottomPt, realNewOri);
         const realNewPos = realNewOri.translate(deltaVec);
-        const newPos = realNewPos.rotate(-img.rotation, realNewOri);
+        const newPos = realNewPos.rotate(-el.rotation, realNewOri);
 
-        img.position = newPos;
-        img.rotateOrigin = realNewOri;
-        img.boundary[0] = getBoundryPoly(img);
-      } else if (
-        u &&
-        u.ele.type === DrawingType.rectangle &&
-        dragInfo.current.type === "resize"
-      ) {
-        const rect = u.ele as RectangleShapeElement;
-        // drawAPoint(img.position);
-        const oldOrigin = dragInfo.current.originalHandles!.rect.center;
-        const pos = rect.position;
-        const leftTop = rect.points[0];
-        const bbx = new Box(
-          leftTop.x + rect.position.x,
-          leftTop.y + rect.position.y,
-          leftTop.x + rect.width * rect.scale.x + rect.position.x,
-          leftTop.y + rect.height * rect.scale.y + rect.position.y
-        );
-        const newOrigin = bbx.center;
-
-        const realNewOri = newOrigin.rotate(rect.rotation, oldOrigin);
-        const rightBottomPt = rect.boundary[0].vertices[2];
-        const deltaVec = new Vector(rightBottomPt, realNewOri);
-        const realNewPos = realNewOri.translate(deltaVec);
-        const newPos = realNewPos.rotate(-rect.rotation, realNewOri);
-
-        rect.position = newPos;
-        rect.rotateOrigin = realNewOri;
-        rect.boundary[0] = getBoundryPoly(rect);
+        el.position = newPos;
+        el.rotateOrigin = realNewOri;
+        el.boundary[0] = getBoundryPoly(el)!;
       }
+      // resize & move
       setSceneData({ ...sceneData });
       dragInfo.current = null;
     }
@@ -467,14 +442,18 @@ function App() {
       el.style.top = e.clientY + 15 + "px";
     }
   }
+
+  useEffect(() => {
+    window.addEventListener("keydown", deleteEle);
+    return () => window.removeEventListener("keydown", deleteEle);
+  }, [deleteEle]);
+
   useEffect(() => {
     const wrapper = canvasEventTrigger.current!;
     wrapper.addEventListener("mousedown", detectElesInterceted);
 
     wrapper.addEventListener("mousedown", dragStart);
     wrapper.addEventListener("mouseup", dragEnd);
-
-    wrapper.addEventListener("keydown", deleteEle);
 
     wrapper.addEventListener("mousemove", detectHandles);
     wrapper.addEventListener("mousemove", dragMove);
@@ -485,7 +464,6 @@ function App() {
       wrapper.removeEventListener("mousedown", dragStart);
 
       wrapper.removeEventListener("mouseup", dragEnd);
-      window.removeEventListener("keydown", deleteEle);
 
       wrapper.removeEventListener("mousemove", detectHandles);
       wrapper.removeEventListener("mousemove", dragMove);
@@ -508,7 +486,9 @@ function App() {
           <>
             <div
               ref={canvasEventTrigger}
-              style={{ cursor: cursorSvg ?? "default" }}
+              style={{
+                cursor: cursorSvg ?? "default",
+              }}
             >
               <DrawCanvas />
               {/* <DynamicCanvas /> */}
