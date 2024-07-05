@@ -237,16 +237,15 @@ export function getBoundryPoly(ele: DrawingElement) {
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
   } else if (ele.type === DrawingType.rectangle) {
     const leftTop = ele.points[0];
-    ele.boundary[0] = new Polygon(
-      new Box(
-        leftTop.x + ele.position.x,
-        leftTop.y + ele.height * ele.scale.x + ele.position.y,
-        leftTop.x + ele.width * ele.scale.y + ele.position.x,
-        leftTop.y + ele.position.y
-      )
+
+    const bbx = new Box(
+      leftTop.x + ele.position.x,
+      leftTop.y + ele.position.y,
+      leftTop.x + ele.width * ele.scale.x + ele.position.x,
+      leftTop.y + ele.height * ele.scale.y + ele.position.y
     );
 
-    return ele.boundary[0].rotate(ele.rotation, ele.boundary[0].box.center);
+    return new Polygon(bbx).rotate(ele.rotation, bbx.center);
   } else {
     return new Polygon();
   }

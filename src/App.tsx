@@ -28,6 +28,7 @@ import {
   DrawingType,
   FreeDrawing,
   ImageElement,
+  RectangleShapeElement,
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
@@ -52,7 +53,7 @@ import {
 
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = false;
+const showDebugPanel = true;
 export const showElePtLength = false;
 
 function isBevelHandle(hand: TransformHandle | undefined) {
@@ -296,7 +297,10 @@ function App() {
         const updatedPt = { x: el.position.x, y: el.position.y };
         const lockScale = isShowShiftTip.current && currentKeyboard === "Shift";
         if (dir !== TransformHandle.ro) {
-          if (el.type === DrawingType.img) {
+          if (
+            el.type === DrawingType.img ||
+            el.type === DrawingType.rectangle
+          ) {
             scalingImg(
               el,
               dir,
@@ -380,7 +384,8 @@ function App() {
       const u = sceneData.updatingElements[0];
       if (
         u &&
-        u.ele.type === DrawingType.img &&
+        (u.ele.type === DrawingType.img ||
+          u.ele.type === DrawingType.rectangle) &&
         dragInfo.current.type === "resize"
       ) {
         const img = u.ele as ImageElement;
@@ -404,6 +409,33 @@ function App() {
         img.position = newPos;
         img.rotateOrigin = realNewOri;
         img.boundary[0] = getBoundryPoly(img);
+      } else if (
+        u &&
+        u.ele.type === DrawingType.rectangle &&
+        dragInfo.current.type === "resize"
+      ) {
+        const rect = u.ele as RectangleShapeElement;
+        // drawAPoint(img.position);
+        const oldOrigin = dragInfo.current.originalHandles!.rect.center;
+        const pos = rect.position;
+        const leftTop = rect.points[0];
+        const bbx = new Box(
+          leftTop.x + rect.position.x,
+          leftTop.y + rect.position.y,
+          leftTop.x + rect.width * rect.scale.x + rect.position.x,
+          leftTop.y + rect.height * rect.scale.y + rect.position.y
+        );
+        const newOrigin = bbx.center;
+
+        const realNewOri = newOrigin.rotate(rect.rotation, oldOrigin);
+        const rightBottomPt = rect.boundary[0].vertices[2];
+        const deltaVec = new Vector(rightBottomPt, realNewOri);
+        const realNewPos = realNewOri.translate(deltaVec);
+        const newPos = realNewPos.rotate(-rect.rotation, realNewOri);
+
+        rect.position = newPos;
+        rect.rotateOrigin = realNewOri;
+        rect.boundary[0] = getBoundryPoly(rect);
       }
       setSceneData({ ...sceneData });
       dragInfo.current = null;

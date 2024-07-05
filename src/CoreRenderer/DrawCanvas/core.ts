@@ -1,6 +1,6 @@
 import { Point as PointF, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
-import { cloneDeep, groupBy } from "lodash";
+import { groupBy } from "lodash";
 import {
   StrokeOptions,
   getStrokeOutlinePoints,
@@ -377,11 +377,8 @@ function drawNeedntCacheEle(el: DrawingElement) {
     globalAppCtx!.restore();
   } else if (el.type === DrawingType.rectangle) {
     const rect = el as RectangleShapeElement;
-    const leftTop = cloneDeep(rect.points[0]);
+    const leftTop = rect.points[0];
     if (!leftTop) return;
-
-    leftTop.x += rect.position.x;
-    leftTop.y += rect.position.y;
 
     globalAppCtx!.save();
     globalAppCtx!.strokeStyle = rect.strokeColor;

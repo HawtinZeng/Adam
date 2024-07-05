@@ -1,4 +1,4 @@
-import { Box, Point, Polygon } from "@zenghawtin/graph2d";
+import { Point } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
 import {
@@ -17,6 +17,7 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { colorConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
+import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { cloneDeepGenId } from "src/common/utils";
 import { Btn } from "src/components/Btn";
 import { UpdatingElement } from "src/drawingElements/data/scene";
@@ -115,17 +116,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           createUpdatingElement(rectangle);
         } else {
           const rectangle = s.updatingElements[0].ele as RectangleShapeElement;
-          const leftTop = rectangle.points[0];
-          rectangle.boundary.push(
-            new Polygon(
-              new Box(
-                leftTop.x,
-                leftTop.y + rectangle.height,
-                leftTop.x + rectangle.width,
-                leftTop.y
-              )
-            )
-          );
+          rectangle.boundary[0] = getBoundryPoly(rectangle);
           rectangle.rotateOrigin = rectangle.boundary[0].box.center;
           s.elements.push(rectangle);
           s.updatingElements.length = 0;
