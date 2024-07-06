@@ -3,6 +3,10 @@ import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
+import { AnimationScheduler } from "src/animations/requestAniThrottle";
+import { lightBlue } from "src/theme/colors";
+
+type Steps4 = 1 | 2 | 3 | 4;
 
 export class Text implements DrawingElement {
   points: Point[] = [];
@@ -34,25 +38,28 @@ export class Text implements DrawingElement {
   boundingLineAboveBaseLine?: number;
   canvas?: HTMLCanvasElement;
   oriImageData?: ImageData;
+  textWidth?: number;
+
+  cursorStep: Steps4 = 1;
+  cursorAnimation: AnimationScheduler;
 
   /** 后缀G表示为getter属性 */
   get fontSizeNumberG() {
     return Number(this.fontSize.replace("px", ""));
   }
 
-  constructor(
-    content: string,
-    position: Point,
-    fontFamily: string,
-    color: string
-  ) {
+  constructor(content: string, fontFamily: string, color: string) {
     this.content = content;
-
-    this.position = position;
+    this.position = { x: 0, y: this.fontSizeNumberG };
 
     this.fontFamily = fontFamily;
     this.color = color;
     this.id = nanoid();
+
+    this.cursorAnimation = new AnimationScheduler(
+      this.animateCursor.bind(this),
+      1
+    );
   }
 
   createTextCanvas(mainCanva: HTMLCanvasElement) {
@@ -67,15 +74,47 @@ export class Text implements DrawingElement {
 
     const textMetrics = ctx.measureText(this.content);
     this.boundingLineAboveBaseLine = textMetrics.fontBoundingBoxAscent;
-
-    ctx.fillText(
-      this.content,
-      this.position.x,
-      this.position.y - this.fontSizeNumberG
-    );
+    this.textWidth = textMetrics.width;
+    ctx.fillText(this.content, this.position.x, this.position.y);
     ctx.restore();
 
     this.canvas = canvas;
     drawingCanvasCache.ele2DrawingCanvas.set(this, canvas);
+
+    this.cursorAnimation.start();
+  }
+
+  animateCursor() {
+    if (this.cursorStep === 4) {
+      this.clearCursor();
+    } else {
+      this.drawCursor();
+    }
+    this.cursorStep = (
+      this.cursorStep + 1 > 4 ? 1 : this.cursorStep + 1
+    ) as Steps4;
+  }
+
+  drawCursor() {
+    const ctx = this.canvas!.getContext("2d");
+
+    ctx!.save();
+    ctx!.fillStyle = lightBlue;
+    ctx!.fillRect(
+      this.position.x + this.textWidth!,
+      this.position.y - this.boundingLineAboveBaseLine!,
+      3,
+      30
+    );
+    ctx!.restore();
+  }
+  clearCursor() {
+    const ctx = this.canvas!.getContext("2d");
+    ctx!.clearRect(
+      this.position.x + this.textWidth!,
+      this.position.y - this.boundingLineAboveBaseLine!,
+      3,
+      30
+    );
   }
 }

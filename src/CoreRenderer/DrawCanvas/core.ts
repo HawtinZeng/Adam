@@ -445,8 +445,8 @@ function drawNeedCacheEle(el: DrawingElement) {
   const text = el as Text;
   globalAppCtx!.drawImage(
     drawingCanvasCache.ele2DrawingCanvas.get(text)!,
-    0,
-    0
+    text.position.x,
+    text.position.y
   );
 }
 

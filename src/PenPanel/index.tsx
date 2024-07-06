@@ -14,6 +14,7 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import { colorConfigs, menuConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
+import { nextFrame } from "src/animations/requestAniThrottle";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
 import {
@@ -33,22 +34,6 @@ type ImageInfo = {
   context: CanvasRenderingContext2D;
   imageData: ImageData;
 };
-
-async function* nextFrame(fps: number) {
-  let then = performance.now();
-  const interval = 1000 / fps;
-  let delta = 0;
-
-  while (true) {
-    let now = await new Promise(requestAnimationFrame);
-
-    if (now - then < interval - delta) continue;
-    delta = Math.min(interval, delta + now - then - interval);
-    then = now;
-
-    yield now;
-  }
-}
 
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;

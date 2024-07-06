@@ -21,10 +21,6 @@ export const throttleRAF = <T extends any[]>(
   };
 
   const ret = (...args: T) => {
-    // if (import.meta.env.MODE === "test") {
-    //   fn(...args);
-    //   return;
-    // }
     lastArgs = args;
     if (timerId === null) {
       scheduleFunc(lastArgs);
@@ -33,24 +29,54 @@ export const throttleRAF = <T extends any[]>(
     }
   };
 
-  ret.flush = () => {
-    if (timerId !== null) {
-      cancelAnimationFrame(timerId);
-      timerId = null;
-    }
-
-    if (lastArgs) {
-      fn(...(lastArgsTrailing || lastArgs));
-      lastArgs = lastArgsTrailing = null;
-    }
-  };
-
-  ret.cancel = () => {
-    lastArgs = lastArgsTrailing = null;
-    if (timerId !== null) {
-      cancelAnimationFrame(timerId);
-      timerId = null;
-    }
-  };
   return ret;
 };
+
+export async function* nextFrame(fps: number) {
+  let then = performance.now();
+  const interval = 1000 / fps;
+  let delta = 0;
+
+  while (true) {
+    let now = await new Promise(requestAnimationFrame);
+
+    if (now - then < interval - delta) continue;
+    delta = Math.min(interval, delta + now - then - interval);
+    then = now;
+
+    yield now;
+  }
+}
+
+export class AnimationScheduler {
+  animationChanger: (...args: any[]) => void;
+  status: "playing" | "end" = "end";
+  fps: number = 60;
+
+  constructor(a: (...args: any[]) => void, fps: number) {
+    if (fps) this.fps = fps;
+    this.animationChanger = a;
+  }
+  /**
+   * 开始动画
+   */
+  start() {
+    this.animationLoop();
+    this.status = "playing";
+  }
+  /**
+   * 启动动画循环
+   */
+  async animationLoop() {
+    for await (const _ of nextFrame(this.fps)) {
+      if (this.status === "end") return;
+      this.animationChanger();
+    }
+  }
+  /**
+   * 关闭动画循环
+   */
+  terminate() {
+    this.status = "end";
+  }
+}
