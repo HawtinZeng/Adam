@@ -1,4 +1,5 @@
 import { Polygon } from "@zenghawtin/graph2d";
+import { cloneDeep } from "lodash";
 import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
@@ -20,6 +21,7 @@ export class Text implements DrawingElement {
   status: "locked" | "notLocked" = "notLocked";
   isDeleted: boolean = false;
   position: Point = { x: 100, y: 100 };
+  lastPos: Point = { x: 0, y: 0 };
   rotation: number = 0;
   scale: Point = { x: 1, y: 1 };
   boundary: Polygon[] = [];
@@ -89,6 +91,7 @@ export class Text implements DrawingElement {
       this.clearCursor();
     } else {
       this.drawCursor();
+      this.lastPos = cloneDeep(this.position);
     }
     this.cursorStep = (
       this.cursorStep + 1 > 4 ? 1 : this.cursorStep + 1
@@ -111,8 +114,8 @@ export class Text implements DrawingElement {
   clearCursor() {
     const ctx = this.canvas!.getContext("2d");
     ctx!.clearRect(
-      this.position.x + this.textWidth!,
-      this.position.y - this.boundingLineAboveBaseLine!,
+      this.lastPos.x + this.textWidth!,
+      this.lastPos.y - this.boundingLineAboveBaseLine!,
       3,
       30
     );
