@@ -7,6 +7,7 @@ import {
 } from "@zenghawtin/graph2d";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
+import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
 import { URL } from "url";
 
 export type Point = {
@@ -16,9 +17,11 @@ export type Point = {
   timestamp?: number;
 };
 export type Degree = number; // 0 - 359
-export type DrawingElement = {
-  [x: string]: any;
-  type: string;
+/**
+ * Core interface.
+ */
+export interface DrawingElement {
+  type: DrawingType;
   points: Point[];
   id: string;
   strokeColor: string;
@@ -43,7 +46,7 @@ export type DrawingElement = {
   needCacheCanvas: boolean;
 
   rotateOrigin: Point; // 旋转中心
-};
+}
 
 export type DomElement = {
   type: "note";

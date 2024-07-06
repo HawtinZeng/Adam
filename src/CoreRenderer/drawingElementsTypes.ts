@@ -20,6 +20,7 @@ export enum DrawingType {
   polyline = "polyline",
   circle = "circle",
   rectangle = "rectangle",
+  text = "text",
 }
 
 export const newFreeDrawingElement: FreeDrawing = {
@@ -74,6 +75,8 @@ export type PolylineShapeElement = DrawingElement & {
 export type CircleShapeElement = DrawingElement & {
   strokeWidth: number;
   radius: number;
+  width: number;
+  height: number;
 };
 
 export type RectangleShapeElement = DrawingElement & {
@@ -199,6 +202,9 @@ export const newCircleShapeElement: CircleShapeElement = {
   excludeArea: [],
   // 默认包围盒的中心
   rotateOrigin: { x: 0, y: 0 },
+
+  width: 100,
+  height: 100,
 };
 export const newRectangleShapeElement: RectangleShapeElement = {
   width: 10,

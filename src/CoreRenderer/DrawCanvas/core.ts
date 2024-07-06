@@ -34,6 +34,7 @@ import {
   UpdatingElement,
 } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
+import { Text } from "src/text/text";
 // @ts-ignore
 import SVGPathCommander from "svg-path-commander";
 
@@ -149,6 +150,8 @@ export function renderDrawCanvas(
   // render transform handler
   groupedElements.transform?.forEach((u) => {
     const img = u.ele as ImageElement;
+    if (!img.boundary[0]) return;
+
     const handleOperator = new Transform2DOperator(
       img.boundary[0],
       img.rotation,
@@ -434,6 +437,17 @@ function drawNeedntCacheEle(el: DrawingElement) {
 
     globalAppCtx!.restore();
   }
+}
+
+function drawNeedCacheEle(el: DrawingElement) {
+  // 先只考虑text
+  if (el.type !== DrawingType.text) return;
+  const text = el as Text;
+  globalAppCtx!.drawImage(
+    drawingCanvasCache.ele2DrawingCanvas.get(text)!,
+    0,
+    0
+  );
 }
 
 export function removeBlankEle(
@@ -824,6 +838,7 @@ export function onlyRedrawOneElement(
 ) {
   globalAppCtx!.putImageData(originalImg, 0, 0);
   drawNeedntCacheEle(ele);
+  drawNeedCacheEle(ele);
 
   if (showElePtLength) {
     const textPos = ele.points[0];

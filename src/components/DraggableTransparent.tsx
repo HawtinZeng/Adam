@@ -100,7 +100,7 @@ export const DraggableTransparent = forwardRef(
             setTrans(false);
 
             unsetTransparent();
-            console.log("unsetTransparent");
+            // console.log("unsetTransparent");
           }}
           onMouseLeave={() => {
             if (selectedKey === -1) {

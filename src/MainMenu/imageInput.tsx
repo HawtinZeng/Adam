@@ -14,6 +14,7 @@ import {
   CircleShapeElement,
   DrawingType,
   ImageElement,
+  RectangleShapeElement,
   newImgElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import { cloneDeepGenId } from "src/common/utils";
@@ -226,13 +227,14 @@ export function ImageInput() {
 export function getBoundryPoly(ele: DrawingElement) {
   let bbx: Box = new Box();
   if (ele.type === DrawingType.img || ele.type === DrawingType.rectangle) {
-    const pos = ele.position;
+    const ensureTypeEle = ele as ImageElement | RectangleShapeElement;
+    const pos = ensureTypeEle.position;
 
     bbx = new Box(
       pos.x,
       pos.y,
-      pos.x + ele.width * ele.scale.x,
-      pos.y + ele.height * ele.scale.y
+      pos.x + ensureTypeEle.width * ensureTypeEle.scale.x,
+      pos.y + ensureTypeEle.height * ensureTypeEle.scale.y
     );
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
   } else if (ele.type === DrawingType.circle) {

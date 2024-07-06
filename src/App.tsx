@@ -25,9 +25,11 @@ import {
   ptIsContained,
 } from "src/CoreRenderer/basicTypes";
 import {
+  CircleShapeElement,
   DrawingType,
   FreeDrawing,
   ImageElement,
+  RectangleShapeElement,
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
@@ -49,6 +51,7 @@ import {
   eraserRadius,
   selectedKeyAtom,
 } from "src/state/uiState";
+import { useTextFunction } from "src/text/activateTextFunction";
 
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
@@ -91,6 +94,8 @@ function App() {
   useDrawingOperator();
   const size = useAtomValue(brushRadius) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
+
+  const { startText, terminateText } = useTextFunction();
 
   const change2DefaultCursor = useCallback(() => {
     if (selectedKey === 0 || selectedKey === 1) {
@@ -390,7 +395,10 @@ function App() {
           u.ele.type === DrawingType.circle) &&
         dragInfo.current.type === "resize"
       ) {
-        const el = u.ele;
+        const el = u.ele as
+          | ImageElement
+          | RectangleShapeElement
+          | CircleShapeElement;
         const oldOrigin = dragInfo.current.originalHandles!.rect.center;
         const pos = el.position;
         const bbx = new Box(
@@ -442,6 +450,14 @@ function App() {
       el.style.top = e.clientY + 15 + "px";
     }
   }
+
+  useEffect(() => {
+    if (selectedKey === 6) {
+      startText();
+    } else {
+      terminateText();
+    }
+  }, [selectedKey]);
 
   useEffect(() => {
     window.addEventListener("keydown", deleteEle);

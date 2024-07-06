@@ -38,6 +38,11 @@ const createWindow = () => {
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   // const win = BrowserWindow.fromWebContents(event.sender);
   win.setIgnoreMouseEvents(ignore, options);
+  if (ignore) {
+    win.blur();
+  } else {
+    win.focus();
+  }
 });
 
 app.whenReady().then(() => {
