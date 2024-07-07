@@ -73,7 +73,7 @@ function App() {
   const color = useAtomValue(customColor);
 
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
-  const [selectedKey] = useAtom(selectedKeyAtom);
+  const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
   const [sceneData, setSceneData] = useAtom(sceneAtom);
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
@@ -367,7 +367,7 @@ function App() {
     sceneData.elements.push(newFreeElement);
   };
 
-  const deleteEle = useCallback(
+  const globalKeydown = useCallback(
     (e: KeyboardEvent) => {
       if (
         (e.key === "Backspace" || e.key === "Delete") &&
@@ -380,9 +380,11 @@ function App() {
         });
         sceneData.updatingElements.length = 0;
         redrawAllEles(undefined, undefined, sceneData.elements);
+      } else if (e.key === "Escape") {
+        setSeletedKey(-1);
       }
     },
-    [sceneData]
+    [sceneData.elements, sceneData.updatingElements, setSeletedKey]
   );
 
   const dragEnd = useCallback(() => {
@@ -460,9 +462,9 @@ function App() {
   }, [selectedKey]);
 
   useEffect(() => {
-    window.addEventListener("keydown", deleteEle);
-    return () => window.removeEventListener("keydown", deleteEle);
-  }, [deleteEle]);
+    window.addEventListener("keydown", globalKeydown);
+    return () => window.removeEventListener("keydown", globalKeydown);
+  }, [globalKeydown]);
 
   useEffect(() => {
     const wrapper = canvasEventTrigger.current!;
@@ -493,7 +495,7 @@ function App() {
     dragMove,
     dragStart,
     dragEnd,
-    deleteEle,
+    globalKeydown,
   ]);
   return (
     <>
@@ -530,6 +532,7 @@ function App() {
                 <Button
                   variant="contained"
                   size="large"
+                  style={{ zIndex: "999" }}
                   onClick={() => {
                     // @ts-ignore
 

@@ -45,7 +45,7 @@ export class Text implements DrawingElement {
   cursorAnimation: AnimationScheduler;
   cursorIdx: number;
   lastCursorIdx: number;
-  inputElement?: HTMLElement;
+  inputElement?: HTMLInputElement;
   mainCanvas?: HTMLCanvasElement;
 
   /** 后缀G表示为getter属性 */
@@ -77,6 +77,10 @@ export class Text implements DrawingElement {
   }
 
   refreshScene(textProperties: { position?: Point; content?: string }) {
+    if (this.inputElement) {
+      this.inputElement.focus();
+    }
+
     const { position, content } = textProperties;
     if (position) {
       this.position = position;
@@ -87,7 +91,6 @@ export class Text implements DrawingElement {
     // content可能为空的字符串，在if判断中为false
     if (content !== undefined) {
       const contentDelta = content.length - this.content.length;
-      console.log(contentDelta);
       this.cursorIdx += contentDelta;
 
       this.content = content;
@@ -118,7 +121,7 @@ export class Text implements DrawingElement {
     ctx.save();
     ctx.font = this.fontSize + " " + this.fontFamily; // 注意不要复原canvas的font属性，不然后续求文字宽度将会不准确
     ctx.fillStyle = this.color;
-    ctx.fillText(this.content, 0, this.fontSizeNumberG);
+    ctx.fillText(this.content, 3, this.fontSizeNumberG);
 
     this.canvas = canvas;
 
@@ -129,7 +132,7 @@ export class Text implements DrawingElement {
     this.cursorAnimation.start();
 
     this.appendInputElement();
-    this.inputElement!.focus();
+    setTimeout(() => this.inputElement!.focus(), 1);
   }
 
   animateCursor() {
@@ -176,7 +179,7 @@ export class Text implements DrawingElement {
     i.style.position = "fixed";
     i.style.fontSize = this.fontSize;
     i.style.opacity = "0";
-    i.style.cursor = "crosshair";
+    i.style.zIndex = "-999"; // 防止输入框阻塞触发画布点击事件
 
     i.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.code === "Space" || e.code === "Enter") {
@@ -189,10 +192,22 @@ export class Text implements DrawingElement {
       } else if (e.code === "ArrowRight") {
         if (this.cursorIdx < this.content.length - 1) this.cursorIdx++;
         this.refreshScene({ content: i.value });
+      } else {
+        setTimeout(() => this.refreshScene({ content: i.value }), 10);
       }
     });
 
     document.body.appendChild(i);
     this.inputElement = i;
+  }
+
+  removeInputElement() {
+    if (this.inputElement) {
+      document.body.removeChild(this.inputElement);
+      this.inputElement = undefined;
+    }
+
+    this.clearCursor();
+    onlyRedrawOneElement(this, this.oriImageData!);
   }
 }

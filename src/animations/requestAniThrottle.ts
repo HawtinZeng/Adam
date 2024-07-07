@@ -72,6 +72,7 @@ export class AnimationScheduler {
     for await (const _ of nextFrame(this.fps)) {
       if (this.status === "end") return;
       this.animationChanger();
+      console.log("animationChanger");
     }
   }
   /**

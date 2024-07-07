@@ -18,6 +18,7 @@ import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { logger } from "src/setup";
 import { sceneAtom } from "src/state/sceneState";
 import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
+import { TextPanel } from "src/textPanel/textPanel";
 import arrow from "../images/svgs/arrow.svg";
 import brush from "../images/svgs/brush.svg";
 import { default as circleShape } from "../images/svgs/circle.svg";
@@ -226,6 +227,7 @@ export const menuConfigs: BtnConfigs = [
     label: "文字",
     svg: textArea,
     key: "textArea",
+    subMenu: <TextPanel />,
   },
   {
     label: "截屏",

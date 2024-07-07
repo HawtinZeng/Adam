@@ -269,6 +269,15 @@ export function redrawAllEles(
 
           globalAppCtx!.restore();
         }
+      } else if (el.type === DrawingType.text) {
+        const text = el as Text;
+        globalAppCtx!.drawImage(
+          cachedCvs!,
+          text.position.x,
+          text.position.y,
+          cachedCvs!.width,
+          cachedCvs!.height
+        );
       } else {
         globalAppCtx!.drawImage(
           cachedCvs!,
