@@ -172,13 +172,6 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
     [s, ss]
   );
 
-  const spaceEnsureAdd = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key !== "Space" || !s.updatingElements[0]) return;
-    },
-    [s, ss]
-  );
-
   useEffect(() => {
     if (lastKey === "Escape" && s.updatingElements.length > 0) {
       restoreOriginalmage(s.updatingElements[0]);
@@ -202,18 +195,11 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
     if (!cvsTrigger) return;
     cvsTrigger!.addEventListener("mousedown", mouseClick);
     cvsTrigger!.addEventListener("mousemove", mouseMove);
-    window.addEventListener("keydown", spaceEnsureAdd);
     return () => {
       cvsTrigger!.removeEventListener("mousedown", mouseClick);
       cvsTrigger!.removeEventListener("mousemove", mouseMove);
-      window.removeEventListener("keydown", spaceEnsureAdd);
     };
-  }, [cvsTrigger, mouseClick, mouseMove, spaceEnsureAdd]);
-
-  useEffect(() => {
-    window.addEventListener("keydown", spaceEnsureAdd);
-    return () => window.removeEventListener("keydown", spaceEnsureAdd);
-  }, [spaceEnsureAdd]);
+  }, [cvsTrigger, mouseClick, mouseMove]);
 
   return Btn(
     setSelectedKey,

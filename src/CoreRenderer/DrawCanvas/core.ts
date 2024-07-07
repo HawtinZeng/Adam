@@ -159,27 +159,13 @@ export function renderDrawCanvas(
       Math.sign(u.ele.scale.y) === -1
     );
     u.handleOperator = handleOperator;
-    function drawCurrentUpdatingHandle() {
-      const cornerPolygon = new Polygon(
-        handleOperator.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
-      );
-
-      drawRectBorder(
-        appCtx,
-        cornerPolygon,
-        handleOperator.borderColor,
-        handleOperator.border
-      );
-
-      drawHandles(handleOperator, appCtx, img);
-    }
 
     redrawAllEles(
       appCtx,
       appCanvas,
       elements,
       u.ele,
-      drawCurrentUpdatingHandle
+      handleOperator.draw.bind(handleOperator)
     );
   });
 }
@@ -748,10 +734,9 @@ export function drawCircle(
   ctx.fill();
 }
 
-function drawHandles(
+export function drawHandles(
   op: Transform2DOperator,
-  ctx: CanvasRenderingContext2D,
-  img: DrawingElement
+  ctx: CanvasRenderingContext2D
 ) {
   Object.keys(op.handleOperator).forEach((k) => {
     const h = op.handleOperator[k as keyof TransformHandles] as Polygon;

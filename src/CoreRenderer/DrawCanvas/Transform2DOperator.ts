@@ -1,7 +1,9 @@
 import { Box, Edge, Point, Polygon } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import {
+  drawHandles,
   drawPolygonPointIndex,
+  drawRectBorder,
   rotate,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { Degree } from "src/CoreRenderer/basicTypes";
@@ -209,5 +211,15 @@ export class Transform2DOperator {
         .toPoints()
         .map((p) => rotate(p.x, p.y, referenceN.x, referenceN.y, this.rotation))
     );
+  }
+
+  draw() {
+    const cornerPolygon = new Polygon(
+      this.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
+    );
+
+    drawRectBorder(this.ctx, cornerPolygon, this.borderColor, this.border);
+
+    drawHandles(this, this.ctx);
   }
 }
