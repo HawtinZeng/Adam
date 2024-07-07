@@ -1,4 +1,4 @@
-import { default as styleX, default as stylex } from "@stylexjs/stylex";
+import stylex from "@stylexjs/stylex";
 import { useAtom } from "jotai";
 import React, { useCallback, useRef, useState } from "react";
 import { HexAlphaColorPicker } from "react-colorful";
@@ -10,7 +10,7 @@ import colorPanel from "src/images/svgs/colorPanel.svg";
 import customColorIcon from "src/images/svgs/customColorIcon.svg";
 import { colorAtom, customColor } from "src/state/uiState";
 
-export const colorPickerStyles = styleX.create({
+export const colorPickerStyles = stylex.create({
   container: {
     width: "40px",
     height: "90px",
@@ -58,7 +58,7 @@ export function ColorPicker() {
   return (
     <div
       id="btn"
-      {...styleX.props(
+      {...stylex.props(
         colorPickerStyles.container,
         menuContainer.areaBorder,
         colorIdx === -1 ? colorPickerStyles.activeColor : null
@@ -74,7 +74,7 @@ export function ColorPicker() {
         )}
       />
       {isOpen && (
-        <div {...styleX.props(colorPickerStyles.pickerPanel)}>
+        <div {...stylex.props(colorPickerStyles.pickerPanel)}>
           <HexAlphaColorPicker color={color} onChange={setColor} />
         </div>
       )}
