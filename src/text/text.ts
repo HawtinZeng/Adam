@@ -78,7 +78,6 @@ export class Text implements DrawingElement {
 
   refreshScene(textProperties: { position?: Point; content?: string }) {
     if (this.inputElement) {
-      this.inputElement.focus();
     }
 
     const { position, content } = textProperties;
@@ -97,6 +96,8 @@ export class Text implements DrawingElement {
       this.createTextCanvas(this.mainCanvas!);
     }
     onlyRedrawOneElement(this, this.oriImageData!);
+
+    this.inputElement!.focus();
   }
 
   /**
@@ -132,7 +133,6 @@ export class Text implements DrawingElement {
     this.cursorAnimation.start();
 
     this.appendInputElement();
-    setTimeout(() => this.inputElement!.focus(), 1);
   }
 
   animateCursor() {
@@ -181,20 +181,19 @@ export class Text implements DrawingElement {
     i.style.opacity = "0";
     i.style.zIndex = "-999"; // 防止输入框阻塞触发画布点击事件
 
+    // move the cursor
     i.addEventListener("keydown", (e: KeyboardEvent) => {
-      if (e.code === "Space" || e.code === "Enter") {
-        setTimeout(() => this.refreshScene({ content: i.value }), 10);
-      } else if (e.code === "Backspace") {
-        setTimeout(() => this.refreshScene({ content: i.value }), 10);
-      } else if (e.code === "ArrowLeft") {
+      if (e.code === "ArrowLeft") {
         if (this.cursorIdx > -1) this.cursorIdx--;
-        this.refreshScene({ content: i.value });
       } else if (e.code === "ArrowRight") {
         if (this.cursorIdx < this.content.length - 1) this.cursorIdx++;
-        this.refreshScene({ content: i.value });
-      } else {
-        setTimeout(() => this.refreshScene({ content: i.value }), 10);
       }
+      this.refreshScene({ content: i.value });
+    });
+
+    // input some character
+    i.addEventListener("input", () => {
+      this.refreshScene({ content: i.value });
     });
 
     document.body.appendChild(i);
