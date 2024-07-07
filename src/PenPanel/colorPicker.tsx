@@ -1,15 +1,14 @@
-import stylex from "@stylexjs/stylex";
+import { default as styleX, default as stylex } from "@stylexjs/stylex";
+import { useAtom } from "jotai";
 import React, { useCallback, useRef, useState } from "react";
-import { HexAlphaColorPicker, RgbaColorPicker } from "react-colorful";
-import { useAtom, useSetAtom } from "jotai";
-import { colorAtom, customColor } from "src/state/uiState";
-import styleX from "@stylexjs/stylex";
-import { menuContainer } from "src/components/DraggableTransparent";
-import colorPanel from "src/images/svgs/colorPanel.svg";
+import { HexAlphaColorPicker } from "react-colorful";
 import { ReactSVG } from "react-svg";
-import useClickOutside from "src/hooks/useClickOutside";
 import { btn } from "src/components/Btn";
+import { menuContainer } from "src/components/DraggableTransparent";
+import useClickOutside from "src/hooks/useClickOutside";
+import colorPanel from "src/images/svgs/colorPanel.svg";
 import customColorIcon from "src/images/svgs/customColorIcon.svg";
+import { colorAtom, customColor } from "src/state/uiState";
 
 export const colorPickerStyles = styleX.create({
   container: {

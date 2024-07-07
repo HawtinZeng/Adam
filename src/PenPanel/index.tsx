@@ -310,7 +310,7 @@ function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   // draw contours
   var ctx = imageInfo.context;
   ctx.clearRect(0, 0, imageInfo.width, imageInfo.height);
-  //inner
+  // inner
   ctx.beginPath();
   for (let i = 0; i < cs.length; i++) {
     if (!cs[i].inner) continue;
