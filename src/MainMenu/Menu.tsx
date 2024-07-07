@@ -40,8 +40,11 @@ export function Menu(props: {
   );
   useEffect(() => {
     setParentSelectedKey?.(selectedKey);
-  }, [selectedKey]);
-  useEffect(() => setParentHoverKey?.(hoveredKey), [hoveredKey]);
+  }, [selectedKey, setParentSelectedKey]);
+  useEffect(
+    () => setParentHoverKey?.(hoveredKey),
+    [hoveredKey, setParentHoverKey]
+  );
   useEffect(() => {
     const eleWid = menuRef.current?.clientWidth ?? 0;
     const eleHei = menuRef.current?.clientHeight ?? 0;

@@ -58,9 +58,10 @@ export class AnimationScheduler {
     this.animationChanger = a;
   }
   /**
-   * 开始动画
+   * 开始动画，不能多次开始动画，例如：第二次开启动画会被第一次屏蔽掉
    */
   start() {
+    if (this.status === "playing") return;
     this.animationLoop();
     this.status = "playing";
   }

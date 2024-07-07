@@ -7,16 +7,12 @@ export const useTextFunction = (): {
   startText: () => void;
   terminateText: () => void;
 } => {
-  const currentText = useRef<Text>(new Text("黑体", "黑体", "#000000"));
+  const currentText = useRef<Text>(new Text("", "黑体", "#000000"));
 
   const [cvsEle] = useAtom(canvasAtom);
   const mouseMoveHandler = (e: MouseEvent) => {
     const newPos = { x: e.clientX, y: e.clientY };
-    currentText.current.position = newPos;
-    onlyRedrawOneElement(
-      currentText.current,
-      currentText.current.oriImageData!
-    );
+    currentText.current.refreshScene({ position: newPos });
   };
 
   const startTextFunction = () => {

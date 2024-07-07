@@ -17,7 +17,9 @@ const createWindow = () => {
     height,
     frame: false,
     titleBarStyle: "hidden",
+
     transparent: true,
+
     alwaysOnTop: true,
     webPreferences: {
       // nodeIntegration: true,
@@ -26,6 +28,7 @@ const createWindow = () => {
       preload: path.join(__dirname, "./preload.js"),
     },
   });
+  win.setAlwaysOnTop(true, "screen-saver");
 
   const servePort = process.env.PORT ?? 3000;
   const startURL = isDev

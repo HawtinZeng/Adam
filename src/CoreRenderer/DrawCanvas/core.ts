@@ -832,6 +832,11 @@ export function drawPolygonPointIndex(
   ctx.restore();
 }
 
+/**
+ *  真正将一个元素的canvas data绘制到主画布上
+ * @param ele 要绘制到主画布上的元素
+ * @param originalImg 绘制之前的主画布图像，用reset
+ */
 export function onlyRedrawOneElement(
   ele: DrawingElement,
   originalImg: ImageData

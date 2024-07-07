@@ -1,7 +1,7 @@
 import { Polygon } from "@zenghawtin/graph2d";
-import { cloneDeep } from "lodash";
 import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
+import { onlyRedrawOneElement } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
 import { AnimationScheduler } from "src/animations/requestAniThrottle";
@@ -21,7 +21,6 @@ export class Text implements DrawingElement {
   status: "locked" | "notLocked" = "notLocked";
   isDeleted: boolean = false;
   position: Point = { x: 100, y: 100 };
-  lastPos: Point = { x: 0, y: 0 };
   rotation: number = 0;
   scale: Point = { x: 1, y: 1 };
   boundary: Polygon[] = [];
@@ -44,6 +43,10 @@ export class Text implements DrawingElement {
 
   cursorStep: Steps4 = 1;
   cursorAnimation: AnimationScheduler;
+  cursorIdx: number;
+  lastCursorIdx: number;
+  inputElement?: HTMLElement;
+  mainCanvas?: HTMLCanvasElement;
 
   /** 后缀G表示为getter属性 */
   get fontSizeNumberG() {
@@ -52,6 +55,9 @@ export class Text implements DrawingElement {
 
   constructor(content: string, fontFamily: string, color: string) {
     this.content = content;
+    this.cursorIdx = content.length - 1;
+    this.lastCursorIdx = this.cursorIdx;
+
     this.position = { x: 0, y: this.fontSizeNumberG };
 
     this.fontFamily = fontFamily;
@@ -60,42 +66,82 @@ export class Text implements DrawingElement {
 
     this.cursorAnimation = new AnimationScheduler(
       this.animateCursor.bind(this),
-      1
+      4
     );
   }
 
-  createTextCanvas(mainCanva: HTMLCanvasElement) {
+  get textMetrics() {
+    const ctx = this.canvas!.getContext("2d")!;
+
+    return ctx.measureText(this.content);
+  }
+
+  refreshScene(textProperties: { position?: Point; content?: string }) {
+    const { position, content } = textProperties;
+    if (position) {
+      this.position = position;
+      this.inputElement!.style.left = this.position.x + "px";
+      this.inputElement!.style.top = this.position.y + "px";
+    }
+
+    // content可能为空的字符串，在if判断中为false
+    if (content !== undefined) {
+      const contentDelta = content.length - this.content.length;
+      console.log(contentDelta);
+      this.cursorIdx += contentDelta;
+
+      this.content = content;
+      this.createTextCanvas(this.mainCanvas!);
+    }
+    onlyRedrawOneElement(this, this.oriImageData!);
+  }
+
+  /**
+   * 获取索引范围为 0 ~ idx 的文字信息
+   */
+  textMetricsOfIdx(idx: number) {
+    const ctx = this.canvas!.getContext("2d")!;
+
+    return ctx.measureText(this.content.slice(0, idx + 1));
+  }
+  /**
+   * 在一个空白的canvas上绘制出文字
+   * @param mainCanvas 程序的主画布
+   */
+  createTextCanvas(mainCanvas: HTMLCanvasElement) {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
-    canvas.width = mainCanva.width;
-    canvas.height = mainCanva.height;
+    canvas.width = mainCanvas.width;
+    canvas.height = mainCanvas.height;
+    this.mainCanvas = mainCanvas;
 
     const ctx = canvas.getContext("2d")!;
     ctx.save();
-    ctx.font = this.fontSize + " " + this.fontFamily;
+    ctx.font = this.fontSize + " " + this.fontFamily; // 注意不要复原canvas的font属性，不然后续求文字宽度将会不准确
     ctx.fillStyle = this.color;
-
-    const textMetrics = ctx.measureText(this.content);
-    this.boundingLineAboveBaseLine = textMetrics.fontBoundingBoxAscent;
-    this.textWidth = textMetrics.width;
-    ctx.fillText(this.content, this.position.x, this.position.y);
-    ctx.restore();
+    ctx.fillText(this.content, 0, this.fontSizeNumberG);
 
     this.canvas = canvas;
+
+    this.boundingLineAboveBaseLine = this.textMetrics.fontBoundingBoxAscent;
+    this.textWidth = this.textMetrics.width;
     drawingCanvasCache.ele2DrawingCanvas.set(this, canvas);
 
     this.cursorAnimation.start();
+
+    this.appendInputElement();
+    this.inputElement!.focus();
   }
 
   animateCursor() {
-    if (this.cursorStep === 4) {
-      this.clearCursor();
-    } else {
+    this.clearCursor();
+    if (this.cursorStep !== 4) {
       this.drawCursor();
-      this.lastPos = cloneDeep(this.position);
+      this.lastCursorIdx = this.cursorIdx;
     }
     this.cursorStep = (
       this.cursorStep + 1 > 4 ? 1 : this.cursorStep + 1
     ) as Steps4;
+    onlyRedrawOneElement(this, this.oriImageData!);
   }
 
   drawCursor() {
@@ -104,20 +150,49 @@ export class Text implements DrawingElement {
     ctx!.save();
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(
-      this.position.x + this.textWidth!,
-      this.position.y - this.boundingLineAboveBaseLine!,
+      this.textMetricsOfIdx(this.cursorIdx).width,
+      this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
       3,
       30
     );
     ctx!.restore();
   }
+
   clearCursor() {
     const ctx = this.canvas!.getContext("2d");
     ctx!.clearRect(
-      this.lastPos.x + this.textWidth!,
-      this.lastPos.y - this.boundingLineAboveBaseLine!,
+      this.textMetricsOfIdx(this.lastCursorIdx).width,
+      this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
       3,
       30
     );
+  }
+
+  appendInputElement() {
+    if (this.inputElement) return;
+    const i = document.createElement("input");
+    i.placeholder = "文字输入框";
+    i.id = this.id;
+    i.style.position = "fixed";
+    i.style.fontSize = this.fontSize;
+    i.style.opacity = "0";
+    i.style.cursor = "crosshair";
+
+    i.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        setTimeout(() => this.refreshScene({ content: i.value }), 10);
+      } else if (e.code === "Backspace") {
+        setTimeout(() => this.refreshScene({ content: i.value }), 10);
+      } else if (e.code === "ArrowLeft") {
+        if (this.cursorIdx > -1) this.cursorIdx--;
+        this.refreshScene({ content: i.value });
+      } else if (e.code === "ArrowRight") {
+        if (this.cursorIdx < this.content.length - 1) this.cursorIdx++;
+        this.refreshScene({ content: i.value });
+      }
+    });
+
+    document.body.appendChild(i);
+    this.inputElement = i;
   }
 }

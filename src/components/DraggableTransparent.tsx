@@ -14,6 +14,7 @@ export const menuContainer = stylex.create({
     alignItems: "center",
     justifyContent: "center",
     position: "absolute",
+    zIndex: "999",
   },
   areaBorder: {
     border: "2px solid #898989",
