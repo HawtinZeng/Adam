@@ -73,12 +73,12 @@ export class Transform2DOperator {
     pol: Polygon,
     rotation: Degree,
     ctx: CanvasRenderingContext2D,
-    revertYDirection: boolean
+    revertYDirection: boolean,
+    showRotation: boolean = true
   ) {
     this.ctx = ctx;
     this.rotation = rotation;
     this.rect = new Rect(pol.clone());
-
     [...this.rect.polygon.edges].forEach((e: Edge) => {
       const midPt = new Point(
         (e.start.x + e.end.x) / 2,
@@ -91,7 +91,7 @@ export class Transform2DOperator {
     const offsetAlignDiagonal = this.pointW / 2;
 
     drawPolygonPointIndex(this.ctx, this.rect.polygon);
-
+    if (pts.length !== 8) return;
     const referenceWN = pts[0];
     this.handleOperator[TransformHandle.nw] = new Polygon(
       new Box(
@@ -196,30 +196,34 @@ export class Transform2DOperator {
         .map((p) => rotate(p.x, p.y, referenceW.x, referenceW.y, this.rotation))
     );
 
-    // referenceNE
-    const referenceRotation = {
-      x: pts[1].x,
-      y: revertYDirection ? pts[1].y + 30 : pts[1].y - 30,
-    };
-    this.handleOperator[TransformHandle.ro] = new Polygon(
-      new Box(
-        referenceRotation.x - (offsetAlignDiagonal + 5),
-        referenceRotation.y - (offsetAlignDiagonal + 5),
-        referenceRotation.x + (offsetAlignDiagonal + 5),
-        referenceRotation.y + (offsetAlignDiagonal + 5)
-      )
-        .toPoints()
-        .map((p) => rotate(p.x, p.y, referenceN.x, referenceN.y, this.rotation))
-    );
+    if (showRotation) {
+      // referenceNE
+      const referenceRotation = {
+        x: pts[1].x,
+        y: revertYDirection ? pts[1].y + 30 : pts[1].y - 30,
+      };
+      this.handleOperator[TransformHandle.ro] = new Polygon(
+        new Box(
+          referenceRotation.x - (offsetAlignDiagonal + 5),
+          referenceRotation.y - (offsetAlignDiagonal + 5),
+          referenceRotation.x + (offsetAlignDiagonal + 5),
+          referenceRotation.y + (offsetAlignDiagonal + 5)
+        )
+          .toPoints()
+          .map((p) =>
+            rotate(p.x, p.y, referenceN.x, referenceN.y, this.rotation)
+          )
+      );
+    }
   }
 
   draw() {
+    if (Object.keys(this.handleOperator).length < 8) return;
     const cornerPolygon = new Polygon(
       this.rect.polygon.vertices.filter((_, idx) => idx % 2 === 0)
     );
 
     drawRectBorder(this.ctx, cornerPolygon, this.borderColor, this.border);
-
     drawHandles(this, this.ctx);
   }
 }

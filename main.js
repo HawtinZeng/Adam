@@ -11,7 +11,7 @@ const isDev = import("electron-is-dev");
 let win;
 
 const createWindow = () => {
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const { width, height } = screen.getPrimaryDisplay().size;
   win = new BrowserWindow({
     width,
     height,
@@ -28,6 +28,8 @@ const createWindow = () => {
       preload: path.join(__dirname, "./preload.js"),
     },
   });
+  win.webContents.send("SET_MENUBAR_HEIGHT", [width, height]);
+
   win.setAlwaysOnTop(true, "screen-saver");
 
   const servePort = process.env.PORT ?? 3000;
@@ -50,7 +52,6 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
 
 app.whenReady().then(() => {
   createWindow();
-
   // exclude the electron window to avoid screen rendering loop.
   win.setContentProtection(true);
   // must be wrapped with when ready
@@ -58,8 +59,6 @@ app.whenReady().then(() => {
     const source = sources[0];
     win.webContents.send("SET_SOURCE", source.id);
   });
-
-  win.webContents.send("SET_MENUBAR_HEIGHT", win.menuBarHeight);
 
   // global shortcuts
   globalShortcut.register("Alt+1", () => {
@@ -88,7 +87,7 @@ app.whenReady().then(() => {
   });
   // setting?
   // globalShortcut.register("Alt+9", () => {
-  //   win.webContents.send("Alt8");
+  //   win.webContents.send("Alt9");
   // });
   globalShortcut.register("Alt+C", () => {
     win.webContents.send("AltC");

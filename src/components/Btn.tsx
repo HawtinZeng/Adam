@@ -1,6 +1,6 @@
 import stylex from "@stylexjs/stylex";
 import { useAtom } from "jotai";
-import React from "react";
+import React, { MouseEvent } from "react";
 import { ReactSVG } from "react-svg";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { subMenuIdx } from "src/state/uiState";
@@ -87,12 +87,13 @@ export function Btn(
         )}
         key={i}
         id="btn"
-        onClick={() => {
+        onClick={(e: MouseEvent) => {
           if (selectedKey === i) {
             setSelectedKey(-1);
           } else {
             setSelectedKey(i);
           }
+          e.preventDefault();
         }}
         onMouseEnter={() => {
           setHoveredKey && setHoveredKey(i);

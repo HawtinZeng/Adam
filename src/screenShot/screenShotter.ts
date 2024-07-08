@@ -12,10 +12,14 @@ export class ScreenShotter {
   constructor(sr: Transform2DOperator, ori: ImageData) {
     this.shotRectangle = sr;
     this.oriImageData = ori;
+    sr.ctx.fillStyle = "red";
+    sr.ctx.fillRect(200, 200, 20, 20);
+
+    this.shotRectangle.draw();
   }
 
   get leftTop() {
-    return this.shotRectangle.handleOperator.nw!.box.center;
+    return this.shotRectangle.rect.polygon.vertices[0];
   }
 
   updateRightBottom(p: Point) {

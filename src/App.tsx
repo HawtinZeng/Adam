@@ -48,6 +48,7 @@ import pointer from "src/images/svgs/mouse/pointer.svg";
 import { useScreenShot } from "src/screenShot/useScreenShot";
 import { sceneAtom } from "src/state/sceneState";
 import {
+  bgCanvasAtom,
   brushRadius,
   canvasEventTriggerAtom,
   colorAtom,
@@ -77,6 +78,7 @@ function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
 
+  const bg = useAtomValue(bgCanvasAtom)!;
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
   const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
 
@@ -504,6 +506,15 @@ function App() {
       }
     };
 
+    const alt8Handler = () => {
+      if (selectedKey === 7) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(7);
+      }
+    };
+
     /**
      * 清理场景
      */
@@ -525,6 +536,7 @@ function App() {
     (window as any).ipcRenderer?.on("Alt5", alt5Handler);
     (window as any).ipcRenderer?.on("Alt6", alt6Handler);
     (window as any).ipcRenderer?.on("Alt7", alt7Handler);
+    (window as any).ipcRenderer?.on("Alt8", alt8Handler);
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
 
@@ -536,6 +548,7 @@ function App() {
       (window as any).ipcRenderer?.off("Alt5", alt5Handler);
       (window as any).ipcRenderer?.off("Alt6", alt6Handler);
       (window as any).ipcRenderer?.off("Alt7", alt7Handler);
+      (window as any).ipcRenderer?.off("Alt8", alt8Handler);
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
     };
@@ -646,6 +659,7 @@ function App() {
                 <div>{`elements: ${sceneData.elements.length}`}</div>
                 <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
                 <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
+                <div>{`height: ${bg?.height}`}</div>
                 <Button
                   variant="contained"
                   size="large"

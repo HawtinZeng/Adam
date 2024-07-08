@@ -8,6 +8,7 @@ const dCvsSt = stylex.create({
     width: "100%",
     position: "fixed",
     top: "0",
+    height: "100%",
   },
 });
 export function BackgroundCanvas() {
@@ -19,13 +20,5 @@ export function BackgroundCanvas() {
     cvsRef.current!.height = cvsRef.current!.offsetHeight;
     cvsRef.current!.width = cvsRef.current!.offsetWidth;
   }, [setbgCanvasAtom]);
-  return (
-    <canvas
-      ref={cvsRef}
-      {...stylex.props(dCvsSt.container)}
-      style={{
-        height: `calc(100% + ${(window as any).menubarHeight ?? 0}px)`,
-      }}
-    ></canvas>
-  );
+  return <canvas ref={cvsRef} {...stylex.props(dCvsSt.container)}></canvas>;
 }
