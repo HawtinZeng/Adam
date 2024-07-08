@@ -257,7 +257,7 @@ function MainMenu() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setSubMenuDragCtrl] = useState("");
   const updateSubMenuPosition = useCallback(() => {
-    if (hoveredKey === -1 || selectedKey === -1) return;
+    if (selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];
     if (!reference || !subMenuRef?.current) return;
     computePosition(reference, subMenuRef.current, {
@@ -269,7 +269,7 @@ function MainMenu() {
         left: placement === "right" ? `${x + 20}px` : `${x - 20}px`,
       });
     });
-  }, [hoveredKey, selectedKey, btnRefs, subMenuRef]);
+  }, [selectedKey, btnRefs, subMenuRef]);
 
   const checkHit = useCallback(
     (e: MouseEvent) => {
@@ -297,6 +297,11 @@ function MainMenu() {
   useEffect(() => {
     updateSubMenuPosition();
   }, [updateSubMenuPosition]);
+
+  useEffect(() => {
+    setTimeout(updateSubMenuPosition, 10);
+    logger.log("updateSubMenuPosition");
+  }, [selectedKey]);
 
   useEffect(() => {
     if (selectedKey === 2) {

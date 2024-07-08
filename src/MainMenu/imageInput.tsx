@@ -1,6 +1,6 @@
 import x from "@stylexjs/stylex";
 import { Box, Polygon } from "@zenghawtin/graph2d";
-import { useAtom, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import React, {
   ChangeEvent,
   useCallback,
@@ -48,7 +48,7 @@ export function ImageInput() {
   const [cvsEle] = useAtom(canvasAtom);
   const fileListRef = useRef<File[]>();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setSelectedKey = useSetAtom(selectedKeyAtom);
+  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
 
   function handleFileSelect(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target) return;
@@ -161,6 +161,15 @@ export function ImageInput() {
       setSelectedKey(-1);
     });
   }, [setSelectedKey]);
+
+  useEffect(() => {
+    if (selectedKey === 4) {
+      if (!excuted.current) {
+        i.current!.click();
+        excuted.current = true;
+      }
+    }
+  }, [selectedKey]);
 
   useEffect(() => {
     if (!excuted.current) {
