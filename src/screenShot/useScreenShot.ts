@@ -68,6 +68,7 @@ export function useScreenShot() {
     bg?.removeEventListener("mousedown", addPoint);
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   function transformOperatorHandlers(e: MouseEvent) {
     const ctx = bg?.getContext("2d")!;
     if (status.current !== "creating" || !startPt.current || !ctx) return;
@@ -92,7 +93,7 @@ export function useScreenShot() {
       bg?.removeEventListener("mousemove", transformOperatorHandlers);
       bg?.removeEventListener("mousedown", addPoint);
     };
-  }, []);
+  }, [bg, transformOperatorHandlers]);
 
   function addPoint(e: MouseEvent) {
     logger.log("addPoint");
