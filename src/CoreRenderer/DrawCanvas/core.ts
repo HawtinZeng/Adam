@@ -170,6 +170,11 @@ export function renderDrawCanvas(
   });
 }
 
+export function clearMainCanvas() {
+  if (!globalAppCtx || !globalCvs) return;
+  globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
+}
+
 export function restoreOriginalmage(u: UpdatingElement) {
   if (!globalAppCtx) return;
   globalAppCtx!.putImageData(u.oriImageData!, 0, 0);

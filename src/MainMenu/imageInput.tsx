@@ -157,17 +157,10 @@ export function ImageInput() {
   );
 
   useEffect(() => {
-    window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mousemove", updateDraggableItemPos);
-
     i.current!.addEventListener("cancel", () => {
       setSelectedKey(-1);
     });
-    return () => {
-      window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mousemove", updateDraggableItemPos);
-    };
-  }, [handleMouseDown, setSelectedKey, updateDraggableItemPos]);
+  }, [setSelectedKey]);
 
   useEffect(() => {
     if (!excuted.current) {

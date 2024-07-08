@@ -2,25 +2,30 @@ import React, { useEffect, useRef } from "react";
 
 import stylex from "@stylexjs/stylex";
 import { useSetAtom } from "jotai";
-import { dyCanvasAtom } from "src/state/uiState";
+import { bgCanvasAtom } from "src/state/uiState";
 const dCvsSt = stylex.create({
   container: {
     width: "100%",
-    height: "100%",
     position: "fixed",
     top: "0",
   },
 });
-export function DynamicCanvas() {
-  // console.log("re-render DynamicCanvas");
-
-  const setDyCanvasAtom = useSetAtom(dyCanvasAtom);
+export function BackgroundCanvas() {
+  const setbgCanvasAtom = useSetAtom(bgCanvasAtom);
   const cvsRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    setDyCanvasAtom(cvsRef.current);
+    setbgCanvasAtom(cvsRef.current);
     cvsRef.current!.height = cvsRef.current!.offsetHeight;
     cvsRef.current!.width = cvsRef.current!.offsetWidth;
-  }, []);
-  return <canvas ref={cvsRef} {...stylex.props(dCvsSt.container)}></canvas>;
+  }, [setbgCanvasAtom]);
+  return (
+    <canvas
+      ref={cvsRef}
+      {...stylex.props(dCvsSt.container)}
+      style={{
+        height: `calc(100% + ${(window as any).menubarHeight ?? 0}px)`,
+      }}
+    ></canvas>
+  );
 }

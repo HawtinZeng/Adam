@@ -51,7 +51,6 @@ export const DraggableTransparent = forwardRef(
     const needPadding = props.needPadding ?? true;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
     const selectedKey = useAtomValue(selectedKeyAtom);
-    const [trans, setTrans] = useState(false);
 
     const onDrag = props.onDrag;
     const [hasIni, setHasIni] = useState(false);
@@ -98,19 +97,15 @@ export const DraggableTransparent = forwardRef(
           ref={ref as Ref<HTMLDivElement>}
           style={hasIni ? { visibility: "visible" } : { visibility: "hidden" }}
           onMouseEnter={() => {
-            setTrans(false);
-
             unsetTransparent();
             // console.log("unsetTransparent");
           }}
           onMouseLeave={() => {
             if (selectedKey === -1) {
-              setTrans(true);
               setTransparent();
             }
           }}
         >
-          <span>{trans}</span>
           {props.children}
         </div>
       </Draggable>

@@ -11,10 +11,10 @@ import { Eraser } from "src/MainMenu/eraser";
 import { ImageInput } from "src/MainMenu/imageInput";
 import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
-import { ScreenShotPanel } from "src/ScreenShotPanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanelCompose } from "src/ShapePanel/shapePanelCompose";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
+import { ScreenShotPanel } from "src/screenShot/ScreenShotPanel/index";
 import { logger } from "src/setup";
 import { sceneAtom } from "src/state/sceneState";
 import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
@@ -256,7 +256,6 @@ function MainMenu() {
   // 当主菜单移动位置之后，需要清空子菜单draggable state, 这里接重新生成一遍子菜单组件，合理的方式应该需要暴露子菜单的state，但draggalbe-react这个库并未提供这个功能
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setSubMenuDragCtrl] = useState("");
-
   const updateSubMenuPosition = useCallback(() => {
     if (hoveredKey === -1 || selectedKey === -1) return;
     const reference = btnRefs.current[selectedKey];

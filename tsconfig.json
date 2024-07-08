@@ -17,7 +17,7 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "outDir": ".",
     "module": "ESNext",
-    "types": ["@webgpu/types", "node"]
+    "types": ["@webgpu/types", "node", "w3c-image-capture"]
   },
   "include": [
     "src/**/*.ts",

@@ -1,10 +1,12 @@
 import { atom } from "jotai";
 import { DomElement } from "src/CoreRenderer/basicTypes";
 export const selectedKeyAtom = atom(-1);
+export const preSelectedKey = atom(-1);
+
 export const subMenuIdx = atom(0);
 
 export const canvasAtom = atom<HTMLCanvasElement | null>(null);
-export const dyCanvasAtom = atom<HTMLCanvasElement | null>(null);
+export const bgCanvasAtom = atom<HTMLCanvasElement | null>(null);
 export const canvasEventTriggerAtom = atom<HTMLDivElement | null>(null);
 
 export const brushRadius = atom<number>(80);

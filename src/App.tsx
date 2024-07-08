@@ -18,7 +18,11 @@ import {
   Transform2DOperator,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
-import { redrawAllEles } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  clearMainCanvas,
+  redrawAllEles,
+} from "src/CoreRenderer/DrawCanvas/core";
+import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
 import {
   DrawingElement,
   Point,
@@ -34,13 +38,14 @@ import {
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
-import { setTransparent } from "src/commonUtils";
+import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
+import { useScreenShot } from "src/screenShot/useScreenShot";
 import { sceneAtom } from "src/state/sceneState";
 import {
   brushRadius,
@@ -55,7 +60,7 @@ import { useTextFunction } from "src/text/activateTextFunction";
 
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = true;
+const showDebugPanel = false;
 export const showElePtLength = false;
 
 function isBevelHandle(hand: TransformHandle | undefined) {
@@ -74,6 +79,7 @@ function App() {
 
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
   const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
+
   const [sceneData, setSceneData] = useAtom(sceneAtom);
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
@@ -96,6 +102,7 @@ function App() {
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const { startText, terminateText } = useTextFunction();
+  const { startScreenShot, terminateScreenShot } = useScreenShot();
 
   const change2DefaultCursor = useCallback(() => {
     if (selectedKey === 0 || selectedKey === 1) {
@@ -427,9 +434,112 @@ function App() {
     }
   }, [sceneData, setSceneData]);
 
+  // setTransparent this app
   useEffect(() => {
     setTransparent();
+    return () => {};
   }, []);
+
+  useEffect(() => {
+    const alt2Handler = () => {
+      if (selectedKey === 1) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(1);
+      }
+    };
+
+    const alt3Handler = () => {
+      if (selectedKey === 2) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(2);
+      }
+    };
+
+    const alt4Handler = () => {
+      if (selectedKey === 3) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(3);
+      }
+    };
+
+    const alt1Handler = () => {
+      if (selectedKey === 0) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(0);
+      }
+    };
+
+    const alt5Handler = () => {
+      if (selectedKey === 4) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(4);
+      }
+    };
+
+    const alt6Handler = () => {
+      if (selectedKey === 5) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(5);
+      }
+    };
+
+    const alt7Handler = () => {
+      if (selectedKey === 6) {
+        setSeletedKey(-1);
+        setTransparent();
+      } else {
+        setSeletedKey(6);
+      }
+    };
+
+    /**
+     * 清理场景
+     */
+    const altCHandler = () => {
+      sceneData.domElements.length = 0;
+      sceneData.elements.length = 0;
+      sceneData.frames.length = 0;
+      clearMainCanvas();
+    };
+
+    const altQHandler = () => {
+      setSeletedKey(-1);
+      setTransparent();
+    };
+    (window as any).ipcRenderer?.on("Alt1", alt1Handler);
+    (window as any).ipcRenderer?.on("Alt2", alt2Handler);
+    (window as any).ipcRenderer?.on("Alt3", alt3Handler);
+    (window as any).ipcRenderer?.on("Alt4", alt4Handler);
+    (window as any).ipcRenderer?.on("Alt5", alt5Handler);
+    (window as any).ipcRenderer?.on("Alt6", alt6Handler);
+    (window as any).ipcRenderer?.on("Alt7", alt7Handler);
+    (window as any).ipcRenderer?.on("AltC", altCHandler);
+    (window as any).ipcRenderer?.on("AltQ", altQHandler);
+
+    return () => {
+      (window as any).ipcRenderer?.off("Alt1", alt1Handler);
+      (window as any).ipcRenderer?.off("Alt2", alt2Handler);
+      (window as any).ipcRenderer?.off("Alt3", alt3Handler);
+      (window as any).ipcRenderer?.off("Alt4", alt4Handler);
+      (window as any).ipcRenderer?.off("Alt5", alt5Handler);
+      (window as any).ipcRenderer?.off("Alt6", alt6Handler);
+      (window as any).ipcRenderer?.off("Alt7", alt7Handler);
+      (window as any).ipcRenderer?.off("AltC", altCHandler);
+      (window as any).ipcRenderer?.off("AltQ", altQHandler);
+    };
+  }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
   useEffect(() => {
     sceneData.updatingElements = [];
@@ -453,14 +563,21 @@ function App() {
     }
   }
 
+  // Do some functions start and terminate
   useEffect(() => {
+    terminateText();
+    terminateScreenShot();
+
     if (selectedKey === 6) {
       startText();
-    } else {
-      terminateText();
+    } else if (selectedKey === 7) {
+      startScreenShot();
     }
-  }, [selectedKey]);
 
+    if (selectedKey !== -1) {
+      unsetTransparent();
+    }
+  }, [selectedKey]); // 不能依赖于start...terminate...
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
     return () => window.removeEventListener("keydown", globalKeydown);
@@ -509,8 +626,8 @@ function App() {
               }}
             >
               <DrawCanvas />
-              {/* <DynamicCanvas /> */}
               <DomElements />
+              <BackgroundCanvas />
             </div>
             <MainMenu />
             {showDebugPanel && (

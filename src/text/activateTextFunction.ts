@@ -7,7 +7,6 @@ import {
   canvasAtom,
   canvasEventTriggerAtom,
   colorAtom,
-  cursorSvgAtom,
   customColor,
 } from "src/state/uiState";
 import { Text } from "src/text/text";
@@ -24,11 +23,9 @@ export const useTextFunction = (): {
 
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
-  const [, setCursor] = useAtom(cursorSvgAtom);
   const mouseMoveHandler = (e: MouseEvent) => {
     if (!currentText.current) return;
 
-    canvasWrapper!.style.cursor = "none";
     const newPos = { x: e.clientX, y: e.clientY };
     currentText.current.refreshScene({ position: newPos });
   };
@@ -69,7 +66,6 @@ export const useTextFunction = (): {
       .getContext("2d", { willReadFrequently: true })!
       .getImageData(0, 0, cvsEle!.width, cvsEle!.height);
 
-    setCursor("none");
     currentText.current.createTextCanvas(cvsEle!);
     onlyRedrawOneElement(
       currentText.current,
@@ -79,7 +75,6 @@ export const useTextFunction = (): {
       mouseLeftDownHandler(e)
     );
     canvasWrapper!.addEventListener("mousemove", mouseMoveHandler);
-    canvasWrapper!.style.cursor = "none";
   };
 
   useEffect(() => {
