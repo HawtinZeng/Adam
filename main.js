@@ -1,7 +1,7 @@
-const {
-  default: installExtension,
-  REACT_DEVELOPER_TOOLS,
-} = require("electron-devtools-installer");
+// const {
+//   default: installExtension,
+//   REACT_DEVELOPER_TOOLS,
+// } = require("electron-devtools-installer");
 // import installExtension, { REDUX_DEVTOOLS } from "electron-devtools-installer";
 const { screen, globalShortcut } = require("electron");
 const { ipcMain } = require("electron");
@@ -33,11 +33,20 @@ const createWindow = () => {
   win.setAlwaysOnTop(true, "screen-saver");
 
   const servePort = process.env.PORT ?? 3000;
-  const startURL = isDev
-    ? `http://localhost:${servePort}`
-    : `file://${path.join(__dirname, "../build/index.html")}`;
 
-  win.loadURL(startURL);
+  if (isDev) {
+    const startURL = `http://localhost:${servePort}`;
+
+    win.loadURL(startURL);
+  } else {
+    // TODO: test build process, add the output into .gitignore
+    const startURL = require("url").format({
+      protocol: "file",
+      slashes: true,
+      pathname: require("path").join(__dirname, "build/index.html"),
+    });
+    win.loadURL(startURL);
+  }
 };
 
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
@@ -53,10 +62,10 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
 app.whenReady().then(() => {
   createWindow();
   // exclude the electron window to avoid screen rendering loop.
-  win.setContentProtection(true);
+  // win.setContentProtection(true);can't set within this context, because we need to enable screen sharing app to share this electron app.
   // must be wrapped with when ready
   desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
-    const source = sources[0];
+    const source = sources[0]; // stream
     win.webContents.send("SET_SOURCE", source.id);
   });
 
@@ -102,9 +111,9 @@ app.whenReady().then(() => {
     }
   });
 
-  installExtension(REACT_DEVELOPER_TOOLS)
-    .then((name) => console.log(`Added Extension:  ${name}`))
-    .catch((err) => console.log("An error occurred: ", err));
+  // installExtension(REACT_DEVELOPER_TOOLS)
+  //   .then((name) => console.log(`Added Extension:  ${name}`))
+  //   .catch((err) => console.log("An error occurred: ", err));
 });
 
 app.on("window-all-closed", () => {

@@ -45,7 +45,7 @@ import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
-import { useScreenShot } from "src/screenShot/useScreenShot";
+import { ScreenShotter } from "src/screenShot/screenShotter";
 import { sceneAtom } from "src/state/sceneState";
 import {
   bgCanvasAtom,
@@ -104,7 +104,8 @@ function App() {
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const { startText, terminateText } = useTextFunction();
-  const { startScreenShot, terminateScreenShot } = useScreenShot();
+
+  const screenShotter = useRef<ScreenShotter>();
 
   const change2DefaultCursor = useCallback(() => {
     if (selectedKey === 0 || selectedKey === 1) {
@@ -439,8 +440,11 @@ function App() {
   // setTransparent this app
   useEffect(() => {
     setTransparent();
-    return () => {};
   }, []);
+
+  useEffect(() => {
+    if (bg) screenShotter.current = new ScreenShotter(bg);
+  }, [bg]);
 
   useEffect(() => {
     const alt2Handler = () => {
@@ -579,16 +583,19 @@ function App() {
   // Do some functions start and terminate
   useEffect(() => {
     terminateText();
-    terminateScreenShot();
+    if (screenShotter.current?.status !== "ending")
+      screenShotter.current?.terminateScreenShot();
 
     if (selectedKey === 6) {
       startText();
     } else if (selectedKey === 7) {
-      startScreenShot();
+      screenShotter.current?.startScreenShot();
     }
 
     if (selectedKey !== -1) {
       unsetTransparent();
+    } else {
+      setTransparent();
     }
   }, [selectedKey]); // 不能依赖于start...terminate...
   useEffect(() => {

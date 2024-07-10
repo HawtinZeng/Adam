@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "license": "Commercial",
+  "main": "main.js",
+  "author": "ZengHawtin",
+  "description": "adam: drawing editor in any window",
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
@@ -19,7 +22,7 @@
     "@types/w3c-image-capture": "^1.0.10",
     "@zenghawtin/graph2d": "^1.1.5",
     "d3-color": "^3.1.0",
-    "electron": "^31.1.0",
+    "electron-squirrel-startup": "^1.0.1",
     "jotai": "2.7.2",
     "jotai-effect": "^0.6.0",
     "lodash": "^4.17.21",
@@ -44,10 +47,13 @@
     "start:react": "cross-env BROWSER=none PORT=5000 craco start",
     "build": "craco build",
     "start:electron": "cross-env PORT=5000 electron ./main.js --enable-logging",
-    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js",
+    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js --enable-logging",
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make --trace-deprecation",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "eslintConfig": {
     "extends": [
@@ -91,14 +97,30 @@
     "@craco/craco": "^7.1.0",
     "@craco/types": "^7.1.0",
     "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-deb": "^7.4.0",
+    "@electron-forge/maker-rpm": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
+    "@electron-forge/plugin-fuses": "^7.4.0",
+    "@electron-forge/plugin-webpack": "^7.4.0",
+    "@electron/fuses": "^1.8.0",
     "@stylexjs/babel-plugin": "^0.5.1",
     "@stylexjs/eslint-plugin": "^0.5.1",
     "@stylexjs/webpack-plugin": "^0.5.1",
     "@types/lodash": "^4.17.0",
     "@webgpu/types": "^0.1.40",
     "cross-env": "^7.0.3",
+    "electron": "^31.1.0",
+    "electron-builder": "^24.13.3",
     "electron-devtools-installer": "^3.2.0",
     "electron-is-dev": "^3.0.1",
     "foreman": "^3.0.1"
+  },
+  "build": {
+    "appId": "Zenghawtin",
+    "mac": {
+      "category": "your.app.category.type"
+    }
   }
 }

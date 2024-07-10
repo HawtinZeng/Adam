@@ -72,4 +72,8 @@ module.exports = {
       return eslintConfig;
     },
   },
+  devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
+    devServerConfig.port = 3000;
+    return devServerConfig;
+  },
 };

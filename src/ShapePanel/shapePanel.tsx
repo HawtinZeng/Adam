@@ -187,9 +187,10 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
       onlyRedrawOneElement(a, u.oriImageData!);
 
       s.updatingElements.length = 0;
+      setSelectedKey(-1);
     }
     clearLastKey();
-  }, [clearLastKey, lastKey, s]);
+  }, [clearLastKey, lastKey, s, setSelectedKey]);
 
   useEffect(() => {
     if (!cvsTrigger) return;

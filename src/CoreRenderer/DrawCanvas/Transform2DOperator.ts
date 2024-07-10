@@ -90,6 +90,7 @@ export class Transform2DOperator {
     const pts = this.rect.polygon.vertices;
     const offsetAlignDiagonal = this.pointW / 2;
 
+    // for debug
     drawPolygonPointIndex(this.ctx, this.rect.polygon);
     if (pts.length !== 8) return;
     const referenceWN = pts[0];
