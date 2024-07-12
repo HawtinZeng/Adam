@@ -1,8 +1,3 @@
-// const {
-//   default: installExtension,
-//   REACT_DEVELOPER_TOOLS,
-// } = require("electron-devtools-installer");
-// import installExtension, { REDUX_DEVTOOLS } from "electron-devtools-installer";
 const { screen, globalShortcut } = require("electron");
 const { ipcMain } = require("electron");
 const { app, BrowserWindow, desktopCapturer } = require("electron/main");

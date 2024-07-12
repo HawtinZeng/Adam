@@ -16,6 +16,7 @@ export type Point = {
   pressure?: number; // 0 - 1
   timestamp?: number;
 };
+
 export type Degree = number; // 0 - 359
 /**
  * Core interface.

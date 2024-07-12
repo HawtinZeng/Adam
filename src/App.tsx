@@ -489,6 +489,7 @@ function App() {
         setTransparent();
       } else {
         setSeletedKey(4);
+        console.log("setSeletedKey 4");
       }
     };
 
@@ -695,13 +696,7 @@ function App() {
             )}
           </>
         ),
-        [
-          cursorSvg,
-          mousePos.x,
-          mousePos.y,
-          sceneData.elements,
-          sceneData.updatingElements,
-        ]
+        [cursorSvg, sceneData.elements, sceneData.updatingElements]
       )}
     </>
   );
@@ -754,7 +749,6 @@ function App() {
         const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
 
         const scalar3 = offset.dot(thirdDir);
-
         const scalar0 = offset.dot(zeroDir);
 
         if (lockScale) {

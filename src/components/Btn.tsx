@@ -87,14 +87,14 @@ export function Btn(
         )}
         key={i}
         id="btn"
-        onClick={(e: MouseEvent) => {
+        onMouseDown={(e: MouseEvent) => {
           if (selectedKey === i) {
             setSelectedKey(-1);
           } else {
             setSelectedKey(i);
           }
           e.preventDefault();
-        }}
+        }} // onMouseDown 比 onClick要更加灵敏，我们点击的时候会出现mouseDown上，然后迅速移走，再mouseUp
         onMouseEnter={() => {
           setHoveredKey && setHoveredKey(i);
         }}

@@ -40,6 +40,7 @@ const grey = {
   800: "#303740",
   900: "#1C2025",
 };
+
 const noteStyles = stylex.create({
   container: {
     width: "300px",
