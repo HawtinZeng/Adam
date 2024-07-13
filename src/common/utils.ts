@@ -3,6 +3,7 @@ import { cloneDeep } from "lodash";
 import { nanoid } from "nanoid";
 import { Point } from "src/CoreRenderer/basicTypes";
 import { FreedrawComp } from "src/drawingElements/data/freedrawElement";
+import { logger } from "src/setup";
 
 const getFreeDrawElementAbsoluteCoords = (
   element: FreedrawComp
@@ -70,4 +71,31 @@ export function transformPointZ(pt: PointZ, m: Matrix3) {
     ty = e[1] * x + e[4] * y + e[7] * z;
 
   return new PointZ(tx, ty);
+}
+
+export async function downloadImage(
+  imageBitmap: ImageBitmap,
+  filename: string
+) {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    const context = canvas.getContext("2d")!;
+    context.drawImage(imageBitmap, 0, 0);
+    const b = (await new Promise((res, rej) => {
+      canvas.toBlob((b) => {
+        if (b) res(b);
+      });
+    })) as Blob;
+
+    const url = URL.createObjectURL(b);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url); // Clean up the temporary URL
+  } catch (e) {
+    logger.error(e as Error);
+  }
 }

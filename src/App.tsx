@@ -43,6 +43,7 @@ import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
+import { logger } from "src/setup";
 import { multipleScenes, sceneAtom } from "src/state/sceneState";
 import {
   bgCanvasAtom,
@@ -61,6 +62,27 @@ export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
 export const showElePtLength = false;
 
+async function getCapture() {
+  const source = (window as any).sourceId;
+  if (source) {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        // @ts-ignore
+        mandatory: {
+          chromeMediaSource: "desktop",
+          chromeMediaSourceId: source,
+        },
+      },
+    });
+    const track = stream.getVideoTracks()[0];
+
+    return new ImageCapture(track);
+  }
+}
+
+const imageCapture = await getCapture();
+
 function isBevelHandle(hand: TransformHandle | undefined) {
   if (!hand) return false;
   return [
@@ -71,9 +93,9 @@ function isBevelHandle(hand: TransformHandle | undefined) {
   ].includes(hand);
 }
 
-function notifyMainProcess() {
-  (window as any).ipcRenderer?.send("updateFocusedWindow");
-}
+// function notifyMainProcess() {
+//   (window as any).ipcRenderer?.send("updateFocusedWindow");
+// }
 
 function App() {
   const colorIdx = useAtomValue(colorAtom);
@@ -442,15 +464,40 @@ function App() {
     setTransparent();
   }, []);
 
-  const changeWorkspace = (e, windowInfo: BaseResult) => {
+  function translateEles(e: any, wheelData: any) {
+    // 负为向下滚动，正为向上滚动
+    const delta = wheelData.delta;
+    const els = sceneData.elements;
+    // compute application specific scroll speed
+    if (sceneData.windowScrollSpeed === 0) {
+      const originalImg = sceneData.firstShowWindowScreenShot;
+      if (originalImg) {
+        try {
+          const currentFrame = imageCapture?.grabFrame();
+        } catch (e) {
+          logger.error(e as Error);
+        }
+      }
+    }
+
+    els.forEach((e) => (e.position.y += delta * 50));
+    redrawAllEles(undefined, undefined, els);
+  }
+
+  const changeWorkspace = async (e, windowInfo: BaseResult) => {
     // save previous scene data
-    multipleScenes.set(sceneData.windowId, sceneData);
+
+    multipleScenes.set(sceneData.windowId, { ...sceneData });
     const exist = multipleScenes.get(windowInfo.id);
 
     if (!exist) {
       sceneData.elements = [];
       sceneData.domElements = [];
       sceneData.windowId = windowInfo.id;
+      if (imageCapture) {
+        const imageBitmap = await imageCapture.grabFrame();
+        sceneData.firstShowWindowScreenShot = imageBitmap;
+      }
 
       setSceneData({ ...sceneData });
       clearMainCanvas();
@@ -563,6 +610,7 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
+    (window as any).ipcRenderer?.on("mouseWheel", translateEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -575,6 +623,7 @@ function App() {
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
+      (window as any).ipcRenderer?.off("mouseWheel", translateEles);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -628,7 +677,7 @@ function App() {
     wrapper.addEventListener("mousedown", detectElesInterceted);
 
     wrapper.addEventListener("mousedown", dragStart);
-    wrapper.addEventListener("mousemove", notifyMainProcess);
+    // wrapper.addEventListener("mousemove", notifyMainProcess);
 
     wrapper.addEventListener("mouseup", dragEnd);
 
@@ -639,7 +688,6 @@ function App() {
     return () => {
       wrapper.removeEventListener("mousedown", detectElesInterceted);
       wrapper.removeEventListener("mousedown", dragStart);
-      wrapper.removeEventListener("mousemove", notifyMainProcess);
 
       wrapper.removeEventListener("mouseup", dragEnd);
 

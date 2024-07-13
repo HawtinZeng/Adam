@@ -26,6 +26,9 @@ export class Scene {
   updatingElements: UpdatingElement[] = [];
   domElements: DomElement[];
   windowId: number = 0;
+  windowScrollSpeed: number = 0;
+  firstShowWindowScreenShot: ImageBitmap | undefined;
+
   constructor(
     elements: DrawingElement[],
     domElements: DomElement[],

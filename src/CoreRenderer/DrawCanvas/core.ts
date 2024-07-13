@@ -277,8 +277,8 @@ export function redrawAllEles(
       } else {
         globalAppCtx!.drawImage(
           cachedCvs!,
-          0,
-          0,
+          el.position.x,
+          el.position.y,
           cachedCvs!.width,
           cachedCvs!.height
         );

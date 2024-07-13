@@ -12,9 +12,11 @@ declare global {
 
 const yellow = (msg: string | number | Object) => `\x1b[33m${msg}\x1b[0m`;
 const cyan = (msg: string | number | Object) => `\x1b[36m${msg}\x1b[0m`;
+const red = (msg: string | number | Object) => `\x1b[31m${msg}\x1b[0m`;
 export class Logger {
   enable: boolean = true;
   logCount: number = 0;
+  errCount: number = 0;
 
   log(msg: string | Object) {
     if (!this.enable) return;
@@ -23,6 +25,18 @@ export class Logger {
       cyan(this.logCount) +
         "    |    " +
         yellow(msg) +
+        "    |    " +
+        new Date().toLocaleTimeString()
+    );
+  }
+
+  error(e: Error) {
+    if (!this.enable) return;
+    this.errCount += 1;
+    console.log(
+      cyan(this.errCount) +
+        "    |    " +
+        red(e.message) +
         "    |    " +
         new Date().toLocaleTimeString()
     );

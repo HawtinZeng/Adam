@@ -24,6 +24,7 @@
     "d3-color": "^3.1.0",
     "electron-squirrel-startup": "^1.0.1",
     "get-windows": "^9.1.1",
+    "global-mouse-events": "^1.2.0",
     "jotai": "2.7.2",
     "jotai-effect": "^0.6.0",
     "lodash": "^4.17.21",

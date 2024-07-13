@@ -4,4 +4,4 @@ Hi, I am hawtin.
 ＊Adam Drawing provides local file storage, which means that any user's files will not be transferred to the external cloud.
 ＊Welcome to download, try, and report bugs from www.hawtin.com/adam/canary.
 
-- Instapired by Antfu, Jamboard, Excalidraw, Flatten.js, thanks for your sharing.
+- Inspired by Antfu, Jamboard, Excalidraw, Flatten.js, thanks for your sharing.

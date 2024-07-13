@@ -3,13 +3,13 @@ import { globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app, desktopCapturer } from "electron/main";
 import { activeWindow } from "get-windows";
+import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// const res = await activeWindow();
 let win;
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().size;
@@ -61,15 +61,18 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
 const v = new GlobalKeyboardListener();
 v.addListener(function (e) {
   if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {
-    // setTimeout(changeWindowHandler, 10);
+    setTimeout(changeWindowHandler, 10);
   } else if (e.name === "MOUSE LEFT" && e.state === "DOWN") {
     // setTimeout(changeWindowHandler, 10);
   }
 });
+let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
+
   if (
     currentWindow?.title && // 资源管理器会有一个空title的窗口
+    currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
     preFocusedWindow?.id !== currentWindow.id
   ) {
@@ -77,11 +80,14 @@ async function changeWindowHandler() {
     preFocusedWindow = currentWindow;
   }
 }
-let preFocusedWindow = undefined;
-ipcMain.on("updateFocusedWindow", changeWindowHandler);
+// ipcMain.on("updateFocusedWindow", changeWindowHandler);
 
 app.whenReady().then(async () => {
   createWindow();
+  mouseEvt.on("mousewheel", (wheel) => {
+    win.webContents.send("mouseWheel", wheel);
+  });
+
   // exclude the electron window to avoid screen rendering loop.
   // win.setContentProtection(true);can't set within this context, because we need to enable screen sharing app to share this electron app.
   // must be wrapped with when ready
@@ -124,6 +130,12 @@ app.whenReady().then(async () => {
   });
   globalShortcut.register("Alt+Q", () => {
     win.webContents.send("AltQ");
+  });
+  globalShortcut.register("Alt+Q", () => {
+    win.webContents.send("AltQ");
+  });
+  globalShortcut.register("Ctrl+Q", () => {
+    app.quit();
   });
 
   app.on("activate", () => {
