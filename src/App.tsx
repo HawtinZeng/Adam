@@ -464,18 +464,19 @@ function App() {
     setTransparent();
   }, []);
 
-  function translateEles(e: any, wheelData: any) {
+  async function translateEles(e: any, wheelData: any) {
     // 负为向下滚动，正为向上滚动
     const delta = wheelData.delta;
     const els = sceneData.elements;
     // compute application specific scroll speed
     if (sceneData.windowScrollSpeed === 0) {
       const originalImg = sceneData.firstShowWindowScreenShot;
-      if (originalImg) {
+      if (originalImg && imageCapture) {
         try {
-          const currentFrame = imageCapture?.grabFrame();
+          const currentFrame = await imageCapture?.grabFrame();
         } catch (e) {
           logger.error(e as Error);
+          return;
         }
       }
     }
@@ -666,6 +667,7 @@ function App() {
     } else {
       setTransparent();
     }
+    logger.log(sceneData.elements.length);
   }, [selectedKey]); // 不能依赖于start...terminate...
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
