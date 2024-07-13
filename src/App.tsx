@@ -8,9 +8,9 @@ import {
   Vector,
 } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
+import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, merge } from "lodash";
-import { nanoid } from "nanoid";
+import { cloneDeep } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
@@ -31,22 +31,19 @@ import {
 import {
   CircleShapeElement,
   DrawingType,
-  FreeDrawing,
   ImageElement,
   RectangleShapeElement,
-  newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
+import MainMenu, { colorConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
-import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
-import { sceneAtom } from "src/state/sceneState";
+import { multipleScenes, sceneAtom } from "src/state/sceneState";
 import {
   bgCanvasAtom,
   brushRadius,
@@ -74,6 +71,10 @@ function isBevelHandle(hand: TransformHandle | undefined) {
   ].includes(hand);
 }
 
+function notifyMainProcess() {
+  (window as any).ipcRenderer?.send("updateFocusedWindow");
+}
+
 function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
@@ -83,6 +84,7 @@ function App() {
   const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
 
   const [sceneData, setSceneData] = useAtom(sceneAtom);
+
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
   const [currentKeyboard] = useKeyboard();
@@ -263,7 +265,6 @@ function App() {
       change2DefaultCursor,
     ]
   );
-
   const dragMove = useCallback(
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
@@ -357,25 +358,25 @@ function App() {
     },
     [sceneData, setSceneData, currentKeyboard]
   );
-  const drawAPoint = (p: Point) => {
-    const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
-      id: nanoid(),
-      position: { x: p.x, y: p.y },
-      points: [{ x: p.x, y: p.y }],
-    } as FreeDrawing);
+  // const drawAPoint = (p: Point) => {
+  //   const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
+  //     id: nanoid(),
+  //     position: { x: p.x, y: p.y },
+  //     points: [{ x: p.x, y: p.y }],
+  //   } as FreeDrawing);
 
-    // default property
-    const subMenuStrokeOption =
-      menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
-    newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
+  //   // default property
+  //   const subMenuStrokeOption =
+  //     menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
+  //   newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
 
-    // updated property, size是ui控件的直径
-    newFreeElement.strokeOptions.size = size / 4;
-    newFreeElement.strokeOptions.strokeColor =
-      colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+  //   // updated property, size是ui控件的直径
+  //   newFreeElement.strokeOptions.size = size / 4;
+  //   newFreeElement.strokeOptions.strokeColor =
+  //     colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
 
-    sceneData.elements.push(newFreeElement);
-  };
+  //   sceneData.elements.push(newFreeElement);
+  // };
 
   const globalKeydown = useCallback(
     (e: KeyboardEvent) => {
@@ -436,11 +437,28 @@ function App() {
       dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
-
   // setTransparent this app
   useEffect(() => {
     setTransparent();
   }, []);
+
+  const changeWorkspace = (e, windowInfo: BaseResult) => {
+    // save previous scene data
+    multipleScenes.set(sceneData.windowId, sceneData);
+    const exist = multipleScenes.get(windowInfo.id);
+
+    if (!exist) {
+      sceneData.elements = [];
+      sceneData.domElements = [];
+      sceneData.windowId = windowInfo.id;
+
+      setSceneData({ ...sceneData });
+      clearMainCanvas();
+    } else {
+      setSceneData({ ...exist });
+      redrawAllEles(undefined, undefined, exist.elements);
+    }
+  };
 
   useEffect(() => {
     if (bg) screenShotter.current = new ScreenShotter(bg);
@@ -544,7 +562,7 @@ function App() {
     (window as any).ipcRenderer?.on("Alt8", alt8Handler);
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
-
+    (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -556,6 +574,7 @@ function App() {
       (window as any).ipcRenderer?.off("Alt8", alt8Handler);
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
+      (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -572,7 +591,7 @@ function App() {
     setTriggerAtom(canvasEventTrigger.current);
   }, [setTriggerAtom]);
 
-  const mousePos = useMousePosition();
+  // const mousePos = useMousePosition();
   function updateMouseTipPosition(e: MouseEvent) {
     const el = document.getElementsByClassName("shiftTip")[0] as HTMLElement;
     if (el) {
@@ -609,6 +628,8 @@ function App() {
     wrapper.addEventListener("mousedown", detectElesInterceted);
 
     wrapper.addEventListener("mousedown", dragStart);
+    wrapper.addEventListener("mousemove", notifyMainProcess);
+
     wrapper.addEventListener("mouseup", dragEnd);
 
     wrapper.addEventListener("mousemove", detectHandles);
@@ -618,12 +639,13 @@ function App() {
     return () => {
       wrapper.removeEventListener("mousedown", detectElesInterceted);
       wrapper.removeEventListener("mousedown", dragStart);
+      wrapper.removeEventListener("mousemove", notifyMainProcess);
 
       wrapper.removeEventListener("mouseup", dragEnd);
 
       wrapper.removeEventListener("mousemove", detectHandles);
       wrapper.removeEventListener("mousemove", dragMove);
-      wrapper.addEventListener("mousemove", updateMouseTipPosition);
+      wrapper.removeEventListener("mousemove", updateMouseTipPosition);
     };
   }, [
     detectElesInterceted,
@@ -665,7 +687,7 @@ function App() {
                   ][0].orientation()
                 }`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
-                <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
+                {/* <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div> */}
                 <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
                 <div>{`height: ${bg?.height}`}</div>
                 <Button

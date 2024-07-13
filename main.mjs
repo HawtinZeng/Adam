@@ -3,15 +3,13 @@ import { globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app, desktopCapturer } from "electron/main";
 import { activeWindow } from "get-windows";
+import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-console.log("await getWin.activeWindow()------------------------->");
-const res = await activeWindow();
-console.log(res);
-
+// const res = await activeWindow();
 let win;
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().size;
@@ -22,7 +20,7 @@ const createWindow = () => {
     titleBarStyle: "hidden",
 
     transparent: true,
-
+    skipTaskbar: true,
     alwaysOnTop: true,
     webPreferences: {
       // nodeIntegration: true,
@@ -53,7 +51,6 @@ const createWindow = () => {
 };
 
 ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
-  // const win = BrowserWindow.fromWebContents(event.sender);
   win.setIgnoreMouseEvents(ignore, options);
   if (ignore) {
     win.blur();
@@ -61,6 +58,27 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
     win.focus();
   }
 });
+const v = new GlobalKeyboardListener();
+v.addListener(function (e) {
+  if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {
+    // setTimeout(changeWindowHandler, 10);
+  } else if (e.name === "MOUSE LEFT" && e.state === "DOWN") {
+    // setTimeout(changeWindowHandler, 10);
+  }
+});
+async function changeWindowHandler() {
+  const currentWindow = await activeWindow();
+  if (
+    currentWindow?.title && // 资源管理器会有一个空title的窗口
+    currentWindow?.title !== "Adam" &&
+    preFocusedWindow?.id !== currentWindow.id
+  ) {
+    win.webContents.send("changeWindow", currentWindow);
+    preFocusedWindow = currentWindow;
+  }
+}
+let preFocusedWindow = undefined;
+ipcMain.on("updateFocusedWindow", changeWindowHandler);
 
 app.whenReady().then(async () => {
   createWindow();
@@ -68,7 +86,7 @@ app.whenReady().then(async () => {
   // win.setContentProtection(true);can't set within this context, because we need to enable screen sharing app to share this electron app.
   // must be wrapped with when ready
   desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
-    const source = sources[0]; // stream
+    const source = sources[0];
     win.webContents.send("SET_SOURCE", source.id);
   });
 
@@ -123,4 +141,8 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
 });

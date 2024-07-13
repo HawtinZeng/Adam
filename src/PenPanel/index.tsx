@@ -42,6 +42,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const [cvsEle] = useAtom(canvasAtom);
 
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
+
   const size = useAtomValue(brushRadius);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
@@ -52,6 +53,13 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const animationTasks = useRef<Function[]>([]);
   const isStop = useRef<boolean>(true);
   const disableDrawing = useAtomValue(disableDrawingAtom);
+
+  const openAnimation = () => {
+    const traillingEle = sceneState.elements.length - 1;
+    animationTasks.current.push(traillingEffect.bind(undefined, traillingEle));
+    isStop.current = false;
+    startAnimationLoop();
+  };
 
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
@@ -102,7 +110,18 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         setSceneAtom(sceneState);
       }
     },
-    [selectedKey, colorIdx, color, size, disableDrawing]
+    [
+      disableDrawing,
+      menuKey,
+      selectedKey,
+      colorIdx,
+      color,
+      size,
+      sceneState,
+      cvsEle,
+      openAnimation,
+      setSceneAtom,
+    ]
   );
   const traillingEffect = (lastIdx: number) => {
     const currentTime = new Date().getTime();
@@ -171,7 +190,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         strokeOutlineStopCurrentDrawing
       );
     };
-  }, [penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
+  }, [cvsTrigger, penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
   const startAnimationLoop = async () => {
     // @ts-ignore
@@ -196,13 +215,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       if (animationTasks.current.length === 0) isStop.current = true;
     }
-  };
-
-  const openAnimation = () => {
-    const traillingEle = sceneState.elements.length - 1;
-    animationTasks.current.push(traillingEffect.bind(undefined, traillingEle));
-    isStop.current = false;
-    startAnimationLoop();
   };
 
   const penPanelMousemove = (evt: MouseEvent) => {

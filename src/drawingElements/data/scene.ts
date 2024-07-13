@@ -25,6 +25,7 @@ export class Scene {
   options: SceneOptions = { scale: 1 };
   updatingElements: UpdatingElement[] = [];
   domElements: DomElement[];
+  windowId: number = 0;
   constructor(
     elements: DrawingElement[],
     domElements: DomElement[],

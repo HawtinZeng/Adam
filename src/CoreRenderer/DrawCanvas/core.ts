@@ -78,11 +78,16 @@ export const throttledRenderDC = throttleRAF(
     trailing: true,
   }
 );
-
+/**
+ * 注意这个方法不会清掉已有的绘图，仅会渲染更新的元素：updatingElements
+ * @param sceneData 场景中的数据
+ * @param appCanvas canvasAtom
+ */
 export function renderDrawCanvas(
   sceneData: Scene,
   appCanvas: HTMLCanvasElement
 ) {
+  // logger.log(sceneData.elements[0]?.id);
   const appCtx = appCanvas.getContext("2d")!;
 
   if (appCtx) globalAppCtx = appCtx;
