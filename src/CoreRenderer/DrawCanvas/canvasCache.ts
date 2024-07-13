@@ -1,4 +1,4 @@
-import LRUCache from "lru-cache";
+import { LRUCache } from "lru-cache";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 
 const options = {

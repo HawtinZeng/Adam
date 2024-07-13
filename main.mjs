@@ -1,10 +1,18 @@
-const { screen, globalShortcut } = require("electron");
-const { ipcMain } = require("electron");
-const { app, BrowserWindow, desktopCapturer } = require("electron/main");
-const path = require("path");
-const isDev = import("electron-is-dev");
-let win;
+// const getWin = import("get-windows");
+import { globalShortcut, ipcMain, screen } from "electron";
+import isDev from "electron-is-dev";
+import { BrowserWindow, app, desktopCapturer } from "electron/main";
+import { activeWindow } from "get-windows";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+console.log("await getWin.activeWindow()------------------------->");
+const res = await activeWindow();
+console.log(res);
+
+let win;
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().size;
   win = new BrowserWindow({
@@ -54,7 +62,7 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   }
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
   // exclude the electron window to avoid screen rendering loop.
   // win.setContentProtection(true);can't set within this context, because we need to enable screen sharing app to share this electron app.
