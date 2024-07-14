@@ -643,7 +643,11 @@ export function createDrawingCvs(
       const i = ele as ImageElement;
       if (!i.image) return;
 
-      ctx.drawImage(i.image, 0, 0, i.image.width, i.image.height);
+      try {
+        ctx.drawImage(i.image, 0, 0, i.image.width, i.image.height);
+      } catch (e) {
+        logger.error(e as Error);
+      }
 
       break;
     }
