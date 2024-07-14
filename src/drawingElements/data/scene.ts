@@ -25,7 +25,7 @@ export class Scene {
   options: SceneOptions = { scale: 1 };
   updatingElements: UpdatingElement[] = [];
   domElements: DomElement[];
-  windowId: number = 0;
+  windowId: number;
   windowScrollSpeed: number = 0;
   firstShowWindowScreenShot: ImageBitmap | undefined;
 
@@ -33,7 +33,8 @@ export class Scene {
     elements: DrawingElement[],
     domElements: DomElement[],
     frames: FrameData[],
-    options?: SceneOptions
+    options?: SceneOptions,
+    windowId: number = 0
   ) {
     this.elements = elements;
     this.frames = frames;
@@ -41,5 +42,6 @@ export class Scene {
     if (options !== undefined) {
       merge(this.options, options);
     }
+    this.windowId = windowId;
   }
 }

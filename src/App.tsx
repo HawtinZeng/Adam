@@ -461,10 +461,15 @@ function App() {
   }, [sceneData, setSceneData]);
   // setTransparent this app
   useEffect(() => {
+    // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
+    if (window.initialWindowId !== undefined) {
+      sceneData.windowId = window.initialWindowId;
+      setSceneData(sceneData);
+    }
   }, []);
 
-  async function translateEles(e: any, wheelData: any) {
+  async function scrollEles(e: any, wheelData: any) {
     // 负为向下滚动，正为向上滚动
     const delta = wheelData.delta;
     const els = sceneData.elements;
@@ -484,17 +489,25 @@ function App() {
     els.forEach((e) => (e.position.y += delta * 50));
     redrawAllEles(undefined, undefined, els);
   }
-
+  let preTitle = "";
   const changeWorkspace = async (e, windowInfo: BaseResult) => {
     // save previous scene data
-
+    logger.log("changeWorkspace");
     multipleScenes.set(sceneData.windowId, { ...sceneData });
+
+    logger.log(
+      `save ${sceneData.windowId}, ${preTitle}, ${sceneData.elements.length}`
+    );
     const exist = multipleScenes.get(windowInfo.id);
+    preTitle = windowInfo.title;
 
     if (!exist) {
       sceneData.elements = [];
       sceneData.domElements = [];
       sceneData.windowId = windowInfo.id;
+      logger.log(
+        `create ${sceneData.windowId}, ${windowInfo.title}, ${sceneData.elements.length}`
+      );
       if (imageCapture) {
         const imageBitmap = await imageCapture.grabFrame();
         sceneData.firstShowWindowScreenShot = imageBitmap;
@@ -611,7 +624,7 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    (window as any).ipcRenderer?.on("mouseWheel", translateEles);
+    (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -624,7 +637,7 @@ function App() {
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
-      (window as any).ipcRenderer?.off("mouseWheel", translateEles);
+      (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -667,7 +680,6 @@ function App() {
     } else {
       setTransparent();
     }
-    logger.log(sceneData.elements.length);
   }, [selectedKey]); // 不能依赖于start...terminate...
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);

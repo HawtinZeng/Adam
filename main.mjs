@@ -58,20 +58,19 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
     win.focus();
   }
 });
+
 const v = new GlobalKeyboardListener();
 v.addListener(function (e) {
   if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {
     setTimeout(changeWindowHandler, 10);
   } else if (e.name === "MOUSE LEFT" && e.state === "DOWN") {
-    // setTimeout(changeWindowHandler, 10);
+    setTimeout(changeWindowHandler, 10);
   }
 });
 let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
-
   if (
-    currentWindow?.title && // 资源管理器会有一个空title的窗口
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
     preFocusedWindow?.id !== currentWindow.id
@@ -87,6 +86,11 @@ app.whenReady().then(async () => {
   mouseEvt.on("mousewheel", (wheel) => {
     win.webContents.send("mouseWheel", wheel);
   });
+
+  // adam won't be focused at start up
+  win.blur();
+  const winInfo = await activeWindow();
+  win.webContents.send("SET_INITIAL_WINDOWID", winInfo.id);
 
   // exclude the electron window to avoid screen rendering loop.
   // win.setContentProtection(true);can't set within this context, because we need to enable screen sharing app to share this electron app.

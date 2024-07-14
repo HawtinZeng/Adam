@@ -7,6 +7,7 @@ Common color command:
 declare global {
   interface Window {
     logger: Logger;
+    initialWindowId?: number; // the previous window after start up adam
   }
 }
 
@@ -18,9 +19,21 @@ export class Logger {
   logCount: number = 0;
   errCount: number = 0;
 
-  log(msg: string | Object) {
-    if (!this.enable) return;
+  log(msg: string | Object | undefined, color: string = "yellow") {
+    if (!this.enable || msg === undefined) return;
     this.logCount += 1;
+
+    if (color === "red") {
+      console.log(
+        cyan(this.logCount) +
+          "    |    " +
+          red(msg) +
+          "    |    " +
+          new Date().toLocaleTimeString()
+      );
+      return;
+    }
+
     console.log(
       cyan(this.logCount) +
         "    |    " +
@@ -31,7 +44,7 @@ export class Logger {
   }
 
   error(e: Error) {
-    if (!this.enable) return;
+    if (!this.enable || !e) return;
     this.errCount += 1;
     console.log(
       cyan(this.errCount) +
