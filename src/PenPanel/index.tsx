@@ -1,13 +1,14 @@
-import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
+import { Box, Point as PointZ, Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
+import { getCapture } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { createDrawingCvs } from "src/CoreRenderer/DrawCanvas/core";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
-import { Point } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   FreeDrawing,
   newFreeDrawingElement,
@@ -34,6 +35,25 @@ type ImageInfo = {
   context: CanvasRenderingContext2D;
   imageData: ImageData;
 };
+async function assignLocator(bbx: Box, ele: DrawingElement) {
+  console.time("assignLocator");
+
+  const imageCapturer = await getCapture(window.sourceId!);
+  if (!imageCapturer) return;
+  const imageBitmap = await imageCapturer.grabFrame();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = bbx.width;
+  canvas.height = bbx.height;
+  const context = canvas.getContext("2d")!;
+  context.drawImage(imageBitmap, -bbx.xmin, -bbx.ymin);
+
+  document.body.appendChild(canvas);
+
+  ele.locator = canvas;
+
+  console.timeEnd("assignLocator");
+}
 
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
@@ -268,6 +288,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const stopCurrentDrawing = () => {
     setSceneAtom(sceneState);
     setTimeout(() => {
+      const upEle = sceneState.updatingElements[0].ele;
+      assignLocator(upEle.boundary[0].box, upEle);
       sceneState.updatingElements.length = 0;
     });
   };

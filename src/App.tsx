@@ -1,4 +1,5 @@
 import { Button } from "@mui/material";
+import cv from "@techstark/opencv-js";
 import {
   Box,
   Edge,
@@ -8,9 +9,11 @@ import {
   Vector,
 } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
+// const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep } from "lodash";
+import { cloneDeep, merge } from "lodash";
+import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
@@ -23,23 +26,24 @@ import {
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
-import {
-  DrawingElement,
-  Point,
-  ptIsContained,
-} from "src/CoreRenderer/basicTypes";
+import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   CircleShapeElement,
   DrawingType,
+  FreeDrawing,
   ImageElement,
   RectangleShapeElement,
+  newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import MainMenu, { colorConfigs } from "src/MainMenu";
+import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
+import { Point } from "src/Utils/Data/geometry";
+import { generateCvs } from "src/common/utils";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
+import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
@@ -57,31 +61,40 @@ import {
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
 
+const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = false;
+const showDebugPanel = true;
 export const showElePtLength = false;
 
-async function getCapture() {
-  const source = (window as any).sourceId;
-  if (source) {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
-      video: {
-        // @ts-ignore
-        mandatory: {
-          chromeMediaSource: "desktop",
-          chromeMediaSourceId: source,
+let stream: MediaStream | undefined;
+const cap = new Map<string, ImageCapture>();
+export async function getCapture(sourceId: string) {
+  if (sourceId) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          // @ts-ignore
+          mandatory: {
+            chromeMediaSource: "desktop",
+            chromeMediaSourceId: sourceId,
+          },
         },
-      },
-    });
-    const track = stream.getVideoTracks()[0];
+      });
+      const track = stream.getVideoTracks()[0];
 
-    return new ImageCapture(track);
+      const c = new ImageCapture(track);
+      // logger.log("new caputure");
+
+      return c;
+    } catch (error) {
+      logger.error(error as Error);
+    }
   }
 }
 
-const imageCapture = await getCapture();
+let imageCapture: ImageCapture | undefined;
 
 function isBevelHandle(hand: TransformHandle | undefined) {
   if (!hand) return false;
@@ -92,10 +105,6 @@ function isBevelHandle(hand: TransformHandle | undefined) {
     TransformHandle.sw,
   ].includes(hand);
 }
-
-// function notifyMainProcess() {
-//   (window as any).ipcRenderer?.send("updateFocusedWindow");
-// }
 
 function App() {
   const colorIdx = useAtomValue(colorAtom);
@@ -120,7 +129,6 @@ function App() {
     originalRotateOrigin?: Point;
     originalBoundary?: Polygon;
   } | null>(null);
-
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
   useDrawingOperator();
@@ -380,25 +388,27 @@ function App() {
     },
     [sceneData, setSceneData, currentKeyboard]
   );
-  // const drawAPoint = (p: Point) => {
-  //   const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
-  //     id: nanoid(),
-  //     position: { x: p.x, y: p.y },
-  //     points: [{ x: p.x, y: p.y }],
-  //   } as FreeDrawing);
+  const drawAPoint = (p: Point) => {
+    const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
+      id: nanoid(),
+      position: { x: p.x, y: p.y },
+      points: [{ x: p.x, y: p.y }],
+    } as FreeDrawing);
 
-  //   // default property
-  //   const subMenuStrokeOption =
-  //     menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
-  //   newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
+    // default property
+    const subMenuStrokeOption =
+      menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
+    newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
 
-  //   // updated property, size是ui控件的直径
-  //   newFreeElement.strokeOptions.size = size / 4;
-  //   newFreeElement.strokeOptions.strokeColor =
-  //     colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+    // updated property, size是ui控件的直径
+    if (newFreeElement.strokeOptions !== undefined) {
+      newFreeElement.strokeOptions.size = size / 4;
+      newFreeElement.strokeOptions.strokeColor =
+        colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+    }
 
-  //   sceneData.elements.push(newFreeElement);
-  // };
+    sceneData.elements.push(newFreeElement);
+  };
 
   const globalKeydown = useCallback(
     (e: KeyboardEvent) => {
@@ -459,45 +469,65 @@ function App() {
       dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
-  // setTransparent this app
+
+  // initialize adam
   useEffect(() => {
     // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
-    if (window.initialWindowId !== undefined) {
-      sceneData.windowId = window.initialWindowId;
-      setSceneData(sceneData);
+    // setCapturer();
+
+    async function setCapturer() {
+      if (window.initialWindowId !== undefined) {
+        sceneData.windowId = window.initialWindowId;
+        setSceneData(sceneData);
+        // const c = await getCapture((window as any).sourceId);
+        // const img = await c!.grabFrame();
+        // downloadImage(img, "img.png");
+      }
     }
   }, []);
 
   async function scrollEles(e: any, wheelData: any) {
-    // 负为向下滚动，正为向上滚动
-    const delta = wheelData.delta;
     const els = sceneData.elements;
-    // compute application specific scroll speed
-    if (sceneData.windowScrollSpeed === 0) {
-      const originalImg = sceneData.firstShowWindowScreenShot;
-      if (originalImg && imageCapture) {
+    const imageCapture = await getCapture(`window:${sceneData.windowId}:0`);
+    const currentFrame = await imageCapture?.grabFrame();
+
+    let currentCanvas: HTMLCanvasElement | undefined;
+    if (currentFrame) {
+      currentCanvas = generateCvs(currentFrame);
+    }
+
+    els.forEach((e) => {
+      const loc = e.locator;
+      if (loc && currentCanvas) {
+        let dst = new cv.Mat();
+        let mask = new cv.Mat();
+        let src = cv.imread(loc);
+        let templ = cv.imread(currentCanvas);
+        cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF, mask);
+        let result = cv.minMaxLoc(dst, mask);
+
+        const leftTop = new Point(result.minLoc.x, result.minLoc.y);
+        logger.log(`draw ${JSON.stringify(leftTop)}`);
         try {
-          const currentFrame = await imageCapture?.grabFrame();
         } catch (e) {
           logger.error(e as Error);
           return;
         }
       }
-    }
-
-    els.forEach((e) => (e.position.y += delta * 50));
+    });
     redrawAllEles(undefined, undefined, els);
   }
   let preTitle = "";
+
   const changeWorkspace = async (e, windowInfo: BaseResult) => {
     // save previous scene data
-    logger.log("changeWorkspace");
+    if (debugChangeWorkspace) logger.log("changeWorkspace");
     multipleScenes.set(sceneData.windowId, { ...sceneData });
-
-    logger.log(
-      `save ${sceneData.windowId}, ${preTitle}, ${sceneData.elements.length}`
-    );
+    if (debugChangeWorkspace)
+      logger.log(
+        `save ${sceneData.windowId}, ${preTitle}, ${sceneData.elements.length}`
+      );
     const exist = multipleScenes.get(windowInfo.id);
     preTitle = windowInfo.title;
 
@@ -505,17 +535,34 @@ function App() {
       sceneData.elements = [];
       sceneData.domElements = [];
       sceneData.windowId = windowInfo.id;
-      logger.log(
-        `create ${sceneData.windowId}, ${windowInfo.title}, ${sceneData.elements.length}`
-      );
-      if (imageCapture) {
-        const imageBitmap = await imageCapture.grabFrame();
-        sceneData.firstShowWindowScreenShot = imageBitmap;
+      if (debugChangeWorkspace)
+        logger.log(
+          `create ${windowInfo.id}, ${windowInfo.title}, ${sceneData.elements.length}`
+        );
+
+      // imageCapture = await getCapture(`window:${sceneData.windowId}:0`);
+      try {
+        // const img = await imageCapture?.grabFrame();
+      } catch (e) {
+        logger.error(e as Error);
       }
+      // if (img) {
+      //   downloadImage(img, `window:${sceneData.windowId}:0`);
+      // }
 
       setSceneData({ ...sceneData });
       clearMainCanvas();
     } else {
+      // imageCapture = await getCapture(`window:${exist.windowId}:0`);
+      try {
+        // const img = await imageCapture?.grabFrame();
+      } catch (e) {
+        logger.error(e as Error);
+      }
+      // if (img) {
+      //   downloadImage(img, `window:${exist.windowId}:0`);
+      // }
+
       setSceneData({ ...exist });
       redrawAllEles(undefined, undefined, exist.elements);
     }
@@ -624,6 +671,10 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
+    (window as any).ipcRenderer?.on(
+      "changeWindowWithoutCondition",
+      change2DefaultCursor
+    );
     (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
@@ -638,6 +689,10 @@ function App() {
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
       (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
+      (window as any).ipcRenderer?.off(
+        "changeWindowWithoutCondition",
+        change2DefaultCursor
+      );
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -654,8 +709,9 @@ function App() {
     setTriggerAtom(canvasEventTrigger.current);
   }, [setTriggerAtom]);
 
-  // const mousePos = useMousePosition();
+  const mousePos = useMousePosition();
   function updateMouseTipPosition(e: MouseEvent) {
+    change2DefaultCursor();
     const el = document.getElementsByClassName("shiftTip")[0] as HTMLElement;
     if (el) {
       el.style.left = e.clientX + 15 + "px";
@@ -749,7 +805,7 @@ function App() {
                   ][0].orientation()
                 }`}</div>
                 <div>{`elements: ${sceneData.elements.length}`}</div>
-                {/* <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div> */}
+                <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
                 <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
                 <div>{`height: ${bg?.height}`}</div>
                 <Button
@@ -780,7 +836,7 @@ function App() {
             )}
           </>
         ),
-        [cursorSvg, sceneData.elements, sceneData.updatingElements]
+        [cursorSvg, sceneData.elements, sceneData.updatingElements, mousePos] //
       )}
     </>
   );

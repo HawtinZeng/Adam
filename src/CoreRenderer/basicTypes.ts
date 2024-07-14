@@ -45,6 +45,7 @@ export interface DrawingElement {
   boundary: Polygon[];
   excludeArea: Polygon[];
   needCacheCanvas: boolean;
+  locator?: HTMLCanvasElement;
 
   rotateOrigin: Point; // 旋转中心
 }

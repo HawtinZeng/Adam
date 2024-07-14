@@ -27,7 +27,7 @@ export class Scene {
   domElements: DomElement[];
   windowId: number;
   windowScrollSpeed: number = 0;
-  firstShowWindowScreenShot: ImageBitmap | undefined;
+  firstShowWindowScreenShot: HTMLCanvasElement | undefined;
 
   constructor(
     elements: DrawingElement[],

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "Entire screen",
+    "id": "screen:0:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "2528732444",
+    "appIcon": null
+  },
+  {
+    "name": "main.mjs - Adam - Cursor [Administrator]",
+    "id": "window:2166708:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "filename.png  WPS鍥剧墖",
+    "id": "window:1119226:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "Downloads",
+    "id": "window:1381618:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "CanvasRenderingContext2D: clip() method - Web APIs | MDN - Google Chrome",
+    "id": "window:722842:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "DevTools - developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/rect",
+    "id": "window:2495098:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "Task Manager",
+    "id": "window:2496270:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "@techstark/opencv-js - npm - Google Chrome",
+    "id": "window:1185912:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  },
+  {
+    "name": "Clash for Windows",
+    "id": "window:986862:0",
+    "thumbnail": { "isMacTemplateImage": false },
+    "display_id": "",
+    "appIcon": null
+  }
+]

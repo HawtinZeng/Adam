@@ -1,7 +1,7 @@
 // const getWin = import("get-windows");
-import { globalShortcut, ipcMain, screen } from "electron";
+import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
-import { BrowserWindow, app, desktopCapturer } from "electron/main";
+import { BrowserWindow, app } from "electron/main";
 import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
@@ -11,6 +11,9 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let win;
+
+console.error = () => {};
+
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().size;
   win = new BrowserWindow({
@@ -18,6 +21,7 @@ const createWindow = () => {
     height,
     frame: false,
     titleBarStyle: "hidden",
+    resizable: false,
 
     transparent: true,
     skipTaskbar: true,
@@ -70,6 +74,8 @@ v.addListener(function (e) {
 let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
+  win.webContents.send("changeWindowWithoutCondition");
+
   if (
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
@@ -97,7 +103,7 @@ app.whenReady().then(async () => {
   // must be wrapped with when ready
   desktopCapturer.getSources({ types: ["screen"] }).then(async (sources) => {
     const source = sources[0];
-    win.webContents.send("SET_SOURCE", source.id);
+    win.webContents.send("SET_SOURCE", source.id); // used in screen shot function
   });
 
   // global shortcuts

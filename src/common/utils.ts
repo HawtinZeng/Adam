@@ -99,3 +99,29 @@ export async function downloadImage(
     logger.error(e as Error);
   }
 }
+
+export function generateCvs(img: ImageBitmap) {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const context = canvas.getContext("2d")!;
+  context.drawImage(img, 0, 0);
+  return canvas;
+}
+
+export function generateCenterPartialCvs(img: ImageBitmap) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 100;
+  canvas.height = 100;
+  const context = canvas.getContext("2d")!;
+  context.drawImage(img, -img.width / 2, -img.height / 2);
+  return canvas;
+}
+
+export function clipCvs(cvs: HTMLCanvasElement) {
+  const ctx = cvs.getContext("2d")!;
+  ctx.beginPath();
+  ctx.rect(0, cvs.height / 2, 100, 100);
+  ctx.closePath();
+  ctx.clip();
+}

@@ -1,0 +1,12 @@
+{
+  "platform": "windows",
+  "id": 2166708,
+  "title": "fromElectron.json - Adam - Cursor [Administrator]",
+  "owner": {
+    "processId": 22536,
+    "path": "C:\\Users\\zenghawtin\\AppData\\Local\\Programs\\cursor\\Cursor.exe",
+    "name": "Cursor"
+  },
+  "bounds": { "x": -8, "y": -8, "width": 2576, "height": 1408 },
+  "memoryUsage": 155697152
+}

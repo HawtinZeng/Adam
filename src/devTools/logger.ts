@@ -4,12 +4,6 @@ Common color command:
   console.log('\x1b[33mThis is yellow text.\x1b[0m'); // Yellow color
   console.log('\x1b[36mThis is cyan text.\x1b[0m'); // Cyan color
  */
-declare global {
-  interface Window {
-    logger: Logger;
-    initialWindowId?: number; // the previous window after start up adam
-  }
-}
 
 const yellow = (msg: string | number | Object) => `\x1b[33m${msg}\x1b[0m`;
 const cyan = (msg: string | number | Object) => `\x1b[36m${msg}\x1b[0m`;
@@ -50,6 +44,7 @@ export class Logger {
       cyan(this.errCount) +
         "    |    " +
         red(e.message) +
+        yellow(JSON.stringify(e)) +
         "    |    " +
         new Date().toLocaleTimeString()
     );

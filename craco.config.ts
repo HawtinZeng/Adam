@@ -32,6 +32,27 @@ module.exports = {
       child_process: false,
       worker_threads: false,
     },
+    configure: (webpackConfig, { env, paths }) => {
+      // Find the index of the ModuleScopePlugin
+      // const scopePluginIndex = webpackConfig.resolve.plugins.findIndex(
+      //   (plugin) =>
+      //     plugin.constructor && plugin.constructor.name === "ModuleScopePlugin"
+      // );
+
+      // // Remove the ModuleScopePlugin to allow resolving browser-compatible modules
+      // if (scopePluginIndex !== -1) {
+      //   webpackConfig.resolve.plugins.splice(scopePluginIndex, 1);
+      // }
+
+      // Configure fallback for specific modules (replace with your needs)
+      webpackConfig.resolve.fallback = {
+        fs: false,
+        path: false,
+        crypto: false,
+      };
+
+      return webpackConfig;
+    },
     plugins: (webpackConfig, { env, paths }) => {
       return [
         // Ensure that the stylex plugin is used before Babel
