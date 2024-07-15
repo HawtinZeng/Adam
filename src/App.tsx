@@ -1,5 +1,4 @@
 import { Button } from "@mui/material";
-import cv from "@techstark/opencv-js";
 import {
   Box,
   Edge,
@@ -38,7 +37,6 @@ import {
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { Point } from "src/Utils/Data/geometry";
-import { generateCvs } from "src/common/utils";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { UpdatingElement } from "src/drawingElements/data/scene";
@@ -64,11 +62,15 @@ import { useTextFunction } from "src/text/activateTextFunction";
 const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = true;
+const showDebugPanel = false;
 export const showElePtLength = false;
 
+let currentFocusedWindow: BaseResult | undefined;
 let stream: MediaStream | undefined;
+let previousCanvas: HTMLCanvasElement | undefined;
 const cap = new Map<string, ImageCapture>();
+let confirmedScrollPage = true;
+
 export async function getCapture(sourceId: string) {
   if (cap.has(sourceId)) return cap.get(sourceId);
   if (sourceId) {
@@ -488,43 +490,77 @@ function App() {
   }, []);
 
   async function scrollEles(e: any, wheelData: any) {
+    if (selectedKey !== -1) return;
     const els = sceneData.elements;
-    const imageCapture = await getCapture(window.sourceId!);
-    try {
-      const currentFrame = await imageCapture?.grabFrame();
-      const currentCanvas: HTMLCanvasElement | undefined = generateCvs(
-        currentFrame!
-      );
 
-      els.forEach((e) => {
-        const loc = e.locator;
-        if (loc && currentCanvas) {
-          let dst = new cv.Mat();
-          let mask = new cv.Mat();
-          let src = cv.imread(loc);
-
-          // downloadCvs(loc, "loc");
-          // downloadCvs(currentCanvas, "currentCanvas");
-
-          let templ = cv.imread(currentCanvas);
-          cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF, mask);
-          let result = cv.minMaxLoc(dst, mask);
-
-          const leftTop = new Point(result.minLoc.x, result.minLoc.y);
-          logger.log(`draw ${JSON.stringify(leftTop)}`);
-          // drawCircle(null, new Circle(new PointZ(leftTop.x, leftTop.y), 10));
-        }
-      });
-    } catch (error) {
-      logger.log(error as Error);
+    const delta = wheelData.delta;
+    if (currentFocusedWindow && confirmedScrollPage) {
+      if (currentFocusedWindow.title.includes("Chrome")) {
+        els.forEach((e) => (e.position.y += delta * 100));
+        // logger.log("chrome");
+      } else if (currentFocusedWindow.title.includes("Cursor")) {
+        els.forEach((e) => (e.position.y += delta * 50));
+      } else {
+        // els.forEach((e) => (e.position.y += delta * 80));
+      }
+      // logger.log(currentFocusedWindow.title);
     }
 
     redrawAllEles(undefined, undefined, els);
+
+    // try {
+    //   const imageCapture = await getCapture(window.sourceId!);
+    //   const currentFrame = await imageCapture?.grabFrame();
+    //   const currentCanvas: HTMLCanvasElement | undefined = generateCvs(
+    //     currentFrame!
+    //   );
+
+    //   if (previousCanvas && currentCanvas) {
+    //     throttle(
+    //       () =>
+    //         resemble(
+    //           previousCanvas!
+    //             .getContext("2d")
+    //             ?.getImageData(
+    //               0,
+    //               0,
+    //               previousCanvas!.width,
+    //               previousCanvas!.height
+    //             )
+    //         )
+    //           .compareTo(
+    //             currentCanvas
+    //               .getContext("2d")
+    //               ?.getImageData(
+    //                 0,
+    //                 0,
+    //                 currentCanvas.width,
+    //                 currentCanvas.height
+    //               )
+    //           )
+    //           .setReturnEarlyThreshold(8)
+    //           .onComplete((data) => {
+    //             logger.log(data.misMatchPercentage);
+    //             if (data.misMatchPercentage > 3) {
+    //               confirmedScrollPage = true;
+    //             } else {
+    //               confirmedScrollPage = false;
+    //             }
+    //           }),
+    //       100
+    //     )();
+    //   }
+
+    //   previousCanvas = currentCanvas;
+    // } catch (error) {
+    //   logger.error(error as Error);
+    // }
   }
   let preTitle = "";
 
   const changeWorkspace = async (e, windowInfo: BaseResult) => {
     // save previous scene data
+    currentFocusedWindow = windowInfo;
     if (debugChangeWorkspace) logger.log("changeWorkspace");
     multipleScenes.set(sceneData.windowId, { ...sceneData });
     if (debugChangeWorkspace)
@@ -674,10 +710,6 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    (window as any).ipcRenderer?.on(
-      "changeWindowWithoutCondition",
-      change2DefaultCursor
-    );
     (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
@@ -692,10 +724,6 @@ function App() {
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
       (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
-      (window as any).ipcRenderer?.off(
-        "changeWindowWithoutCondition",
-        change2DefaultCursor
-      );
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -714,7 +742,6 @@ function App() {
 
   const mousePos = useMousePosition();
   function updateMouseTipPosition(e: MouseEvent) {
-    change2DefaultCursor();
     const el = document.getElementsByClassName("shiftTip")[0] as HTMLElement;
     if (el) {
       el.style.left = e.clientX + 15 + "px";

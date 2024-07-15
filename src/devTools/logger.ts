@@ -16,6 +16,9 @@ export class Logger {
   log(msg: string | Object | undefined, color: string = "yellow") {
     if (!this.enable || msg === undefined) return;
     this.logCount += 1;
+    if (msg instanceof Object) {
+      msg = JSON.stringify(msg);
+    }
 
     if (color === "red") {
       console.log(
