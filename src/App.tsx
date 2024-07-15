@@ -70,6 +70,7 @@ export const showElePtLength = false;
 let stream: MediaStream | undefined;
 const cap = new Map<string, ImageCapture>();
 export async function getCapture(sourceId: string) {
+  if (cap.has(sourceId)) return cap.get(sourceId);
   if (sourceId) {
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -85,8 +86,7 @@ export async function getCapture(sourceId: string) {
       const track = stream.getVideoTracks()[0];
 
       const c = new ImageCapture(track);
-      // logger.log("new caputure");
-
+      cap.set(sourceId, c);
       return c;
     } catch (error) {
       logger.error(error as Error);
@@ -489,33 +489,36 @@ function App() {
 
   async function scrollEles(e: any, wheelData: any) {
     const els = sceneData.elements;
-    const imageCapture = await getCapture(`window:${sceneData.windowId}:0`);
-    const currentFrame = await imageCapture?.grabFrame();
+    const imageCapture = await getCapture(window.sourceId!);
+    try {
+      const currentFrame = await imageCapture?.grabFrame();
+      const currentCanvas: HTMLCanvasElement | undefined = generateCvs(
+        currentFrame!
+      );
 
-    let currentCanvas: HTMLCanvasElement | undefined;
-    if (currentFrame) {
-      currentCanvas = generateCvs(currentFrame);
+      els.forEach((e) => {
+        const loc = e.locator;
+        if (loc && currentCanvas) {
+          let dst = new cv.Mat();
+          let mask = new cv.Mat();
+          let src = cv.imread(loc);
+
+          // downloadCvs(loc, "loc");
+          // downloadCvs(currentCanvas, "currentCanvas");
+
+          let templ = cv.imread(currentCanvas);
+          cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF, mask);
+          let result = cv.minMaxLoc(dst, mask);
+
+          const leftTop = new Point(result.minLoc.x, result.minLoc.y);
+          logger.log(`draw ${JSON.stringify(leftTop)}`);
+          // drawCircle(null, new Circle(new PointZ(leftTop.x, leftTop.y), 10));
+        }
+      });
+    } catch (error) {
+      logger.log(error as Error);
     }
 
-    els.forEach((e) => {
-      const loc = e.locator;
-      if (loc && currentCanvas) {
-        let dst = new cv.Mat();
-        let mask = new cv.Mat();
-        let src = cv.imread(loc);
-        let templ = cv.imread(currentCanvas);
-        cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF, mask);
-        let result = cv.minMaxLoc(dst, mask);
-
-        const leftTop = new Point(result.minLoc.x, result.minLoc.y);
-        logger.log(`draw ${JSON.stringify(leftTop)}`);
-        try {
-        } catch (e) {
-          logger.error(e as Error);
-          return;
-        }
-      }
-    });
     redrawAllEles(undefined, undefined, els);
   }
   let preTitle = "";
@@ -836,7 +839,7 @@ function App() {
             )}
           </>
         ),
-        [cursorSvg, sceneData.elements, sceneData.updatingElements, mousePos] //
+        [cursorSvg, sceneData.elements, sceneData.updatingElements] // mousePos
       )}
     </>
   );

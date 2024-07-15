@@ -48,7 +48,7 @@ async function assignLocator(bbx: Box, ele: DrawingElement) {
   const context = canvas.getContext("2d")!;
   context.drawImage(imageBitmap, -bbx.xmin, -bbx.ymin);
 
-  document.body.appendChild(canvas);
+  // document.body.appendChild(canvas);
 
   ele.locator = canvas;
 

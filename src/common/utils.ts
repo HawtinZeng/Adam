@@ -100,6 +100,21 @@ export async function downloadImage(
   }
 }
 
+export async function downloadCvs(canvas: HTMLCanvasElement, filename: string) {
+  const b = (await new Promise((res, rej) => {
+    canvas.toBlob((b) => {
+      if (b) res(b);
+    });
+  })) as Blob;
+
+  const url = URL.createObjectURL(b);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url); // Clean up the temporary URL
+}
+
 export function generateCvs(img: ImageBitmap) {
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
