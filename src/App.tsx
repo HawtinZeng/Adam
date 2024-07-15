@@ -59,7 +59,7 @@ import {
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
 
-const debugChangeWorkspace = false;
+const debugChangeWorkspace = true;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
@@ -565,7 +565,7 @@ function App() {
     multipleScenes.set(sceneData.windowId, { ...sceneData });
     if (debugChangeWorkspace)
       logger.log(
-        `save ${sceneData.windowId}, ${preTitle}, ${sceneData.elements.length}`
+        `save ${sceneData.windowId}, ${currentFocusedWindow.title}, ${sceneData.elements.length}`
       );
     const exist = multipleScenes.get(windowInfo.id);
     preTitle = windowInfo.title;

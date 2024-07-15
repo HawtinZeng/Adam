@@ -79,6 +79,7 @@ async function changeWindowHandler() {
   if (
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
+    currentWindow?.title !== "Open" &&
     preFocusedWindow?.id !== currentWindow.id
   ) {
     win.webContents.send("changeWindow", currentWindow);
