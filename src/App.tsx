@@ -507,54 +507,6 @@ function App() {
     }
 
     redrawAllEles(undefined, undefined, els);
-
-    // try {
-    //   const imageCapture = await getCapture(window.sourceId!);
-    //   const currentFrame = await imageCapture?.grabFrame();
-    //   const currentCanvas: HTMLCanvasElement | undefined = generateCvs(
-    //     currentFrame!
-    //   );
-
-    //   if (previousCanvas && currentCanvas) {
-    //     throttle(
-    //       () =>
-    //         resemble(
-    //           previousCanvas!
-    //             .getContext("2d")
-    //             ?.getImageData(
-    //               0,
-    //               0,
-    //               previousCanvas!.width,
-    //               previousCanvas!.height
-    //             )
-    //         )
-    //           .compareTo(
-    //             currentCanvas
-    //               .getContext("2d")
-    //               ?.getImageData(
-    //                 0,
-    //                 0,
-    //                 currentCanvas.width,
-    //                 currentCanvas.height
-    //               )
-    //           )
-    //           .setReturnEarlyThreshold(8)
-    //           .onComplete((data) => {
-    //             logger.log(data.misMatchPercentage);
-    //             if (data.misMatchPercentage > 3) {
-    //               confirmedScrollPage = true;
-    //             } else {
-    //               confirmedScrollPage = false;
-    //             }
-    //           }),
-    //       100
-    //     )();
-    //   }
-
-    //   previousCanvas = currentCanvas;
-    // } catch (error) {
-    //   logger.error(error as Error);
-    // }
   }
   let preTitle = "";
 
