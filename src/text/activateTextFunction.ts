@@ -11,18 +11,18 @@ import {
 } from "src/state/uiState";
 import { Text } from "src/text/text";
 export const useTextFunction = (): {
-  startText: () => void;
+  startText: (c: number) => void;
   terminateText: () => void;
 } => {
   const currentText = useRef<Text | null>(null);
-
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
-
   const canvasWrapper = useAtomValue(canvasEventTriggerAtom);
 
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
+
+  const colorValRef = useRef<number>(colorIdx);
   const mouseMoveHandler = (e: MouseEvent) => {
     if (!currentText.current) return;
 
@@ -47,21 +47,24 @@ export const useTextFunction = (): {
    */
   const mouseLeftDownHandler = (e: MouseEvent) => {
     if (e.button !== 0) return;
+
     if (currentText.current && currentText.current.content !== "") {
       s.elements.push(currentText.current);
       ss({ ...s });
       terminateTextFunnction();
 
-      startTextFunction();
+      startTextFunction(colorValRef.current);
     }
   };
 
-  const startTextFunction = () => {
+  const startTextFunction = (colorVal: number) => {
     currentText.current = new Text(
       "",
       "黑体",
-      colorIdx !== -1 ? colorConfigs[colorIdx].key : color
+      colorVal !== -1 ? colorConfigs[colorVal].key : color
     );
+    colorValRef.current = colorVal;
+
     currentText.current.oriImageData = cvsEle!
       .getContext("2d", { willReadFrequently: true })!
       .getImageData(0, 0, cvsEle!.width, cvsEle!.height);

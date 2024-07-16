@@ -708,7 +708,7 @@ function App() {
       screenShotter.current?.terminateScreenShot();
 
     if (selectedKey === 6) {
-      startText();
+      startText(colorIdx);
     } else if (selectedKey === 7) {
       screenShotter.current?.startScreenShot();
     }
@@ -718,7 +718,7 @@ function App() {
     } else {
       setTransparent();
     }
-  }, [selectedKey]); // 不能依赖于start...terminate...
+  }, [selectedKey, colorIdx]); // 不能依赖于start...terminate...
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
     return () => window.removeEventListener("keydown", globalKeydown);

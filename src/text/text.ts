@@ -77,9 +77,6 @@ export class Text implements DrawingElement {
   }
 
   refreshScene(textProperties: { position?: Point; content?: string }) {
-    if (this.inputElement) {
-    }
-
     const { position, content } = textProperties;
     if (position) {
       this.position = position;
@@ -125,13 +122,11 @@ export class Text implements DrawingElement {
     ctx.fillText(this.content, 3, this.fontSizeNumberG);
 
     this.canvas = canvas;
-
     this.boundingLineAboveBaseLine = this.textMetrics.fontBoundingBoxAscent;
     this.textWidth = this.textMetrics.width;
     drawingCanvasCache.ele2DrawingCanvas.set(this, canvas);
 
     this.cursorAnimation.start();
-
     this.appendInputElement();
   }
 

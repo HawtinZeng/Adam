@@ -169,8 +169,8 @@ export const newPolylineShapeElement: PolylineShapeElement = {
 
   boundary: [],
   excludeArea: [],
-  // 默认包围盒的中心
-  rotateOrigin: { x: 0, y: 0 },
+
+  rotateOrigin: { x: 0, y: 0 }, // 默认包围盒的中心
 };
 
 export const newCircleShapeElement: CircleShapeElement = {
@@ -195,13 +195,12 @@ export const newCircleShapeElement: CircleShapeElement = {
   isDeleted: false,
 
   position: { x: 0, y: 0 },
-  rotation: 0, // 以rotateOrigin为中心
-  scale: { x: 1, y: 1 }, // 以rotateOrigin为中心
+  rotation: 0, // 以 rotateOrigin 为中心
+  scale: { x: 1, y: 1 }, // 以 rotateOrigin 为中心
 
   boundary: [],
   excludeArea: [],
-  // 默认包围盒的中心
-  rotateOrigin: { x: 0, y: 0 },
+  rotateOrigin: { x: 0, y: 0 }, // 默认包围盒的中心
 
   width: 100,
   height: 100,
@@ -234,6 +233,6 @@ export const newRectangleShapeElement: RectangleShapeElement = {
 
   boundary: [],
   excludeArea: [],
-  // 默认包围盒的中心
-  rotateOrigin: { x: 0, y: 0 },
+
+  rotateOrigin: { x: 0, y: 0 }, // 默认包围盒的中心
 };
