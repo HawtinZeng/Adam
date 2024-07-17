@@ -1,3 +1,3 @@
 @echo off
 
-call node A:\Files\CodeRepo\Adam\node-native-messaging\nm_nodejs.mjs
+call node A:\Files\CodeRepo\Adam\node-native-messaging\adam_extension.mjs

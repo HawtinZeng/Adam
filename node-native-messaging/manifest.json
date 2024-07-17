@@ -1,6 +1,6 @@
 {
-  "name": "nm-node",
-  "short_name": "nm_nodejs",
+  "name": "adam extension",
+  "short_name": "adam_extension",
   "version": "1.0",
   "description": "Node.js Native Messaging host",
   "manifest_version": 3,

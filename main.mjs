@@ -12,7 +12,7 @@ import {
   exit,
   getMessage,
   sendMessage,
-} from "./nativeMessaging/messageUtil.mjs";
+} from "./node-native-messaging/adam_extension.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

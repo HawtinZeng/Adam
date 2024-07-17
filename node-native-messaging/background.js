@@ -6,6 +6,4 @@ port.onMessage.addListener((message) => console.log(message));
 port.onDisconnect.addListener((p) => console.log(chrome.runtime.lastError));
 port.postMessage("111");
 
-chrome.runtime.onInstalled.addListener((reason) => {
-  // console.log(reason);
-});
+chrome.runtime.onInstalled.addListener((reason) => {});

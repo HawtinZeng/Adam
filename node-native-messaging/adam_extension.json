@@ -1,5 +1,5 @@
 {
-  "name": "nm_nodejs",
+  "name": "adam_extension",
   "description": "Node.js Native Messaging Host",
   "path": "A:\\Files\\CodeRepo\\Adam\\node-native-messaging\\startup.bat",
   "type": "stdio",
