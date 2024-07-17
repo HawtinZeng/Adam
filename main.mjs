@@ -7,8 +7,12 @@ import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-
-// import fs from "node:fs/promises";
+import {
+  encodeMessage,
+  exit,
+  getMessage,
+  sendMessage,
+} from "./nativeMessaging/messageUtil.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -156,10 +160,6 @@ app.whenReady().then(async () => {
       createWindow();
     }
   });
-
-  // installExtension(REACT_DEVELOPER_TOOLS)
-  //   .then((name) => console.log(`Added Extension:  ${name}`))
-  //   .catch((err) => console.log("An error occurred: ", err));
 });
 
 app.on("window-all-closed", () => {
@@ -172,42 +172,11 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-// async function getMessage() {
-//   const header = new Uint32Array(1);
-//   await readFullAsync(1, header);
-//   const message = await readFullAsync(header[0]);
-
-//   return message;
-// }
-
-// async function readFullAsync(length, buffer = new Uint8Array(65536)) {
-//   const data = [];
-//   while (data.length < length) {
-//     const input = await fs.open("/dev/stdin");
-//     const { bytesRead } = await input.read({ buffer });
-//     await input.close();
-//     if (bytesRead === 0) {
-//       break;
-//     }
-//     data.push(...buffer.subarray(0, bytesRead));
-//   }
-//   return new Uint8Array(data);
-// }
-
-// async function sendMessage(message) {
-//   const header = new Uint32Array([message.length]);
-//   const stdout = await fs.open(`/proc/${process.pid}/fd/1`, "w");
-//   await stdout.write(header);
-//   await stdout.write(message);
-//   await stdout.close();
-// }
-
-// while (true) {
-//   try {
-//     const message = await getMessage();
-//     await sendMessage(message);
-//   } catch (e) {
-//     console.error(e);
-//     process.exit(1);
-//   }
-// }
+const decoder = new TextDecoder();
+try {
+  for await (const message of getMessage()) {
+    await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
+  }
+} catch (e) {
+  exit();
+}

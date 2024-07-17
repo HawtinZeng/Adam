@@ -1,0 +1,7 @@
+{
+  "name": "nm_nodejs",
+  "description": "Node.js Native Messaging Host",
+  "path": "A:\\Files\\CodeRepo\\Adam\\node-native-messaging\\startup.bat",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://mefojdjallggipnhpppbmafeipindgci/"]
+}
