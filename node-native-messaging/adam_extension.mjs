@@ -1,16 +1,13 @@
-/* eslint-disable */
-// @ts-ignore
+import ipc from "node-ipc";
+import { Duplex } from "stream";
 const buffer = new ArrayBuffer(0, { maxByteLength: 1024 ** 2 });
 const view = new DataView(buffer);
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
-const { dirname, filename, url } = import.meta;
-import { Duplex } from "stream";
 
 const { readable } = Duplex.toWeb(process.stdin);
 const { writable } = Duplex.toWeb(process.stdout);
 const { exit } = process;
-const { argv: args } = process;
 
 function encodeMessage(message) {
   return encoder.encode(JSON.stringify(message));
@@ -33,6 +30,7 @@ async function* getMessage() {
     for (let i = 0; i < message.length; i++, readOffset++) {
       view.setUint8(readOffset, message[i]);
     }
+
     if (buffer.byteLength === messageLength) {
       yield new Uint8Array(buffer);
       messageLength = 0;
@@ -50,6 +48,23 @@ async function sendMessage(message) {
     .stream()
     .pipeTo(writable, { preventClose: true });
 }
+ipc.config.retry = 1500;
+ipc.config.networkPort = 1500;
+ipc.connectToNet("adam-electron-main", function () {
+  ipc.of["adam-electron-main"].on("connect", function () {
+    ipc.log("## connected to adam-electron-main ##", ipc.config.delay);
+    ipc.of["adam-electron-main"].emit(
+      "message",
+      "hello from adam extension" + "\n" + new Date().getTime()
+    );
+  });
+  ipc.of["adam-electron-main"].on("disconnect", function () {
+    ipc.log("disconnected from adam-electron-main");
+  });
+  ipc.of["adam-electron-main"].on("message", function (data) {
+    ipc.log("got a message from adam-electron-main : ", data);
+  });
+});
 
 try {
   for await (const message of getMessage()) {
@@ -58,13 +73,3 @@ try {
 } catch (e) {
   exit();
 }
-
-export {
-  args,
-  encodeMessage,
-  exit,
-  getMessage,
-  readable,
-  sendMessage,
-  writable,
-};

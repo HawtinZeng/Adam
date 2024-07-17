@@ -7,12 +7,8 @@ import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import {
-  encodeMessage,
-  exit,
-  getMessage,
-  sendMessage,
-} from "./node-native-messaging/adam_extension.mjs";
+
+import ipc from "node-ipc";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -172,11 +168,32 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-const decoder = new TextDecoder();
-try {
-  for await (const message of getMessage()) {
-    await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
-  }
-} catch (e) {
-  exit();
-}
+ipc.config.id = "adam-electron-main";
+ipc.config.retry = 1500;
+ipc.config.maxConnections = 1;
+ipc.config.networkPort = 1500;
+
+ipc.serveNet(function () {
+  ipc.server.on("message", function (data, socket) {
+    ipc.log("got a message : ", data + "\n" + new Date().getTime());
+    ipc.server.emit(socket, "message", " how are u from adam-electron-main");
+  });
+  ipc.server.on("socket.disconnected", function (data, socket) {
+    console.log("DISCONNECTED\n\n", arguments);
+  });
+});
+ipc.server.on("error", function (err) {
+  ipc.log("Got an ERROR!", err);
+});
+
+ipc.server.start();
+
+// const decoder = new TextDecoder();
+// try {
+//   for await (const message of getMessage()) {
+//     await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
+//   }
+// } catch (e) {
+//   console.log("exit");
+//   exit();
+// }
