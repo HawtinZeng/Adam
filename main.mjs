@@ -2,13 +2,16 @@
 import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app } from "electron/main";
+import { appendFileSync } from "fs";
 import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-
-import ipc from "node-ipc";
+import {
+  decoder,
+  getMessage,
+} from "./node-native-messaging/adam_extension.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -168,26 +171,6 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-ipc.config.id = "adam-electron-main";
-ipc.config.retry = 1500;
-ipc.config.maxConnections = 1;
-ipc.config.networkPort = 1500;
-
-ipc.serveNet(function () {
-  ipc.server.on("message", function (data, socket) {
-    ipc.log("got a message : ", data + "\n" + new Date().getTime());
-    ipc.server.emit(socket, "message", " how are u from adam-electron-main");
-  });
-  ipc.server.on("socket.disconnected", function (data, socket) {
-    console.log("DISCONNECTED\n\n", arguments);
-  });
-});
-ipc.server.on("error", function (err) {
-  ipc.log("Got an ERROR!", err);
-});
-
-ipc.server.start();
-
 // const decoder = new TextDecoder();
 // try {
 //   for await (const message of getMessage()) {
@@ -196,4 +179,49 @@ ipc.server.start();
 // } catch (e) {
 //   console.log("exit");
 //   exit();
+// }
+
+// try {
+//   for await (const message of getMessage()) {
+//     await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
+//   }
+// } catch (e) {
+//   exit();
+// }
+
+function Send(message) {
+  let msgStr = JSON.stringify(message);
+  let lengthStr = String.fromCharCode(
+    msgStr.length & 0x000000ff,
+    (msgStr.length >> 8) & 0x000000ff,
+    (msgStr.length >> 16) & 0x000000ff,
+    (msgStr.length >> 24) & 0x000000ff
+  );
+  process.stdout.write(lengthStr + msgStr);
+}
+
+process.stdin.setEncoding("utf8");
+
+// process.stdout
+
+for await (const message of getMessage()) {
+  appendFileSync("output.txt", decoder.decode(message));
+}
+// function AppendInputString(chunk) {
+//   msgBacklog += chunk;
+//   while (true) {
+//     if (msgBacklog.length < 4) return;
+//     let msgLength =
+//       msgBacklog.charCodeAt(0) +
+//       (msgBacklog.charCodeAt(1) << 8) +
+//       (msgBacklog.charCodeAt(2) << 16) +
+//       (msgBacklog.charCodeAt(3) << 24);
+//     if (msgBacklog.length < msgLength + 4) return;
+//     try {
+//       let msgObject = JSON.parse(msgBacklog.substring(4, 4 + msgLength));
+//       appendFileSync("out.tex", JSON.stringify(msgObject));
+//       // handle received message
+//     } catch (e) {}
+//     msgBacklog = msgBacklog.substring(4 + msgLength);
+//   }
 // }
