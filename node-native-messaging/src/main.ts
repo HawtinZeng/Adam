@@ -1,10 +1,21 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.ts'
+import { setupCounter } from "./counter.ts";
+import "./style.css";
+import typescriptLogo from "./typescript.svg";
+import viteLogo from "/vite.svg";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
+// const socket = io("http://localhost:3000");
+// // client-side
+// socket.on("connect", () => {
+//   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+// });
+// socket.open();
+// console.log("socket");
+
+document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
+
+  
+  
     <a href="https://vitejs.dev" target="_blank">
       <img src="${viteLogo}" class="logo" alt="Vite logo" />
     </a>
@@ -19,6 +30,6 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       Click on the Vite and TypeScript logos to learn more
     </p>
   </div>
-`
+`;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
