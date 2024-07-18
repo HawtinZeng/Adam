@@ -1,26 +1,4 @@
-import { fork } from "child_process";
-import { appendFile } from "fs";
-import path from "path";
 import { Duplex } from "stream";
-import { fileURLToPath } from "url";
-// export { decoder, encodeMessage, getMessage, sendMessage };
-// ipc.config.retry = 1500;
-// ipc.config.networkPort = 1500;
-// ipc.connectToNet("adam-electron-main", function () {
-//   ipc.of["adam-electron-main"].on("connect", function () {
-//     ipc.log("## connected to adam-electron-main ##", ipc.config.delay);
-//     ipc.of["adam-electron-main"].emit(
-//       "message",
-//       "hello from adam extension" + "\n" + new Date().getTime()
-//     );
-//   });
-//   ipc.of["adam-electron-main"].on("disconnect", function () {
-//     ipc.log("disconnected from adam-electron-main");
-//   });
-//   ipc.of["adam-electron-main"].on("message", function (data) {
-//     ipc.log("got a message from adam-electron-main : ", data);
-//   });
-// });
 
 const buffer = new ArrayBuffer(0, { maxByteLength: 1024 ** 2 });
 const view = new DataView(buffer);
@@ -72,20 +50,21 @@ async function sendMessage(message) {
     .pipeTo(writable, { preventClose: true });
 }
 
-const childPath = path.join(
-  fileURLToPath(import.meta.url),
-  "../child_adam_extension.mjs"
-);
-const subProcess = fork(childPath);
+// client.on("data", function (data) {
+//   console.log(data.toString());
+// });
 
-subProcess.on("message", (message) => {
-  appendFile("message", message, () => {});
-});
+// client.on("end", function () {
+//   console.log("disconnected from server");
+// });
 
 try {
   for await (const message of getMessage()) {
-    await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
+    // console.log(decoder.decode(message));
+    // await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
+    // subProcess.send(decoder.decode(message));
   }
 } catch (e) {
   exit();
 }
+export { decoder, encodeMessage, getMessage, sendMessage };

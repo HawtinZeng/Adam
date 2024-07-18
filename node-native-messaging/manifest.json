@@ -9,6 +9,7 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "action": {},
-  "homepage_url": "https://github.com/guest271314/native-messaging-nodejs"
+  "action": {
+    "default_popup": "index.html"
+  }
 }
