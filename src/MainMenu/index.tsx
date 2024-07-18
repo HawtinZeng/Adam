@@ -280,7 +280,7 @@ function MainMenu() {
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
-          logger.log("hit");
+          // logger.log("hit");
           return true;
         }
       }

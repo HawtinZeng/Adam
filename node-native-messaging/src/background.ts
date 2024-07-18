@@ -1,8 +1,14 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5555");
+console.log("hello123");
+const socket = io("http://localhost:5555", { transports: ["websocket"] });
+
 socket.on("connect", () => {
-  console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+  console.log("connected from client"); // x8WIv7-mJelg7on_ALbx
+});
+
+socket.on("connect_error", (err) => {
+  console.log(`connect_error due to ${err.message}`);
 });
 // globalThis.name = chrome.runtime.getManifest().short_name;
 // globalThis.port = chrome.runtime.connectNative(globalThis.name);

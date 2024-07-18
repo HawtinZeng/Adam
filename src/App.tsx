@@ -59,7 +59,7 @@ import {
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
 
-const debugChangeWorkspace = true;
+const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;

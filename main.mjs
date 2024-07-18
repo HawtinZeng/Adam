@@ -2,16 +2,14 @@
 import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app } from "electron/main";
-import { appendFileSync } from "fs";
 import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
+import { Server } from "socket.io";
 import { fileURLToPath } from "url";
-import {
-  decoder,
-  getMessage,
-} from "./node-native-messaging/adam_extension.mjs";
+
+import { createServer } from "http";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -164,6 +162,7 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+    io.close();
   }
 });
 
@@ -171,57 +170,11 @@ app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
 
-// const decoder = new TextDecoder();
-// try {
-//   for await (const message of getMessage()) {
-//     await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
-//   }
-// } catch (e) {
-//   console.log("exit");
-//   exit();
-// }
+const httpServer = createServer();
+const io = new Server(httpServer, {});
 
-// try {
-//   for await (const message of getMessage()) {
-//     await sendMessage(encodeMessage("node echo " + decoder.decode(message)));
-//   }
-// } catch (e) {
-//   exit();
-// }
+io.on("connection", (socket) => {
+  console.log("connected");
+});
 
-function Send(message) {
-  let msgStr = JSON.stringify(message);
-  let lengthStr = String.fromCharCode(
-    msgStr.length & 0x000000ff,
-    (msgStr.length >> 8) & 0x000000ff,
-    (msgStr.length >> 16) & 0x000000ff,
-    (msgStr.length >> 24) & 0x000000ff
-  );
-  process.stdout.write(lengthStr + msgStr);
-}
-
-process.stdin.setEncoding("utf8");
-
-// process.stdout
-
-for await (const message of getMessage()) {
-  appendFileSync("output.txt", decoder.decode(message));
-}
-// function AppendInputString(chunk) {
-//   msgBacklog += chunk;
-//   while (true) {
-//     if (msgBacklog.length < 4) return;
-//     let msgLength =
-//       msgBacklog.charCodeAt(0) +
-//       (msgBacklog.charCodeAt(1) << 8) +
-//       (msgBacklog.charCodeAt(2) << 16) +
-//       (msgBacklog.charCodeAt(3) << 24);
-//     if (msgBacklog.length < msgLength + 4) return;
-//     try {
-//       let msgObject = JSON.parse(msgBacklog.substring(4, 4 + msgLength));
-//       appendFileSync("out.tex", JSON.stringify(msgObject));
-//       // handle received message
-//     } catch (e) {}
-//     msgBacklog = msgBacklog.substring(4 + msgLength);
-//   }
-// }
+httpServer.listen(5555);
