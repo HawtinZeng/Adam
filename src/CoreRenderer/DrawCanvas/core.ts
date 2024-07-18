@@ -525,7 +525,7 @@ export function createDrawingCvs(
   targetCvs: HTMLCanvasElement
 ) {
   if (ele.points.length === 0) return;
-
+  // stylelint-vite-plugin
   const canvas = document.createElement("canvas") as HTMLCanvasElement;
   canvas.width = targetCvs.width;
   canvas.height = targetCvs.height;

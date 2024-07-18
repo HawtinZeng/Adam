@@ -135,10 +135,6 @@ app.whenReady().then(async () => {
   globalShortcut.register("Alt+8", () => {
     win.webContents.send("Alt8");
   });
-  // setting?
-  // globalShortcut.register("Alt+9", () => {
-  //   win.webContents.send("Alt9");
-  // });
   globalShortcut.register("Alt+C", () => {
     win.webContents.send("AltC");
   });
