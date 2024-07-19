@@ -9,7 +9,9 @@ function isScrollable (node: Element) {
     horizontal: (overflowX === 'scroll' || overflowX === 'auto') && node.scrollWidth > node.clientWidth,
   };
 }
-
+/**
+ * 监听一个Document的滚动事件
+ */
 export class ScrollListener {
   count = 0;
   constructor(public maxDepth: number) {
@@ -26,16 +28,16 @@ export class ScrollListener {
     this.attachScrollEventToScrollableEle(doc.getElementsByTagName('body')[0], handler, 0);
     }
 
-    attachScrollEventToScrollableEle(node: Element,  handler: (e: Event) => void, depth: number) {
-      if (depth > this.maxDepth) return;
+  attachScrollEventToScrollableEle(node: Element,  handler: (e: Event) => void, depth: number) {
+    if (depth > this.maxDepth) return;
 
-      if (isScrollable(node)) {
-        node.addEventListener('scroll', handler)
-        this.count++;
-      }
-      
-      [...node.children].forEach(c => {
-        this.attachScrollEventToScrollableEle(c, handler, depth+1);
-      })
+    if (isScrollable(node)) {
+      node.addEventListener('scroll', handler)
+      this.count++;
     }
+    
+    [...node.children].forEach(c => {
+      this.attachScrollEventToScrollableEle(c, handler, depth+1);
+    })
+  }
   }

@@ -1,12 +1,11 @@
 {
-  "name": "adamchromeextension",
+  "name": "adam chrome extension",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "buildW": "tsc --watch && vite build --watch --watch.include './background.js'",
     "preview": "vite preview"
   },
   "devDependencies": {
