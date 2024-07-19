@@ -1,17 +1,37 @@
 {
+  "manifest_version": 3,
   "name": "adam extension",
   "short_name": "adam_extension",
-  "version": "1.0",
+  "version": "0.0.0.0",
+  "version_name": "0.0.0",
   "description": "Node.js Native Messaging host",
-  "manifest_version": 3,
-  "permissions": [
-    "nativeMessaging"
+  "content_scripts": [
+    {
+      "js": [
+        "assets/content-script-loader.setup.ts.js.js"
+      ],
+      "matches": [
+        "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "index.html"
+  },
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "**/*",
+        "*"
+      ],
+      "use_dynamic_url": true
+    }
   ],
   "background": {
     "service_worker": "service-worker-loader.js",
     "type": "module"
-  },
-  "action": {
-    "default_popup": "index.html"
   }
 }

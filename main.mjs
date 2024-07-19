@@ -1,4 +1,3 @@
-// const getWin = import("get-windows");
 import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app } from "electron/main";
@@ -147,6 +146,9 @@ app.whenReady().then(async () => {
   globalShortcut.register("Ctrl+Q", () => {
     app.quit();
   });
+  globalShortcut.register("Ctrl+R", () => {
+    restartApp();
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -158,19 +160,29 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
-    io.close();
+    server.close();
   }
 });
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
 });
-
+// Function to restart the app
+function restartApp() {
+  app.relaunch();
+  app.exit(0);
+}
 const httpServer = createServer();
-const io = new Server(httpServer, {});
+const server = new Server(httpServer, {});
 
-io.on("connection", (socket) => {
-  console.log("connected");
+server.on("connection", (socket) => {
+  socket.on("testLatency", (d) => {
+    console.log(`Got: ${d}, received at ${new Date().getTime()}`);
+  });
+
+  socket.on("scrollElement", (areaInfo) => {
+    console.log(areaInfo);
+  });
 });
 
 httpServer.listen(5555);

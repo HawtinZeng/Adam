@@ -20,5 +20,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "src/background.js"]
+  "include": ["src", "src/background.js", "../common/"]
 }

@@ -31,5 +31,4 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     </p>
   </div>
 `;
-
 setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
