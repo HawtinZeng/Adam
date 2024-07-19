@@ -164,7 +164,7 @@ export function renderDrawCanvas(
       Math.sign(u.ele.scale.y) === -1
     );
     u.handleOperator = handleOperator;
-
+    console.log(handleOperator);
     redrawAllEles(
       appCtx,
       appCanvas,

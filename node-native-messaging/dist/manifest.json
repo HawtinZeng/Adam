@@ -4,14 +4,14 @@
   "short_name": "adam_extension",
   "version": "0.0.0.0",
   "version_name": "0.0.0",
-  "description": "Node.js Native Messaging host",
+  "description": "Listen for window change event",
   "content_scripts": [
     {
       "js": [
         "assets/content-script-loader.setup.ts.js.js"
       ],
       "matches": [
-        "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns"
+        "https://*/*"
       ]
     }
   ],

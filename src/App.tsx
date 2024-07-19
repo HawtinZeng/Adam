@@ -7,6 +7,7 @@ import {
   Polygon,
   Vector,
 } from "@zenghawtin/graph2d";
+import { ElementRect } from "common/types";
 import * as d3c from "d3-color";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
@@ -22,6 +23,7 @@ import {
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
   clearMainCanvas,
+  drawRectBorder,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -59,10 +61,13 @@ import {
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
 
+window.Buffer = require("buffer/").Buffer;
+
 const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
+const debugExtensionScroll = true;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
@@ -476,17 +481,26 @@ function App() {
   useEffect(() => {
     // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
-    // setCapturer();
 
-    async function setCapturer() {
-      if (window.initialWindowId !== undefined) {
-        sceneData.windowId = window.initialWindowId;
-        setSceneData(sceneData);
-        // const c = await getCapture((window as any).sourceId);
-        // const img = await c!.grabFrame();
-        // downloadImage(img, "img.png");
+    (window as any).ipcRenderer?.on("scrollElement", (e, areaInfos: string) => {
+      const areaInfo = JSON.parse(areaInfos) as ElementRect;
+      if (debugExtensionScroll) {
+        redrawAllEles(undefined, undefined, sceneData.elements);
+        drawRectBorder(
+          null,
+          new Polygon(
+            new Box(
+              Number(areaInfo.offsetX),
+              Number(areaInfo.offsetY),
+              Number(areaInfo.offsetX) + Number(areaInfo.width),
+              Number(areaInfo.offsetY) + Number(areaInfo.height)
+            )
+          ),
+          d3c.rgb("#14C0E0"),
+          10
+        );
       }
-    }
+    });
   }, []);
 
   async function scrollEles(e: any, wheelData: any) {

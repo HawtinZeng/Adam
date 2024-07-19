@@ -15,13 +15,12 @@ export default defineManifest(async (env) => ({
   short_name: "adam_extension",
   version: `${major}.${minor}.${patch}.${label}`,
   version_name: version,
-  description: "Node.js Native Messaging host",
+  description: "Listen for window change event",
   content_scripts: [
     {
       js: ["src/setup.ts"],
       matches: [
-        "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns"
-        // "https://*/*"
+        "https://*/*"
       ]
     }
   ],

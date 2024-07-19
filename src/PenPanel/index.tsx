@@ -1,14 +1,13 @@
-import { Box, Point as PointZ, Polygon } from "@zenghawtin/graph2d";
+import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
-import { getCapture } from "src/App";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { createDrawingCvs } from "src/CoreRenderer/DrawCanvas/core";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
-import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
+import { Point } from "src/CoreRenderer/basicTypes";
 import {
   FreeDrawing,
   newFreeDrawingElement,
@@ -35,25 +34,6 @@ type ImageInfo = {
   context: CanvasRenderingContext2D;
   imageData: ImageData;
 };
-async function assignLocator(bbx: Box, ele: DrawingElement) {
-  console.time("assignLocator");
-
-  const imageCapturer = await getCapture(window.sourceId!);
-  if (!imageCapturer) return;
-  const imageBitmap = await imageCapturer.grabFrame();
-
-  const canvas = document.createElement("canvas");
-  canvas.width = bbx.width;
-  canvas.height = bbx.height;
-  const context = canvas.getContext("2d")!;
-  context.drawImage(imageBitmap, -bbx.xmin, -bbx.ymin);
-
-  // document.body.appendChild(canvas);
-
-  ele.locator = canvas;
-
-  console.timeEnd("assignLocator");
-}
 
 export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
@@ -272,14 +252,27 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theFirstPt = drawingEle.points[0];
 
-      if (theFirstPt)
-        drawingEle.boundary =
-          getAntArea(theFirstPt.x, theFirstPt.y, {
-            width: cvs.width,
-            height: cvs.height,
-            context: ctx,
-            imageData: imgd,
-          }) ?? [];
+      if (theFirstPt) {
+        const allPols =
+          getAntArea(
+            theFirstPt.x,
+            theFirstPt.y,
+            {
+              width: cvs.width,
+              height: cvs.height,
+              context: ctx,
+              imageData: imgd,
+            },
+            true
+          ) ?? [];
+        if (allPols[0]) {
+          drawingEle.boundary = allPols[0];
+        }
+
+        if (allPols[1]) {
+          drawingEle.excludeArea = allPols[1];
+        }
+      }
 
       stopCurrentDrawing();
     }
@@ -288,8 +281,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const stopCurrentDrawing = () => {
     setSceneAtom(sceneState);
     setTimeout(() => {
-      const upEle = sceneState.updatingElements[0].ele;
-      assignLocator(upEle.boundary[0].box, upEle);
       sceneState.updatingElements.length = 0;
     });
   };
@@ -328,12 +319,19 @@ export function getAntArea(
   }>; // CW是外轮廓，CWW是洞
 
   const polygons: Polygon[] = [];
+  const excludePols: Polygon[] = [];
+
   ptsGrp.forEach((pts) => {
     if (pts.points.length < 3) return; // TODO, 将点判空逻辑挪到Graph2D中去
     const poly = new Polygon(pts.points.map((pt) => new PointZ(pt.x, pt.y)));
-    polygons.push(poly.reverse());
+    if (pts.inner) {
+      excludePols.push(poly);
+    } else {
+      polygons.push(poly.reverse());
+    }
   });
-  return polygons;
+
+  return [polygons, excludePols];
 }
 
 function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
@@ -347,10 +345,12 @@ function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   // inner
   ctx.beginPath();
   for (let i = 0; i < cs.length; i++) {
-    if (!cs[i].inner) continue;
+    if (cs[i].inner) continue;
+
     var ps = cs[i].points;
     ctx.moveTo(ps[0].x, ps[0].y);
     for (let j = 1; j < ps.length; j++) {
+      // drawCircle(null, new Circle(new PointZ(ps[j].x, ps[j].y), 3));
       ctx.lineTo(ps[j].x, ps[j].y);
     }
   }
@@ -360,7 +360,7 @@ function strokeTrace(mask: any, imageInfo: ImageInfo, needStroke: boolean) {
   //outer
   ctx.beginPath();
   for (let i = 0; i < cs.length; i++) {
-    if (cs[i].inner) continue;
+    if (!cs[i].inner) continue;
     let ps = cs[i].points;
     ctx.moveTo(ps[0].x, ps[0].y);
     for (let j = 1; j < ps.length; j++) {

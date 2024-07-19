@@ -24,9 +24,8 @@ const createWindow = () => {
     frame: false,
     titleBarStyle: "hidden",
     resizable: false,
-
-    transparent: true,
     skipTaskbar: true,
+    transparent: true,
     alwaysOnTop: true,
     webPreferences: {
       // nodeIntegration: true,
@@ -181,7 +180,7 @@ server.on("connection", (socket) => {
   });
 
   socket.on("scrollElement", (areaInfo) => {
-    console.log(areaInfo);
+    win.webContents.send("scrollElement", areaInfo);
   });
 });
 

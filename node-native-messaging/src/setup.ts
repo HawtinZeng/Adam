@@ -15,8 +15,8 @@ const throttledScrollEmitter = throttle(  function emitScroll(e: Event) {
   
   const trigger = e.target;
   if (trigger  instanceof Document) {
-    scrollingElement.width = window.innerWidth;
-    scrollingElement.height = window.innerHeight;
+    scrollingElement.width = window.outerWidth;
+    scrollingElement.height = window.outerHeight;
     scrollingElement.offsetX = window.screenLeft;
     scrollingElement.offsetY = window.screenTop;
   } else if (trigger instanceof Element) {
@@ -24,9 +24,8 @@ const throttledScrollEmitter = throttle(  function emitScroll(e: Event) {
     scrollingElement.width = rect.width;
     scrollingElement.height = rect.height;
     scrollingElement.offsetX = rect.left + window.screenLeft;
-    scrollingElement.offsetY = rect.top + window.screenTop;
+    scrollingElement.offsetY = rect.top + window.screenTop + window.outerHeight - window.innerHeight;
   }
-  console.log(`sent: ${JSON.stringify(scrollingElement)}`)
   socket.emit('scrollElement', JSON.stringify(scrollingElement))
 }, 50);
 scrollerListener.addListenerTo(document, throttledScrollEmitter);
