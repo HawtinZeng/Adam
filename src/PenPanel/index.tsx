@@ -254,23 +254,29 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
       if (theFirstPt) {
         const allPols =
-          getAntArea(
-            theFirstPt.x,
-            theFirstPt.y,
-            {
-              width: cvs.width,
-              height: cvs.height,
-              context: ctx,
-              imageData: imgd,
-            },
-            true
-          ) ?? [];
+          getAntArea(theFirstPt.x, theFirstPt.y, {
+            width: cvs.width,
+            height: cvs.height,
+            context: ctx,
+            imageData: imgd,
+          }) ?? [];
         if (allPols[0]) {
           drawingEle.boundary = allPols[0];
+          drawingEle.oriBoundary = allPols[0];
+          drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
+          // console.log(drawingEle.rotateOrigin);
+          // drawCircle(
+          //   null,
+          //   new Circle(
+          //     new PointZ(drawingEle.rotateOrigin.x, drawingEle.rotateOrigin.y),
+          //     100
+          //   )
+          // );
         }
 
         if (allPols[1]) {
           drawingEle.excludeArea = allPols[1];
+          drawingEle.oriexcludeArea = allPols[1];
         }
       }
 

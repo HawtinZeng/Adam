@@ -1,6 +1,7 @@
 import x from "@stylexjs/stylex";
-import { Box, Polygon } from "@zenghawtin/graph2d";
+import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom } from "jotai";
+import { cloneDeep } from "lodash";
 import React, {
   ChangeEvent,
   useCallback,
@@ -13,6 +14,7 @@ import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   CircleShapeElement,
   DrawingType,
+  FreeDrawing,
   ImageElement,
   RectangleShapeElement,
   newImgElement,
@@ -250,5 +252,31 @@ export function getBoundryPoly(ele: DrawingElement) {
       pos.y + circle.radius * 2 * circle.scale.y
     );
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
+  } else if (ele.type === DrawingType.freeDraw) {
+    const free = ele as FreeDrawing;
+    const pos = free.position;
+    const bbx = free.oriBoundary[0].box.translate(pos.x, pos.y);
+    const cloned = cloneDeep(free.oriBoundary[0]);
+    console.log(free.oriBoundary[0].vertices[0].x);
+
+    return cloned
+      .translate(new Vector(pos.x, pos.y))
+      .rotate(ele.rotation, bbx.center);
+  }
+}
+
+export function getExcludeBoundaryPoly(ele: DrawingElement) {
+  if (ele.type === DrawingType.freeDraw) {
+    const free = ele as FreeDrawing;
+    const ori = free.oriexcludeArea;
+    ori.map((pol) => {
+      const tranPol = pol.translate(
+        new Vector(free.position.x, free.position.y)
+      );
+      const bbx = tranPol.box;
+
+      return tranPol.rotate(ele.rotation, bbx.center);
+    });
+    return ori;
   }
 }

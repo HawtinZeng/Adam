@@ -1,4 +1,4 @@
-import { Point as PointF, Polygon, Vector } from "@zenghawtin/graph2d";
+import { Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
@@ -156,15 +156,21 @@ export function renderDrawCanvas(
   groupedElements.transform?.forEach((u) => {
     const img = u.ele as ImageElement;
     if (!img.boundary[0]) return;
-
+    console.log((u.ele as FreeDrawing).oriBoundary[0].vertices[0].x);
     const handleOperator = new Transform2DOperator(
-      img.boundary[0],
+      new Polygon(
+        (u.ele as FreeDrawing).oriBoundary[0].box.translate(
+          new Vector(u.ele.position.x, u.ele.position.y)
+        )
+      ).rotate(
+        u.ele.rotation,
+        new PointZ(u.ele.rotateOrigin.x, u.ele.rotateOrigin.y)
+      ),
       img.rotation,
       appCtx,
       Math.sign(u.ele.scale.y) === -1
     );
     u.handleOperator = handleOperator;
-    console.log(handleOperator);
     redrawAllEles(
       appCtx,
       appCanvas,
@@ -275,6 +281,7 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else {
+        console.log(el.rotation);
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,
@@ -621,7 +628,7 @@ export function createDrawingCvs(
       } else {
         const strokePoints = getStrokePoints(
           points.map((pt) => {
-            const ptObj = new PointF(pt.x, pt.y)
+            const ptObj = new PointZ(pt.x, pt.y)
               .translate(
                 new Vector(freeDrawing.position.x, freeDrawing.position.y)
               )

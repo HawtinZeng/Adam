@@ -10,6 +10,9 @@ export interface FreeDrawing extends DrawingElement {
   readonly points: Point[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
+
+  oriBoundary: Polygon[];
+  oriexcludeArea: Polygon[];
 }
 
 export enum DrawingType {
@@ -51,6 +54,8 @@ export const newFreeDrawingElement: FreeDrawing = {
   },
   rotateOrigin: { x: 0, y: 0 },
   needCacheCanvas: true,
+  oriBoundary: [],
+  oriexcludeArea: [],
 };
 export type ImageElement = DrawingElement & {
   image: HTMLImageElement | undefined;

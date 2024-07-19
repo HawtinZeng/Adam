@@ -37,7 +37,10 @@ import {
   newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
 import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
-import { getBoundryPoly } from "src/MainMenu/imageInput";
+import {
+  getBoundryPoly,
+  getExcludeBoundaryPoly,
+} from "src/MainMenu/imageInput";
 import { Point } from "src/Utils/Data/geometry";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
@@ -66,7 +69,7 @@ window.Buffer = require("buffer/").Buffer;
 const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = false;
+const showDebugPanel = true;
 const debugExtensionScroll = true;
 export const showElePtLength = false;
 
@@ -325,7 +328,8 @@ function App() {
           y: originalRotateOrigin!.y + offset.y,
         };
 
-        ele.boundary[0] = getBoundryPoly(ele)!;
+        ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+        ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
 
         setSceneData({ ...sceneData });
         return;
@@ -373,7 +377,8 @@ function App() {
           if (
             el.type === DrawingType.img ||
             el.type === DrawingType.rectangle ||
-            el.type === DrawingType.circle
+            el.type === DrawingType.circle ||
+            el.type === DrawingType.freeDraw
           ) {
             const rotationCenter = new PointZ(
               el.rotateOrigin.x,
@@ -384,10 +389,15 @@ function App() {
               rotationCenter
             );
             const currentLine = new Line(new PointZ(x, y), rotationCenter);
+
             const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
             el.rotation = deltaRotation + originalRotation;
 
             el.boundary[0] = getBoundryPoly(el)!;
+
+            // el.boundary[0].vertices.forEach((v) => {
+            //   drawAPoint(v);
+            // });
           }
         }
         setSceneData({ ...sceneData });
@@ -398,10 +408,10 @@ function App() {
   const drawAPoint = (p: Point) => {
     const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
       id: nanoid(),
-      position: { x: p.x, y: p.y },
+      position: { x: 0, y: 0 },
       points: [{ x: p.x, y: p.y }],
     } as FreeDrawing);
-
+    console.log(newFreeElement);
     // default property
     const subMenuStrokeOption =
       menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
@@ -832,7 +842,7 @@ function App() {
             )}
           </>
         ),
-        [cursorSvg, sceneData.elements, sceneData.updatingElements] // mousePos
+        [cursorSvg, sceneData.elements, sceneData.updatingElements, mousePos] //
       )}
     </>
   );

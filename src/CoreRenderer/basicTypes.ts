@@ -44,6 +44,7 @@ export interface DrawingElement {
 
   boundary: Polygon[];
   excludeArea: Polygon[];
+
   needCacheCanvas: boolean;
   locator?: HTMLCanvasElement;
 

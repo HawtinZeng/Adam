@@ -78,7 +78,7 @@ export class Transform2DOperator {
   ) {
     this.ctx = ctx;
     this.rotation = rotation;
-    this.rect = new Rect(pol.clone());
+    this.rect = new Rect(pol.box);
     [...this.rect.polygon.edges].forEach((e: Edge) => {
       const midPt = new Point(
         (e.start.x + e.end.x) / 2,
