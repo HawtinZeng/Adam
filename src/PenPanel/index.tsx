@@ -239,6 +239,13 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const strokeOutlineStopCurrentDrawing = () => {
     if (sceneState.updatingElements.length > 0) {
+      stopCurrentDrawing();
+    }
+  };
+
+  const stopCurrentDrawing = () => {
+    setSceneAtom(sceneState);
+    setTimeout(() => {
       const drawingEle = sceneState.updatingElements[0].ele as FreeDrawing;
       let cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
 
@@ -247,7 +254,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       }
 
       if (!cvs) return; // for laser brush
-
       const ctx = cvs.getContext("2d", { willReadFrequently: true })!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theFirstPt = drawingEle.points[0];
@@ -279,14 +285,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.oriexcludeArea = allPols[1];
         }
       }
-
-      stopCurrentDrawing();
-    }
-  };
-
-  const stopCurrentDrawing = () => {
-    setSceneAtom(sceneState);
-    setTimeout(() => {
       sceneState.updatingElements.length = 0;
     });
   };

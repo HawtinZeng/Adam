@@ -12,7 +12,7 @@ import * as d3c from "d3-color";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, merge } from "lodash";
+import { cloneDeep, merge, throttle } from "lodash";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
@@ -226,6 +226,7 @@ function App() {
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
+          logger.log(isHit);
           dragStart(e, ele);
           if (sceneData.updatingElements.find((u) => u.ele === ele)) {
             return;
@@ -251,7 +252,7 @@ function App() {
   );
 
   const detectHandles = useCallback(
-    (e: MouseEvent) => {
+    throttle((e: MouseEvent) => {
       if (selectedKey !== 2) return;
       if (dragInfo.current) return;
       for (let i = 0; i < sceneData.updatingElements.length; i++) {
@@ -286,18 +287,20 @@ function App() {
         currentHandle.current = null;
         isShowShiftTip.current = false;
 
+        // change the cursor style when moving the cursor out of the element.
         const isHit = ptIsContained(
           u.ele.boundary.map((p) => p.rotate(u.ele.rotation, p.box.center)),
           u.ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
+        logger.log(isHit);
         if (isHit) {
           setCursorSvg("move");
         } else {
           change2DefaultCursor();
         }
       }
-    },
+    }, 50),
     [
       sceneData.updatingElements,
       selectedKey,
@@ -411,7 +414,6 @@ function App() {
       position: { x: 0, y: 0 },
       points: [{ x: p.x, y: p.y }],
     } as FreeDrawing);
-    console.log(newFreeElement);
     // default property
     const subMenuStrokeOption =
       menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
