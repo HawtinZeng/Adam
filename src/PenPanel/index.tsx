@@ -5,7 +5,10 @@ import mw from "magic-wand-tool";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useRef } from "react";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
-import { createDrawingCvs } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  createDrawingCvs,
+  redrawAllEles,
+} from "src/CoreRenderer/DrawCanvas/core";
 import { dist2 } from "src/CoreRenderer/DrawCanvas/vec";
 import { Point } from "src/CoreRenderer/basicTypes";
 import {
@@ -23,7 +26,6 @@ import {
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
-  disableDrawingAtom,
   selectedKeyAtom,
   subMenuIdx,
 } from "src/state/uiState";
@@ -52,7 +54,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const animationTasks = useRef<Function[]>([]);
   const isStop = useRef<boolean>(true);
-  const disableDrawing = useAtomValue(disableDrawingAtom);
+  const leftPressed = useRef<boolean>(false);
 
   const openAnimation = () => {
     const traillingEle = sceneState.elements.length - 1;
@@ -63,7 +65,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const penPanelMousedown = useCallback(
     (evt: MouseEvent) => {
-      if (disableDrawing) return;
+      leftPressed.current = true;
       const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
         id: nanoid(),
         position: { x: 0, y: 0 },
@@ -82,6 +84,13 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
 
+      if (sceneState.updatingElements[0]) {
+        const old = sceneState.updatingElements[0];
+        const oldIdx = sceneState.elements.findIndex((e) => old.ele === e);
+        if (oldIdx !== -1) sceneState.elements.splice(oldIdx, 1);
+        redrawAllEles(undefined, undefined, sceneState.elements);
+      }
+
       const newEleUpdating: UpdatingElement = {
         ele: newFreeElement,
         type: "addPoints",
@@ -89,10 +98,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           .getContext("2d", { willReadFrequently: true })!
           .getImageData(0, 0, cvsEle!.width, cvsEle!.height),
       };
-      sceneState.updatingElements.push(newEleUpdating);
+      sceneState.updatingElements[0] = newEleUpdating;
       if (
-        (sceneState.updatingElements[0].ele as FreeDrawing)?.strokeOptions
-          ?.haveTrailling
+        (
+          sceneState.updatingElements[sceneState.updatingElements.length - 1]
+            .ele as FreeDrawing
+        )?.strokeOptions?.haveTrailling
       ) {
         // with pressure in point
         newFreeElement.strokeOptions.simulatePressure = false;
@@ -111,7 +122,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       }
     },
     [
-      disableDrawing,
       menuKey,
       selectedKey,
       colorIdx,
@@ -126,7 +136,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const traillingEffect = (lastIdx: number) => {
     const currentTime = new Date().getTime();
     let elePoints = sceneState.elements[lastIdx]?.points;
-
     let accumulatedDis = 0,
       len = elePoints.length,
       i = len - 1,
@@ -162,7 +171,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         );
       }
     }
-    if (elePoints.length === 1) elePoints = [];
+    if (elePoints.length === 4) elePoints = [];
     elePoints = elePoints.filter((pt) => pt.pressure! > 0);
 
     sceneState.elements[lastIdx]!.points = [...elePoints];
@@ -213,22 +222,26 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         );
       }
 
-      if (animationTasks.current.length === 0) isStop.current = true;
+      if (animationTasks.current.length === 0) {
+        isStop.current = true;
+      }
     }
   };
 
   const penPanelMousemove = (evt: MouseEvent) => {
-    if (sceneState.updatingElements[0]) {
-      sceneState.updatingElements[0].ele.points.push({
+    if (leftPressed.current === true) {
+      const currentDrawing = sceneState.updatingElements[
+        sceneState.updatingElements.length - 1
+      ]?.ele as FreeDrawing;
+      currentDrawing?.points.push({
         x: evt.clientX,
         y: evt.clientY,
         pressure: 1,
         timestamp: new Date().getTime(),
       });
       if (
-        (sceneState.updatingElements[0].ele as FreeDrawing)?.strokeOptions
-          ?.haveTrailling &&
-        sceneState.updatingElements[0].ele.points.length === 1 // 重新打开动画，防止点击之后，动画自动停止，再移动的话，需要重新打开动画
+        currentDrawing?.strokeOptions?.haveTrailling &&
+        currentDrawing.points.length === 1 // 重新打开动画，防止点击之后，动画自动停止，再移动的话，需要重新打开动画
       ) {
         openAnimation();
       }
@@ -238,6 +251,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   const strokeOutlineStopCurrentDrawing = () => {
+    leftPressed.current = false;
     if (sceneState.updatingElements.length > 0) {
       stopCurrentDrawing();
     }
@@ -246,7 +260,11 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   const stopCurrentDrawing = () => {
     setSceneAtom(sceneState);
     setTimeout(() => {
-      const drawingEle = sceneState.updatingElements[0].ele as FreeDrawing;
+      const drawingEle = sceneState.updatingElements[
+        sceneState.updatingElements.length - 1
+      ]?.ele as FreeDrawing;
+      if (!drawingEle) return;
+
       let cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
 
       if (!cvs) {
@@ -285,7 +303,12 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.oriexcludeArea = allPols[1];
         }
       }
-      sceneState.updatingElements.length = 0;
+      if (
+        !sceneState.updatingElements.find(
+          (u) => (u.ele as FreeDrawing)?.strokeOptions?.haveTrailling
+        )
+      )
+        sceneState.updatingElements.length = 0;
     });
   };
 

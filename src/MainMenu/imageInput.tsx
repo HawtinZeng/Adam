@@ -1,5 +1,5 @@
 import x from "@stylexjs/stylex";
-import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
+import { Box, Point, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom } from "jotai";
 import React, {
   ChangeEvent,
@@ -254,13 +254,13 @@ export function getBoundryPoly(ele: DrawingElement) {
   } else if (ele.type === DrawingType.freeDraw) {
     const free = ele as FreeDrawing;
     const pos = free.position;
-    const bbx = free.oriBoundary[0].box.translate(pos.x, pos.y);
-
-    console.log(free.oriBoundary[0].box.width);
 
     return free.oriBoundary[0]
       .translate(new Vector(pos.x, pos.y))
-      .rotate(ele.rotation, bbx.center);
+      .rotate(
+        ele.rotation,
+        new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+      );
   }
 }
 
