@@ -80,7 +80,7 @@ export class Transform2DOperator {
   ) {
     this.ctx = ctx;
     this.rotation = rotation;
-    this.rect = new Rect(pol); // 这个pol是绝对坐标，是旋转之后的boundingBox，原始值，不是对象所有世界坐标点的boundingBox
+    this.rect = new Rect(pol.clone()); // 这个pol是绝对坐标，是旋转之后的boundingBox，原始值，不是对象所有世界坐标点的boundingBox
     [...this.rect.polygon.edges].forEach((e: Edge) => {
       const midPt = new Point(
         (e.start.x + e.end.x) / 2,
