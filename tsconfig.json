@@ -25,7 +25,7 @@
     "src/images/svgs/svg.d.ts",
     "src/test/*",
     "src/test/points.ts",
-    "./common/"
+    "commonModule"
   ],
   "exclude": ["node_modules", "**/node_modules/*"]
 }
