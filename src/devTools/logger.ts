@@ -9,7 +9,7 @@ const yellow = (msg: string | number | Object) => `\x1b[33m${msg}\x1b[0m`;
 const cyan = (msg: string | number | Object) => `\x1b[36m${msg}\x1b[0m`;
 const red = (msg: string | number | Object) => `\x1b[31m${msg}\x1b[0m`;
 export class Logger {
-  enable: boolean = true;
+  enable: boolean = false;
   logCount: number = 0;
   errCount: number = 0;
 

@@ -259,9 +259,15 @@ function App() {
         const u = sceneData.updatingElements[i];
         const operator = u.handleOperator;
         if (operator) {
-          const handleOperator = Object.keys(
-            operator.handleOperator
-          ) as TransformHandle[];
+          let handleOperator: TransformHandle[];
+          if (!operator.ableTransform) {
+            handleOperator = [TransformHandle.ro];
+          } else {
+            handleOperator = Object.keys(
+              operator.handleOperator
+            ) as TransformHandle[];
+          }
+
           for (
             let handleIdx = 0;
             handleIdx < handleOperator.length;
@@ -332,6 +338,7 @@ function App() {
         };
 
         ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+
         ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
 
         setSceneData({ ...sceneData });
@@ -844,7 +851,7 @@ function App() {
             )}
           </>
         ),
-        [cursorSvg, sceneData.elements, sceneData.updatingElements, mousePos] //
+        [cursorSvg, sceneData.elements, sceneData.updatingElements] // append mousePos to check real-time mouse position
       )}
     </>
   );

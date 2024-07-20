@@ -1,7 +1,6 @@
 import x from "@stylexjs/stylex";
 import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom } from "jotai";
-import { cloneDeep } from "lodash";
 import React, {
   ChangeEvent,
   useCallback,
@@ -256,10 +255,10 @@ export function getBoundryPoly(ele: DrawingElement) {
     const free = ele as FreeDrawing;
     const pos = free.position;
     const bbx = free.oriBoundary[0].box.translate(pos.x, pos.y);
-    const cloned = cloneDeep(free.oriBoundary[0]);
-    console.log(free.oriBoundary[0].vertices[0].x);
 
-    return cloned
+    console.log(free.oriBoundary[0].box.width);
+
+    return free.oriBoundary[0]
       .translate(new Vector(pos.x, pos.y))
       .rotate(ele.rotation, bbx.center);
   }

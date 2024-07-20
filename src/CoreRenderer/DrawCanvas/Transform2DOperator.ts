@@ -50,6 +50,7 @@ export function sortPoints(pts: Point[]) {
 }
 export class Transform2DOperator {
   handleOperator: TransformHandles = {};
+  ableTransform: boolean = true;
   ctx: CanvasRenderingContext2D;
   cursorStyle: { [T in TransformHandle]: string } = {
     [TransformHandle.n]: "n-resize",
@@ -74,11 +75,12 @@ export class Transform2DOperator {
     rotation: Degree,
     ctx: CanvasRenderingContext2D,
     revertYDirection: boolean,
-    showRotation: boolean = true
+    showRotation: boolean = true,
+    ableTransform: boolean = true
   ) {
     this.ctx = ctx;
     this.rotation = rotation;
-    this.rect = new Rect(pol.box);
+    this.rect = new Rect(pol); // 这个pol是绝对坐标，是旋转之后的boundingBox，原始值，不是对象所有世界坐标点的boundingBox
     [...this.rect.polygon.edges].forEach((e: Edge) => {
       const midPt = new Point(
         (e.start.x + e.end.x) / 2,
@@ -87,6 +89,7 @@ export class Transform2DOperator {
       this.rect.polygon.addVertex(midPt, e);
     });
 
+    this.ableTransform = ableTransform;
     const pts = this.rect.polygon.vertices;
     const offsetAlignDiagonal = this.pointW / 2;
 
