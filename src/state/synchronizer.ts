@@ -26,6 +26,7 @@ class Synchronizer {
     const bk = `${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`;
     if (!this.areasMap.has(bk)) {
       this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
+      this.elesMap.set(b, []);
     }
 
     return this.areasMap.get(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`)!;
@@ -45,7 +46,6 @@ class Synchronizer {
   */
   partition(eles: DrawingElement[], area: Box) {
     this.addArea(area);
-
     const withoutIncludingParts = eles.filter((e) => !e.includingPart);
     withoutIncludingParts.forEach((ele) => {
       let boundingPoly: Polygon | undefined;
@@ -68,9 +68,8 @@ class Synchronizer {
       if (!containsArea) return;
 
       ele.includingPart = containsArea;
-      const exists = this.elesMap.get(containsArea) ?? [];
+      const exists = this.elesMap.get(containsArea)!;
       exists.push(ele);
-      this.elesMap.set(containsArea, exists);
     });
     window.eles = eles;
   }
@@ -85,7 +84,6 @@ class Synchronizer {
       }
     }
     let delta = scrollTop;
-
     if (b) {
       const exist = this.scrollTopMap.get(b) ?? scrollTop;
       this.scrollTopMap.set(b, scrollTop);
@@ -136,6 +134,12 @@ class Synchronizer {
     } else {
       return false;
     }
+  }
+
+  clearAllEles() {
+    this.elesMap.forEach((els, box) => {
+      els.length = 0;
+    });
   }
 }
 export const synchronizer = new Synchronizer();

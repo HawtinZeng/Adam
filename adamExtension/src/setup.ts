@@ -1,7 +1,14 @@
 import { throttle } from "lodash";
 import { io } from "socket.io-client";
+import { loggerIns } from "../../commonModule/devTools/logger";
 import { ElementRect } from "../../commonModule/types";
 import { ScrollListener } from "./scrollListener";
+
+declare global {
+  interface Window {
+    scrollerListener: ScrollListener;
+  }
+}
 
 const socket = io("http://localhost:5555", { transports: ["websocket"] });
 socket.on("connect", () => {
@@ -25,10 +32,10 @@ function emitScroll(e: Event) {
   const trigger = e.target;
 
   if (trigger instanceof Document) {
-    scrollingElement.width = window.innerWidth;
+    scrollingElement.width = window.outerWidth;
     scrollingElement.height = window.innerHeight;
 
-    scrollingElement.offsetX = window.screenLeft + 8; // screenLeft is not on the left border of the window, but has a gap of 8.
+    scrollingElement.offsetX = window.screenLeft; // screenLeft is not on the left border of the window, but has a gap of 8.
     scrollingElement.offsetY =
       window.screenTop + (window.outerHeight - window.innerHeight);
 
@@ -40,19 +47,22 @@ function emitScroll(e: Event) {
     const rect = trigger.getBoundingClientRect();
     scrollingElement.width = rect.width;
     scrollingElement.height = rect.height;
-    scrollingElement.offsetX = rect.left + window.screenLeft + 8;
+    scrollingElement.offsetX = rect.left + window.screenLeft;
     scrollingElement.offsetY =
       rect.top + window.screenTop + window.outerHeight - window.innerHeight;
     scrollingElement.scrollTop = (trigger as any)?.scrollTop;
     scrollingElement.scrollHeight = (trigger as any)?.scrollHeight;
   }
   scrollingElement.topPadding = window.outerHeight - window.innerHeight;
+  loggerIns.log(scrollingElement.width);
   socket.emit("scrollElement", JSON.stringify(scrollingElement));
 }
 const throttledScrollEmitter = throttle(emitScroll, latency);
 scrollerListener.addListenerTo(document, throttledScrollEmitter);
 
+window.scrollerListener = scrollerListener;
 scrollerListener.scrollables.forEach((scrollable) => {
+  // loggerIns.log("emitScroll({ target: scrollable } as unknown as Event)");
   emitScroll({ target: scrollable } as unknown as Event);
 });
 // globalThis.name = chrome.runtime.getManifest().short_name;

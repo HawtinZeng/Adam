@@ -34,11 +34,9 @@ export class ScrollListener {
     this.scrollables.push(doc);
 
     this.count++;
-    this.attachScrollEventToScrollableEle(
-      doc.getElementsByTagName("body")[0],
-      handler,
-      0
-    );
+    [...doc.getElementsByTagName("body")[0].children].forEach((n) => {
+      this.attachScrollEventToScrollableEle(n, handler, 0);
+    });
   }
 
   attachScrollEventToScrollableEle(

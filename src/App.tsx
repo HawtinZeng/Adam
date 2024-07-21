@@ -76,7 +76,6 @@ export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
 let stream: MediaStream | undefined;
-let previousCanvas: HTMLCanvasElement | undefined;
 const cap = new Map<string, ImageCapture>();
 let confirmedScrollPage = true;
 
@@ -682,6 +681,7 @@ function App() {
       sceneData.elements.length = 0;
       sceneData.frames.length = 0;
       clearMainCanvas();
+      synchronizer.clearAllEles();
     };
 
     const altQHandler = () => {

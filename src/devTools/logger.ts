@@ -14,7 +14,8 @@ export class Logger {
   errCount: number = 0;
 
   log(msg: string | Object | undefined, color: string = "yellow") {
-    if (!this.enable || msg === undefined) return;
+    if (msg === undefined) msg = "undefined";
+    if (!this.enable) return;
     this.logCount += 1;
     if (msg instanceof Object) {
       msg = JSON.stringify(msg);
