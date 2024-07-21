@@ -284,9 +284,7 @@ function App() {
               setCursorSvg(operator.cursorStyle[handleOperator[handleIdx]]);
 
               isShowShiftTip.current = isBevelHandle(handleOperator[handleIdx]);
-
               currentHandle.current = [u.ele, handleOperator[handleIdx]];
-              // console.log(handleOperator[handleIdx]);hovered handle location
               return;
             }
           }
@@ -506,7 +504,6 @@ function App() {
   useEffect(() => {
     function scrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
-
       const b = new Box(
         areaInfo.offsetX,
         areaInfo.offsetY,
@@ -514,7 +511,10 @@ function App() {
         areaInfo.offsetY + areaInfo.height
       );
 
-      synchronizer.partition(sceneData.elements, b);
+      try {
+        synchronizer.partition(sceneData.elements, b);
+      } catch (e) {}
+
       const needUpdating = synchronizer.scrollTop(b, areaInfo.scrollTop);
       if (needUpdating) {
         redrawAllEles(
@@ -528,7 +528,6 @@ function App() {
 
       if (debugExtensionScroll) {
         redrawAllEles(undefined, undefined, sceneData.elements);
-        console.log(Number(areaInfo.width));
         drawRectBorder(
           null,
           new Polygon(
@@ -549,7 +548,6 @@ function App() {
       (window as any).ipcRenderer?.off("scrollElement", scrollElementHandler);
     };
   }, [sceneData]);
-  let preTitle = "";
 
   const changeWorkspace = async (e, windowInfo: BaseResult) => {
     // save previous scene data
@@ -561,7 +559,6 @@ function App() {
         `save ${sceneData.windowId}, ${currentFocusedWindow.title}, ${sceneData.elements.length}`
       );
     const exist = multipleScenes.get(windowInfo.id);
-    preTitle = windowInfo.title;
 
     if (!exist) {
       sceneData.elements = [];
@@ -647,7 +644,6 @@ function App() {
         setTransparent();
       } else {
         setSeletedKey(4);
-        console.log("setSeletedKey 4");
       }
     };
 

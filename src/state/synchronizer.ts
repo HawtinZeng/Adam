@@ -6,17 +6,28 @@ import {
   FreeDrawing,
 } from "src/CoreRenderer/drawingElementsTypes";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
+declare global {
+  interface Window {
+    synchronizer: Synchronizer;
+    eles: DrawingElement[];
+  }
+}
 
 class Synchronizer {
   areasMap: Map<string, Box> = new Map();
   elesMap: Map<Box, DrawingElement[]> = new Map();
   scrollTopMap: Map<Box, number> = new Map();
+  constructor() {
+    window.synchronizer = this;
+  }
 
+  // add or get
   addArea(b: Box) {
     const bk = `${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`;
-    console.log("add" + bk);
-    if (!this.areasMap.has(bk))
+    if (!this.areasMap.has(bk)) {
       this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
+    }
+
     return this.areasMap.get(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`)!;
   }
 
@@ -33,6 +44,8 @@ class Synchronizer {
     给没有分区的元素分区，然后记录这个分区
   */
   partition(eles: DrawingElement[], area: Box) {
+    this.addArea(area);
+
     const withoutIncludingParts = eles.filter((e) => !e.includingPart);
     withoutIncludingParts.forEach((ele) => {
       let boundingPoly: Polygon | undefined;
@@ -46,17 +59,20 @@ class Synchronizer {
         boundingPoly = getBoundryPoly(ele);
       }
 
-      if (boundingPoly && area.contains(boundingPoly)) {
-        ele.includingPart = area;
-        let areaInMap = this.addArea(area);
+      const allAreas = [...this.areasMap.values()];
+      allAreas.sort((a, b) =>
+        new Polygon(a).area > new Polygon(b).area ? 1 : -1
+      );
+      if (!boundingPoly) return;
+      const containsArea = allAreas.find((a) => a.contains(boundingPoly));
+      if (!containsArea) return;
 
-        const exists = this.elesMap.get(areaInMap) ?? [];
-        exists.push(ele);
-
-        this.elesMap.set(area, exists);
-        console.log(`add to elesMap${exists.length}`);
-      }
+      ele.includingPart = containsArea;
+      const exists = this.elesMap.get(containsArea) ?? [];
+      exists.push(ele);
+      this.elesMap.set(containsArea, exists);
     });
+    window.eles = eles;
   }
 
   scrollTop(scrollArea: Box, scrollTop: number): boolean {
@@ -69,16 +85,13 @@ class Synchronizer {
       }
     }
     let delta = scrollTop;
-    // console.log(
-    // `${scrollArea.xmin}-${scrollArea.xmax}-${scrollArea.ymin}-${scrollArea.ymax}`
-    // );
-    // console.log([...this.areasMap.keys()].length);
+
     if (b) {
       const exist = this.scrollTopMap.get(b) ?? scrollTop;
       this.scrollTopMap.set(b, scrollTop);
       delta = exist - scrollTop; // scrollTop 与position.y 的计算方式是相反的
       const scrolledEles = this.elesMap.get(b);
-      console.log(scrolledEles?.length);
+
       scrolledEles?.forEach((el) => {
         el.position.y += delta;
         debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 500)();

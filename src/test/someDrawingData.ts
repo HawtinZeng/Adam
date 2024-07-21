@@ -1,7 +1,9 @@
-import { getBoundsFromPoints } from "src/common/utils";
 import { DrawingElement, FrameData } from "src/CoreRenderer/basicTypes";
+import { getBoundsFromPoints } from "src/common/utils";
 import { testedPoints } from "src/test/points";
 
+// getBoundsFromPoints()
+// 18w,
 const boundingMinPt = getBoundsFromPoints(
   testedPoints.map((pt) => {
     return { x: pt[0], y: pt[1] };

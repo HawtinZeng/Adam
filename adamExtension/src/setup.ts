@@ -5,12 +5,13 @@ import { ScrollListener } from "./scrollListener";
 
 const socket = io("http://localhost:5555", { transports: ["websocket"] });
 socket.on("connect", () => {
-  console.log("connected from client"); // x8WIv7-mJelg7on_ALbx
+  console.log("connected from client");
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
 const latency = 0;
 const scrollerListener = new ScrollListener(5); // PUT IT INTO SETTINGS
-const throttledScrollEmitter = throttle(function emitScroll(e: Event) {
+
+function emitScroll(e: Event) {
   const scrollingElement: ElementRect = {
     width: 0,
     height: 0,
@@ -22,7 +23,7 @@ const throttledScrollEmitter = throttle(function emitScroll(e: Event) {
   };
 
   const trigger = e.target;
-  console.clear();
+
   if (trigger instanceof Document) {
     scrollingElement.width = window.innerWidth;
     scrollingElement.height = window.innerHeight;
@@ -47,9 +48,13 @@ const throttledScrollEmitter = throttle(function emitScroll(e: Event) {
   }
   scrollingElement.topPadding = window.outerHeight - window.innerHeight;
   socket.emit("scrollElement", JSON.stringify(scrollingElement));
-}, latency);
+}
+const throttledScrollEmitter = throttle(emitScroll, latency);
 scrollerListener.addListenerTo(document, throttledScrollEmitter);
 
+scrollerListener.scrollables.forEach((scrollable) => {
+  emitScroll({ target: scrollable } as unknown as Event);
+});
 // globalThis.name = chrome.runtime.getManifest().short_name;
 // globalThis.port = chrome.runtime.connectNative(globalThis.name);
 // port.onMessage.addListener((message) => console.log(message));
