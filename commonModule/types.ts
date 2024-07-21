@@ -3,4 +3,5 @@ export type ElementRect = {
   height: number;
   offsetX: number;
   offsetY: number;
+  topPadding: number;
 };

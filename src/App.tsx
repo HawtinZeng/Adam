@@ -695,7 +695,7 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
+    // (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -708,7 +708,7 @@ function App() {
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
-      (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
+      // (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
