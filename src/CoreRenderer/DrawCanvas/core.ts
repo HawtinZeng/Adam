@@ -156,12 +156,31 @@ export function renderDrawCanvas(
     const img = u.ele as ImageElement;
     if (!img.boundary[0]) return;
 
-    const handleOperator = new Transform2DOperator(
-      img.boundary[0],
-      img.rotation,
-      appCtx,
-      Math.sign(u.ele.scale.y) === -1
-    );
+    let handleOperator;
+    if (u.ele.type !== DrawingType.freeDraw) {
+      handleOperator = new Transform2DOperator(
+        img.boundary[0],
+        img.rotation,
+        appCtx,
+        Math.sign(u.ele.scale.y) === -1
+      );
+    } else {
+      const freeDrawBox = (u.ele as FreeDrawing).oriBoundary[0].box.translate(
+        new Vector(u.ele.position.x, u.ele.position.y)
+      );
+      const freeDrawPol = new Polygon(freeDrawBox);
+      handleOperator = new Transform2DOperator(
+        freeDrawPol.rotate(
+          u.ele.rotation,
+          new PointZ(u.ele.rotateOrigin.x, u.ele.rotateOrigin.y)
+        ),
+        img.rotation,
+        appCtx,
+        Math.sign(u.ele.scale.y) === -1,
+        undefined,
+        false
+      );
+    }
     u.handleOperator = handleOperator;
     redrawAllEles(
       appCtx,
@@ -247,7 +266,7 @@ export function redrawAllEles(
       needClearIdx.push(idx);
       return;
     }
-    if ((el as FreeDrawing).strokeOptions.haveTrailling) return;
+    if ((el as FreeDrawing).strokeOptions?.haveTrailling) return;
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
 
@@ -282,6 +301,12 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else {
+        globalAppCtx!.save();
+
+        const rotateOrigin = el.rotateOrigin;
+        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+        globalAppCtx!.rotate(el.rotation);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,
@@ -289,6 +314,8 @@ export function redrawAllEles(
           cachedCvs!.width,
           cachedCvs!.height
         );
+
+        globalAppCtx!.restore();
       }
     } else {
       drawNeedntCacheEle(el);
