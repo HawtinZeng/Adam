@@ -63,6 +63,10 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   }
 });
 
+ipcMain.on("checkWindow", (e) => {
+  changeWindowHandler();
+});
+
 const v = new GlobalKeyboardListener();
 v.addListener(function (e) {
   if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {

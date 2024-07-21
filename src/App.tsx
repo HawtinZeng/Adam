@@ -9,6 +9,7 @@ import {
 } from "@zenghawtin/graph2d";
 import { ElementRect } from "commonModule/types";
 import * as d3c from "d3-color";
+import { IpcRenderer } from "electron";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -64,6 +65,11 @@ import {
   selectedKeyAtom,
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
+declare global {
+  interface Window {
+    ipcRenderer: IpcRenderer;
+  }
+}
 
 window.Buffer = require("buffer/").Buffer;
 
@@ -548,17 +554,17 @@ function App() {
     };
   }, [sceneData]);
 
-  const changeWorkspace = async (e, windowInfo: BaseResult) => {
+  const changeWorkspace = async (e, windowInfo?: BaseResult | undefined) => {
     // save previous scene data
+    if (!windowInfo) return;
+
     currentFocusedWindow = windowInfo;
-    if (debugChangeWorkspace) logger.log("changeWorkspace");
     multipleScenes.set(sceneData.windowId, { ...sceneData });
     if (debugChangeWorkspace)
       logger.log(
         `save ${sceneData.windowId}, ${currentFocusedWindow.title}, ${sceneData.elements.length}`
       );
     const exist = multipleScenes.get(windowInfo.id);
-
     if (!exist) {
       sceneData.elements = [];
       sceneData.domElements = [];
@@ -762,6 +768,10 @@ function App() {
     terminateText();
     if (screenShotter.current?.status !== "ending")
       screenShotter.current?.terminateScreenShot();
+
+    if (selectedKey !== -1) {
+      window.ipcRenderer.send("checkWindow");
+    }
 
     if (selectedKey === 6) {
       startText(colorIdx);
