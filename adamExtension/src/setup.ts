@@ -16,15 +16,19 @@ const throttledScrollEmitter = throttle(function emitScroll(e: Event) {
     height: 0,
     offsetX: 0,
     offsetY: 0,
+    topPadding: 0,
   };
 
   const trigger = e.target;
+  // console.log((trigger as any)?.scrollingElement?.scrollTop);
   if (trigger instanceof Document) {
     scrollingElement.width = window.outerWidth;
     scrollingElement.height = window.outerHeight;
     scrollingElement.offsetX = window.screenLeft;
     scrollingElement.offsetY = window.screenTop;
   } else if (trigger instanceof Element) {
+    console.log((trigger as any)?.scrollTop);
+    console.log((trigger as any)?.scrollHeight);
     const rect = trigger.getBoundingClientRect();
     scrollingElement.width = rect.width;
     scrollingElement.height = rect.height;
@@ -32,6 +36,7 @@ const throttledScrollEmitter = throttle(function emitScroll(e: Event) {
     scrollingElement.offsetY =
       rect.top + window.screenTop + window.outerHeight - window.innerHeight;
   }
+  scrollingElement.topPadding = window.outerHeight - window.innerHeight;
   socket.emit("scrollElement", JSON.stringify(scrollingElement));
 }, 50);
 scrollerListener.addListenerTo(document, throttledScrollEmitter);
