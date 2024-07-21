@@ -156,14 +156,14 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
             0.0001 * (currentTime - elePoints[i].timestamp!),
           0
         );
-        if (accumulatedDis > 50) {
+        if (accumulatedDis > 350) {
           accumulatedDis = 0;
           stage = "trailling";
         }
       } else if (stage === "trailling") {
         elePoints[i].pressure = Math.max(
           Math.min(
-            1 - accumulatedDis / 500,
+            1 - accumulatedDis / 100,
             elePoints[i].pressure! -
               0.0001 * (currentTime - elePoints[i].timestamp!)
           ),
@@ -171,7 +171,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         );
       }
     }
-    if (elePoints.length === 4) elePoints = [];
+    if (elePoints.length === 1) elePoints = [];
     elePoints = elePoints.filter((pt) => pt.pressure! > 0);
 
     sceneState.elements[lastIdx]!.points = [...elePoints];

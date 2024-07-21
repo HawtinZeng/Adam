@@ -7,7 +7,7 @@ import {
   Polygon,
   Vector,
 } from "@zenghawtin/graph2d";
-import { ElementRect } from "common/types";
+import { ElementRect } from "commonModule/types";
 import * as d3c from "d3-color";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
