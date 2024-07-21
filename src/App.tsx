@@ -52,6 +52,7 @@ import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
 import { logger } from "src/setup";
 import { multipleScenes, sceneAtom } from "src/state/sceneState";
+import { synchronizer } from "src/state/synchronizer";
 import {
   bgCanvasAtom,
   brushRadius,
@@ -69,8 +70,8 @@ window.Buffer = require("buffer/").Buffer;
 const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = true;
-const debugExtensionScroll = true;
+const showDebugPanel = false;
+const debugExtensionScroll = false;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
@@ -500,11 +501,34 @@ function App() {
   useEffect(() => {
     // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
+  }, []);
 
-    (window as any).ipcRenderer?.on("scrollElement", (e, areaInfos: string) => {
+  useEffect(() => {
+    function scrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
+
+      const b = new Box(
+        areaInfo.offsetX,
+        areaInfo.offsetY,
+        areaInfo.offsetX + areaInfo.width,
+        areaInfo.offsetY + areaInfo.height
+      );
+
+      synchronizer.partition(sceneData.elements, b);
+      const needUpdating = synchronizer.scrollTop(b, areaInfo.scrollTop);
+      if (needUpdating) {
+        redrawAllEles(
+          undefined,
+          undefined,
+          sceneData.elements,
+          undefined,
+          undefined
+        );
+      }
+
       if (debugExtensionScroll) {
         redrawAllEles(undefined, undefined, sceneData.elements);
+        console.log(Number(areaInfo.width));
         drawRectBorder(
           null,
           new Polygon(
@@ -516,31 +540,15 @@ function App() {
             )
           ),
           d3c.rgb("#14C0E0"),
-          10
+          1
         );
       }
-    });
-  }, []);
-
-  async function scrollEles(e: any, wheelData: any) {
-    if (selectedKey !== -1) return;
-    const els = sceneData.elements;
-
-    const delta = wheelData.delta;
-    if (currentFocusedWindow && confirmedScrollPage) {
-      if (currentFocusedWindow.title.includes("Chrome")) {
-        els.forEach((e) => (e.position.y += delta * 100));
-        // logger.log("chrome");
-      } else if (currentFocusedWindow.title.includes("Cursor")) {
-        els.forEach((e) => (e.position.y += delta * 50));
-      } else {
-        // els.forEach((e) => (e.position.y += delta * 80));
-      }
-      // logger.log(currentFocusedWindow.title);
     }
-
-    redrawAllEles(undefined, undefined, els);
-  }
+    (window as any).ipcRenderer?.on("scrollElement", scrollElementHandler);
+    return () => {
+      (window as any).ipcRenderer?.off("scrollElement", scrollElementHandler);
+    };
+  }, [sceneData]);
   let preTitle = "";
 
   const changeWorkspace = async (e, windowInfo: BaseResult) => {
@@ -695,7 +703,7 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    // (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
+    (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -708,10 +716,29 @@ function App() {
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
-      // (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
+      (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
+  async function scrollEles(e: any, wheelData: any) {
+    if (selectedKey !== -1) return;
+    const els = sceneData.elements;
+
+    const delta = wheelData.delta;
+    if (currentFocusedWindow && confirmedScrollPage) {
+      if (currentFocusedWindow.title.includes("Chrome")) {
+        // els.forEach((e) => (e.position.y += delta * 100));
+        // logger.log("chrome");
+      } else if (currentFocusedWindow.title.includes("Cursor")) {
+        els.forEach((e) => (e.position.y += delta * 50));
+      } else {
+        // els.forEach((e) => (e.position.y += delta * 80));
+      }
+      // logger.log(currentFocusedWindow.title);
+    }
+
+    redrawAllEles(undefined, undefined, els);
+  }
   useEffect(() => {
     sceneData.updatingElements = [];
     setSceneData({ ...sceneData });

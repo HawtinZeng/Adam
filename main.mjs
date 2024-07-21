@@ -2,6 +2,7 @@ import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app } from "electron/main";
 import { activeWindow } from "get-windows";
+import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
@@ -27,7 +28,6 @@ const createWindow = () => {
     transparent: true,
     alwaysOnTop: true,
     webPreferences: {
-      // nodeIntegration: true,
       nodeIntegrationInWorker: true,
       contextIsolation: false,
       preload: path.join(__dirname, "./preload.js"),
@@ -90,9 +90,9 @@ async function changeWindowHandler() {
 
 app.whenReady().then(async () => {
   createWindow();
-  // mouseEvt.on("mousewheel", (wheel) => {
-  //   win.webContents.send("mouseWheel", wheel);
-  // });
+  mouseEvt.on("mousewheel", (wheel) => {
+    win.webContents.send("mouseWheel", wheel);
+  });
 
   // adam won't be focused at start up
   win.blur();

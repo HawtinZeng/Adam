@@ -4,4 +4,6 @@ export type ElementRect = {
   offsetX: number;
   offsetY: number;
   topPadding: number;
+  scrollTop: number;
+  scrollHeight: number;
 };

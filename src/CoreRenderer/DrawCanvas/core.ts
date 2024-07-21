@@ -34,6 +34,7 @@ import {
   UpdatingElement,
 } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
+import { synchronizer } from "src/state/synchronizer";
 import { Text } from "src/text/text";
 // @ts-ignore
 import SVGPathCommander from "svg-path-commander";
@@ -303,10 +304,23 @@ export function redrawAllEles(
       } else {
         globalAppCtx!.save();
 
+        const eleCliping = synchronizer?.eleToBox.get(el);
+        if (eleCliping) {
+          globalAppCtx!.beginPath();
+          globalAppCtx!.rect(
+            eleCliping.xmin,
+            eleCliping.ymin,
+            eleCliping.width,
+            eleCliping.height
+          );
+          globalAppCtx!.clip();
+        }
+
         const rotateOrigin = el.rotateOrigin;
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,

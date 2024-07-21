@@ -1,4 +1,5 @@
 import {
+  Box,
   Circle,
   Face,
   ORIENTATION,
@@ -49,6 +50,8 @@ export interface DrawingElement {
   locator?: HTMLCanvasElement;
 
   rotateOrigin: Point; // 旋转中心
+
+  includingPart?: Box;
 }
 
 export type DomElement = {
