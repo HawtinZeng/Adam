@@ -16,7 +16,7 @@ socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
 const latency = 0;
-const scrollerListener = new ScrollListener(5); // PUT IT INTO SETTINGS
+const scrollerListener = new ScrollListener(10); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
   const scrollingElement: ElementRect = {
@@ -54,17 +54,23 @@ function emitScroll(e: Event) {
     scrollingElement.scrollHeight = (trigger as any)?.scrollHeight;
   }
   scrollingElement.topPadding = window.outerHeight - window.innerHeight;
-  loggerIns.log(scrollingElement.width);
   socket.emit("scrollElement", JSON.stringify(scrollingElement));
 }
 const throttledScrollEmitter = throttle(emitScroll, latency);
-scrollerListener.addListenerTo(document, throttledScrollEmitter);
 
-window.scrollerListener = scrollerListener;
-scrollerListener.scrollables.forEach((scrollable) => {
-  // loggerIns.log("emitScroll({ target: scrollable } as unknown as Event)");
-  emitScroll({ target: scrollable } as unknown as Event);
-});
+let count = 0;
+const id = setInterval(() => {
+  if (count < 8 && document.readyState === "complete") {
+    scrollerListener.addListenerTo(document, throttledScrollEmitter);
+    scrollerListener.scrollables.forEach((scrollable) => {
+      emitScroll({ target: scrollable } as unknown as Event);
+    });
+    loggerIns.log(scrollerListener.scrollables.size);
+    count++;
+  } else if (count >= 8) {
+    clearInterval(id);
+  }
+}, 500);
 // globalThis.name = chrome.runtime.getManifest().short_name;
 // globalThis.port = chrome.runtime.connectNative(globalThis.name);
 // port.onMessage.addListener((message) => console.log(message));

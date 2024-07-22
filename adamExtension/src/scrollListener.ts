@@ -12,6 +12,13 @@ function isScrollable(node: Element) {
       node.scrollWidth > node.clientWidth,
   };
 }
+
+declare global {
+  interface Window {
+    scrollLis: ScrollListener;
+  }
+}
+
 /**
  * 监听一个Document的滚动事件
  */
@@ -19,9 +26,10 @@ export class ScrollListener {
   count = 0;
   constructor(public maxDepth: number) {
     this.maxDepth = maxDepth;
+    window.scrollLis = this;
   }
 
-  scrollables: (Element | Document)[] = [];
+  scrollables: Set<Element | Document> = new Set();
   addListenerTo(
     doc: Document,
     handler: (e: Event) => void = function emitScroll(e: Event) {
@@ -30,10 +38,12 @@ export class ScrollListener {
   ) {
     if (!(doc instanceof Document)) return;
 
-    doc.addEventListener("scroll", handler);
-    this.scrollables.push(doc);
+    if (!this.scrollables.has(doc)) {
+      doc.addEventListener("scroll", handler);
+      this.scrollables.add(doc);
+      this.count++;
+    }
 
-    this.count++;
     [...doc.getElementsByTagName("body")[0].children].forEach((n) => {
       this.attachScrollEventToScrollableEle(n, handler, 0);
     });
@@ -48,9 +58,11 @@ export class ScrollListener {
 
     const { vertical, horizontal } = isScrollable(node);
     if (vertical || horizontal) {
-      this.scrollables.push(node);
-      node.addEventListener("scroll", handler);
-      this.count++;
+      if (!this.scrollables.has(node)) {
+        this.scrollables.add(node);
+        node.addEventListener("scroll", handler);
+        this.count++;
+      }
     }
 
     [...node.children].forEach((c) => {
