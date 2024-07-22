@@ -87,7 +87,7 @@ class Synchronizer {
     if (b) {
       const exist = this.scrollTopMap.get(b) ?? scrollTop;
       this.scrollTopMap.set(b, scrollTop);
-      delta = exist - scrollTop; // scrollTop 与position.y 的计算方式是相反的
+      delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
       const scrolledEles = this.elesMap.get(b);
 
       scrolledEles?.forEach((el) => {

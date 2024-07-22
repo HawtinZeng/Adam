@@ -79,7 +79,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
       newFreeElement.strokeColor =
         colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
       // updated property, size是ui控件的直径
-      newFreeElement.strokeOptions.size = size / 4;
+      if (newFreeElement.strokeOptions)
+        newFreeElement.strokeOptions.size = size / 4;
 
       // trigger DrawCanvas re-render
       sceneState.elements.push(newFreeElement);
