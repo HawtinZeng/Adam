@@ -52,8 +52,12 @@ import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
 import { logger } from "src/setup";
-import { multipleScenes, sceneAtom } from "src/state/sceneState";
-import { synchronizer } from "src/state/synchronizer";
+import {
+  multipleScenes,
+  multipleSynchronizer,
+  sceneAtom,
+} from "src/state/sceneState";
+import { Synchronizer, globalSynchronizer } from "src/state/synchronizer";
 import {
   bgCanvasAtom,
   brushRadius,
@@ -517,10 +521,15 @@ function App() {
       );
 
       try {
-        synchronizer.partition(sceneData.elements, b);
+        if (!globalSynchronizer.value) return;
+        globalSynchronizer.value.partition(sceneData.elements, b);
       } catch (e) {}
 
-      const needUpdating = synchronizer.scrollTop(b, areaInfo.scrollTop);
+      if (!globalSynchronizer.value) return;
+      const needUpdating = globalSynchronizer.value.scrollTop(
+        b,
+        areaInfo.scrollTop
+      );
       if (needUpdating) {
         redrawAllEles(
           undefined,
@@ -555,16 +564,26 @@ function App() {
   }, [sceneData]);
 
   const changeWorkspace = async (e, windowInfo?: BaseResult | undefined) => {
-    // save previous scene data
     if (!windowInfo) return;
 
     currentFocusedWindow = windowInfo;
     multipleScenes.set(sceneData.windowId, { ...sceneData });
+    if (globalSynchronizer.value)
+      multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
+
     if (debugChangeWorkspace)
       logger.log(
         `save ${sceneData.windowId}, ${currentFocusedWindow.title}, ${sceneData.elements.length}`
       );
     const exist = multipleScenes.get(windowInfo.id);
+    const existSynchronizer = multipleSynchronizer.get(windowInfo.id);
+
+    if (!existSynchronizer) {
+      globalSynchronizer.value = new Synchronizer();
+    } else {
+      globalSynchronizer.value = existSynchronizer;
+    }
+
     if (!exist) {
       sceneData.elements = [];
       sceneData.domElements = [];
@@ -574,29 +593,9 @@ function App() {
           `create ${windowInfo.id}, ${windowInfo.title}, ${sceneData.elements.length}`
         );
 
-      // imageCapture = await getCapture(`window:${sceneData.windowId}:0`);
-      try {
-        // const img = await imageCapture?.grabFrame();
-      } catch (e) {
-        logger.error(e as Error);
-      }
-      // if (img) {
-      //   downloadImage(img, `window:${sceneData.windowId}:0`);
-      // }
-
       setSceneData({ ...sceneData });
       clearMainCanvas();
     } else {
-      // imageCapture = await getCapture(`window:${exist.windowId}:0`);
-      try {
-        // const img = await imageCapture?.grabFrame();
-      } catch (e) {
-        logger.error(e as Error);
-      }
-      // if (img) {
-      //   downloadImage(img, `window:${exist.windowId}:0`);
-      // }
-
       setSceneData({ ...exist });
       redrawAllEles(undefined, undefined, exist.elements);
     }
@@ -687,7 +686,7 @@ function App() {
       sceneData.elements.length = 0;
       sceneData.frames.length = 0;
       clearMainCanvas();
-      synchronizer.clearAllEles();
+      globalSynchronizer.value?.clearAllEles();
     };
 
     const altQHandler = () => {

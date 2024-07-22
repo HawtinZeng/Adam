@@ -34,7 +34,7 @@ import {
   UpdatingElement,
 } from "src/drawingElements/data/scene";
 import { coreThreadPool, logger } from "src/setup";
-import { synchronizer } from "src/state/synchronizer";
+import { globalSynchronizer } from "src/state/synchronizer";
 import { Text } from "src/text/text";
 // @ts-ignore
 import SVGPathCommander from "svg-path-commander";
@@ -304,7 +304,7 @@ export function redrawAllEles(
       } else {
         globalAppCtx!.save();
 
-        const eleCliping = synchronizer?.eleToBox.get(el);
+        const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
         if (eleCliping) {
           globalAppCtx!.beginPath();
           globalAppCtx!.rect(
@@ -512,7 +512,8 @@ export function removeBlankEle(
     if (el.type === DrawingType.img) return;
     const prevLen = sceneState.elements.length;
     const elCvs = drawingCanvasCache.ele2DrawingCanvas.get(el)!;
-    const ctx = elCvs.getContext("2d", { willReadFrequently: true })!;
+    const ctx = elCvs?.getContext("2d", { willReadFrequently: true })!;
+    if (!ctx) return;
     const imageData = ctx.getImageData(0, 0, elCvs.width, elCvs.height);
     coreThreadPool.exec(getIsDeletedFlag, [imageData.data]).then((r) => {
       el.isDeleted = r;

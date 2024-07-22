@@ -13,13 +13,10 @@ declare global {
   }
 }
 
-class Synchronizer {
+export class Synchronizer {
   areasMap: Map<string, Box> = new Map();
   elesMap: Map<Box, DrawingElement[]> = new Map();
   scrollTopMap: Map<Box, number> = new Map();
-  constructor() {
-    window.synchronizer = this;
-  }
 
   // add or get
   addArea(b: Box) {
@@ -142,4 +139,4 @@ class Synchronizer {
     });
   }
 }
-export const synchronizer = new Synchronizer();
+export const globalSynchronizer: { value?: Synchronizer } = {};
