@@ -81,7 +81,7 @@ const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
-const debugExtensionScroll = true;
+const debugExtensionScroll = false;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
@@ -632,7 +632,7 @@ function App() {
     // put not included elements into the areas of the current window
     globalSynchronizer.value?.partition(sceneData.elements);
     redrawAllEles(undefined, undefined, sceneData.elements);
-    globalSynchronizer.value?.drawAllAreas();
+    // globalSynchronizer.value?.drawAllAreas();
   }
 
   useEffect(() => {

@@ -145,7 +145,7 @@ export class Synchronizer {
         console.log("false");
     });
   }
-
+  // for debug
   drawAllAreas() {
     this.areasMap.forEach((b) => {
       drawRectBorder(null, new Polygon(b), d3c.rgb("#14C0E0"), 1);
