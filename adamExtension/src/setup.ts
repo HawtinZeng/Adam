@@ -16,7 +16,7 @@ socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
 const latency = 0;
-const scrollerListener = new ScrollListener(10); // PUT IT INTO SETTINGS
+const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
   const scrollingElement: ElementRect = {
@@ -44,7 +44,7 @@ function emitScroll(e: Event) {
       trigger as any
     )?.scrollingElement.scrollHeight;
   } else if (trigger instanceof Element) {
-    const rect = trigger.getBoundingClientRect();
+    const rect = trigger.getBoundingClientRect(); // have conflicts with https://leetcode.com/problems/maximum-score-from-grid-operations/solutions/5512718/clean-java-recursive-dp/ and https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
     scrollingElement.width = rect.width;
     scrollingElement.height = rect.height;
     scrollingElement.offsetX = rect.left + window.screenLeft;

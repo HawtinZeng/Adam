@@ -114,8 +114,6 @@ export async function getCapture(sourceId: string) {
   }
 }
 
-let imageCapture: ImageCapture | undefined;
-
 function isBevelHandle(hand: TransformHandle | undefined) {
   if (!hand) return false;
   return [

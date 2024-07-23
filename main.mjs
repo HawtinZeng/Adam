@@ -59,7 +59,6 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   if (ignore) {
     win.blur();
   } else {
-    win.focus();
   }
 });
 
@@ -96,6 +95,20 @@ app.whenReady().then(async () => {
   createWindow();
   mouseEvt.on("mousewheel", (wheel) => {
     win.webContents.send("mouseWheel", wheel);
+  });
+
+  function changeGlobalMousePress() {
+    globalMousePress =
+      globalMousePress === "unPressing" ? "pressing" : "unPressing";
+    if (globalMousePress === "pressing") {
+    }
+  }
+  mouseEvt.on("mousedown", () => {
+    win.webContents.send("toggleMousePress");
+  });
+
+  mouseEvt.on("mouseup", () => {
+    win.webContents.send("toggleMousePress");
   });
 
   // adam won't be focused at start up
