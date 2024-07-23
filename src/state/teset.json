@@ -1,0 +1,277 @@
+{
+  "[object Object]": [
+    {
+      "type": "freeDraw",
+      "points": [
+        { "x": 950, "y": 615, "pressure": 1, "timestamp": 1721730277383 },
+        { "x": 936, "y": 617, "pressure": 1, "timestamp": 1721730277384 },
+        { "x": 931, "y": 618, "pressure": 1, "timestamp": 1721730277391 },
+        { "x": 925, "y": 619, "pressure": 1, "timestamp": 1721730277407 },
+        { "x": 919, "y": 622, "pressure": 1, "timestamp": 1721730277419 },
+        { "x": 916, "y": 625, "pressure": 1, "timestamp": 1721730277434 },
+        { "x": 913, "y": 630, "pressure": 1, "timestamp": 1721730277451 },
+        { "x": 913, "y": 636, "pressure": 1, "timestamp": 1721730277468 },
+        { "x": 915, "y": 643, "pressure": 1, "timestamp": 1721730277484 },
+        { "x": 926, "y": 653, "pressure": 1, "timestamp": 1721730277500 },
+        { "x": 944, "y": 664, "pressure": 1, "timestamp": 1721730277517 },
+        { "x": 970, "y": 670, "pressure": 1, "timestamp": 1721730277534 },
+        { "x": 1012, "y": 671, "pressure": 1, "timestamp": 1721730277551 },
+        { "x": 1058, "y": 668, "pressure": 1, "timestamp": 1721730277567 },
+        { "x": 1105, "y": 660, "pressure": 1, "timestamp": 1721730277584 },
+        { "x": 1146, "y": 654, "pressure": 1, "timestamp": 1721730277601 },
+        { "x": 1172, "y": 643, "pressure": 1, "timestamp": 1721730277617 },
+        { "x": 1172, "y": 639, "pressure": 1, "timestamp": 1721730277634 },
+        { "x": 1167, "y": 632, "pressure": 1, "timestamp": 1721730277651 },
+        { "x": 1158, "y": 626, "pressure": 1, "timestamp": 1721730277667 },
+        { "x": 1144, "y": 622, "pressure": 1, "timestamp": 1721730277684 },
+        { "x": 1125, "y": 619, "pressure": 1, "timestamp": 1721730277701 },
+        { "x": 1100, "y": 617, "pressure": 1, "timestamp": 1721730277717 },
+        { "x": 1062, "y": 616, "pressure": 1, "timestamp": 1721730277734 },
+        { "x": 1028, "y": 614, "pressure": 1, "timestamp": 1721730277751 },
+        { "x": 1001, "y": 613, "pressure": 1, "timestamp": 1721730277769 },
+        { "x": 984, "y": 612, "pressure": 1, "timestamp": 1721730277784 },
+        { "x": 980, "y": 612, "pressure": 1, "timestamp": 1721730277801 },
+        { "x": 979, "y": 613, "pressure": 1, "timestamp": 1721730277817 },
+        { "x": 979, "y": 614, "pressure": 1, "timestamp": 1721730277850 },
+        { "x": 978, "y": 615, "pressure": 1, "timestamp": 1721730277867 },
+        { "x": 978, "y": 617, "pressure": 1, "timestamp": 1721730277876 }
+      ],
+      "excludeArea": [],
+      "needSimulate": true,
+      "id": "KkFi_3R51iU061K0dOe0h",
+      "strokeColor": "#238e9d",
+      "strokeStyle": "solid",
+      "fillStyle": "solid",
+      "opacity": 1,
+      "belongedFrame": "defaultFrameId",
+      "belongedGroup": "defaultGrp",
+      "status": "notLocked",
+      "isDeleted": false,
+      "position": { "x": 40, "y": -98 },
+      "rotation": 0,
+      "strokeOptions": {
+        "size": 5,
+        "thinning": 0.7,
+        "start": { "cap": true },
+        "end": { "cap": true },
+        "isCtxStroke": false,
+        "smoothing": 0.9,
+        "streamline": 0.9,
+        "strokeColor": "#000000"
+      },
+      "boundary": [
+        [
+          [
+            {
+              "ps": { "x": 946, "y": 513, "name": "point" },
+              "pe": { "x": 924, "y": 521, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 924, "y": 521, "name": "point" },
+              "pe": { "x": 920, "y": 536, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 920, "y": 536, "name": "point" },
+              "pe": { "x": 938, "y": 551, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 938, "y": 551, "name": "point" },
+              "pe": { "x": 966, "y": 558, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 966, "y": 558, "name": "point" },
+              "pe": { "x": 1073, "y": 556, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1073, "y": 556, "name": "point" },
+              "pe": { "x": 1116, "y": 547, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1116, "y": 547, "name": "point" },
+              "pe": { "x": 1129, "y": 536, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1129, "y": 536, "name": "point" },
+              "pe": { "x": 1111, "y": 525, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1111, "y": 525, "name": "point" },
+              "pe": { "x": 1002, "y": 514, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1002, "y": 514, "name": "point" },
+              "pe": { "x": 1001, "y": 518, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1001, "y": 518, "name": "point" },
+              "pe": { "x": 1106, "y": 527, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1106, "y": 527, "name": "point" },
+              "pe": { "x": 1124, "y": 538, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1124, "y": 538, "name": "point" },
+              "pe": { "x": 1069, "y": 553, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1069, "y": 553, "name": "point" },
+              "pe": { "x": 971, "y": 556, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 971, "y": 556, "name": "point" },
+              "pe": { "x": 941, "y": 549, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 941, "y": 549, "name": "point" },
+              "pe": { "x": 925, "y": 537, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 925, "y": 537, "name": "point" },
+              "pe": { "x": 930, "y": 523, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 930, "y": 523, "name": "point" },
+              "pe": { "x": 952, "y": 517, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 952, "y": 517, "name": "point" },
+              "pe": { "x": 946, "y": 513, "name": "point" },
+              "name": "segment"
+            }
+          ]
+        ]
+      ],
+      "scale": { "x": 1, "y": 1 },
+      "rotateOrigin": { "x": 1024.5, "y": 634.5, "name": "point" },
+      "needCacheCanvas": true,
+      "oriBoundary": [
+        [
+          [
+            {
+              "ps": { "x": 946, "y": 612, "name": "point" },
+              "pe": { "x": 924, "y": 620, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 924, "y": 620, "name": "point" },
+              "pe": { "x": 920, "y": 635, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 920, "y": 635, "name": "point" },
+              "pe": { "x": 938, "y": 650, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 938, "y": 650, "name": "point" },
+              "pe": { "x": 966, "y": 657, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 966, "y": 657, "name": "point" },
+              "pe": { "x": 1073, "y": 655, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1073, "y": 655, "name": "point" },
+              "pe": { "x": 1116, "y": 646, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1116, "y": 646, "name": "point" },
+              "pe": { "x": 1129, "y": 635, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1129, "y": 635, "name": "point" },
+              "pe": { "x": 1111, "y": 624, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1111, "y": 624, "name": "point" },
+              "pe": { "x": 1002, "y": 613, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1002, "y": 613, "name": "point" },
+              "pe": { "x": 1001, "y": 617, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1001, "y": 617, "name": "point" },
+              "pe": { "x": 1106, "y": 626, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1106, "y": 626, "name": "point" },
+              "pe": { "x": 1124, "y": 637, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1124, "y": 637, "name": "point" },
+              "pe": { "x": 1069, "y": 652, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 1069, "y": 652, "name": "point" },
+              "pe": { "x": 971, "y": 655, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 971, "y": 655, "name": "point" },
+              "pe": { "x": 941, "y": 648, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 941, "y": 648, "name": "point" },
+              "pe": { "x": 925, "y": 636, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 925, "y": 636, "name": "point" },
+              "pe": { "x": 930, "y": 622, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 930, "y": 622, "name": "point" },
+              "pe": { "x": 952, "y": 616, "name": "point" },
+              "name": "segment"
+            },
+            {
+              "ps": { "x": 952, "y": 616, "name": "point" },
+              "pe": { "x": 946, "y": 612, "name": "point" },
+              "name": "segment"
+            }
+          ]
+        ]
+      ],
+      "oriexcludeArea": [],
+      "includingPart": {
+        "xmin": 452,
+        "ymin": 263,
+        "xmax": 2033,
+        "ymax": 1148,
+        "name": "box"
+      }
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import { createServer } from "http";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let win;
-
+let globalMousePress = "unPressing";
 console.error = () => {};
 
 const createWindow = () => {
@@ -77,7 +77,6 @@ v.addListener(function (e) {
 let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
-  win.webContents.send("changeWindowWithoutCondition");
 
   if (
     currentWindow?.id &&
@@ -89,7 +88,6 @@ async function changeWindowHandler() {
     preFocusedWindow = currentWindow;
   }
 }
-// ipcMain.on("updateFocusedWindow", changeWindowHandler);
 
 app.whenReady().then(async () => {
   createWindow();
@@ -97,18 +95,21 @@ app.whenReady().then(async () => {
     win.webContents.send("mouseWheel", wheel);
   });
 
-  function changeGlobalMousePress() {
+  mouseEvt.on("mousemove", async () => {
+    if (globalMousePress === "pressing") {
+      const winInfo = await activeWindow();
+      win.webContents.send("mousedrag", winInfo);
+    }
+  });
+
+  mouseEvt.on("mousedown", () => {
     globalMousePress =
       globalMousePress === "unPressing" ? "pressing" : "unPressing";
-    if (globalMousePress === "pressing") {
-    }
-  }
-  mouseEvt.on("mousedown", () => {
-    win.webContents.send("toggleMousePress");
   });
 
   mouseEvt.on("mouseup", () => {
-    win.webContents.send("toggleMousePress");
+    globalMousePress =
+      globalMousePress === "unPressing" ? "pressing" : "unPressing";
   });
 
   // adam won't be focused at start up

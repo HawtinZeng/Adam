@@ -81,10 +81,24 @@ const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
-const debugExtensionScroll = false;
+const debugExtensionScroll = true;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
+
+const isNotEqual = (
+  win1: BaseResult | undefined,
+  win2: BaseResult | undefined
+) => {
+  if (win1 === undefined || win2 === undefined) return false;
+  return (
+    win1.bounds.x !== win2.bounds.x ||
+    win1.bounds.y !== win2.bounds.y ||
+    win1.bounds.width !== win2.bounds.width ||
+    win1.bounds.height !== win2.bounds.height
+  );
+};
+
 let stream: MediaStream | undefined;
 const cap = new Map<string, ImageCapture>();
 let confirmedScrollPage = true;
@@ -211,7 +225,6 @@ function App() {
         };
         return;
       }
-
       change2DefaultCursor();
     },
     [
@@ -389,7 +402,6 @@ function App() {
             // FreeDrawing
           }
         } else {
-          // rotation
           if (
             el.type === DrawingType.img ||
             el.type === DrawingType.rectangle ||
@@ -410,10 +422,6 @@ function App() {
             el.rotation = deltaRotation + originalRotation;
 
             el.boundary[0] = getBoundryPoly(el)!;
-
-            // el.boundary[0].vertices.forEach((v) => {
-            //   drawAPoint(v);
-            // });
           }
         }
         setSceneData({ ...sceneData });
@@ -509,7 +517,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    function scrollElementHandler(e, areaInfos: string) {
+    function extensionScrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
       const b = new Box(
         areaInfo.offsetX,
@@ -517,10 +525,12 @@ function App() {
         areaInfo.offsetX + areaInfo.width,
         areaInfo.offsetY + areaInfo.height
       );
-
       try {
         if (!globalSynchronizer.value) return;
         globalSynchronizer.value.partition(sceneData.elements, b);
+        globalSynchronizer.value.updateWindowInfo({
+          topPadding: areaInfo.topPadding,
+        });
       } catch (e) {}
 
       if (!globalSynchronizer.value) return;
@@ -555,9 +565,15 @@ function App() {
         );
       }
     }
-    (window as any).ipcRenderer?.on("scrollElement", scrollElementHandler);
+    (window as any).ipcRenderer?.on(
+      "scrollElement",
+      extensionScrollElementHandler
+    );
     return () => {
-      (window as any).ipcRenderer?.off("scrollElement", scrollElementHandler);
+      (window as any).ipcRenderer?.off(
+        "scrollElement",
+        extensionScrollElementHandler
+      );
     };
   }, [sceneData]);
 
@@ -598,6 +614,26 @@ function App() {
       redrawAllEles(undefined, undefined, exist.elements);
     }
   };
+
+  function mousedragHandler(_: any, windowInfo: BaseResult) {
+    if (windowInfo.title === "Adam") return;
+    if (isNotEqual(windowInfo, currentFocusedWindow)) {
+      if (globalSynchronizer.value)
+        globalSynchronizer.value.updateArea(
+          new Box(
+            windowInfo.bounds.x,
+            windowInfo.bounds.y,
+            windowInfo.bounds.x + windowInfo.bounds.width,
+            windowInfo.bounds.y + windowInfo.bounds.height
+          )
+        );
+    }
+
+    // put not included elements into the areas of the current window
+    globalSynchronizer.value?.partition(sceneData.elements);
+    redrawAllEles(undefined, undefined, sceneData.elements);
+    globalSynchronizer.value?.drawAllAreas();
+  }
 
   useEffect(() => {
     if (bg) screenShotter.current = new ScreenShotter(bg);
@@ -702,7 +738,8 @@ function App() {
     (window as any).ipcRenderer?.on("AltC", altCHandler);
     (window as any).ipcRenderer?.on("AltQ", altQHandler);
     (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    (window as any).ipcRenderer?.on("mouseWheel", scrollEles);
+    (window as any).ipcRenderer?.on("mouseWheel", globalScrollEles);
+    (window as any).ipcRenderer?.on("mousedrag", mousedragHandler); // mousedrag
     return () => {
       (window as any).ipcRenderer?.off("Alt1", alt1Handler);
       (window as any).ipcRenderer?.off("Alt2", alt2Handler);
@@ -715,25 +752,21 @@ function App() {
       (window as any).ipcRenderer?.off("AltC", altCHandler);
       (window as any).ipcRenderer?.off("AltQ", altQHandler);
       (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
-      (window as any).ipcRenderer?.off("mouseWheel", scrollEles);
+      (window as any).ipcRenderer?.off("mouseWheel", globalScrollEles);
+      (window as any).ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
-  async function scrollEles(e: any, wheelData: any) {
+  async function globalScrollEles(e: any, wheelData: any) {
     if (selectedKey !== -1) return;
     const els = sceneData.elements;
 
     const delta = wheelData.delta;
     if (currentFocusedWindow && confirmedScrollPage) {
       if (currentFocusedWindow.title.includes("Chrome")) {
-        // els.forEach((e) => (e.position.y += delta * 100));
-        // logger.log("chrome");
       } else if (currentFocusedWindow.title.includes("Cursor")) {
         els.forEach((e) => (e.position.y += delta * 50));
-      } else {
-        // els.forEach((e) => (e.position.y += delta * 80));
       }
-      // logger.log(currentFocusedWindow.title);
     }
 
     redrawAllEles(undefined, undefined, els);

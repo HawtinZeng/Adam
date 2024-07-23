@@ -1,5 +1,7 @@
 import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
+import * as d3c from "d3-color";
 import { debounce } from "lodash";
+import { drawRectBorder } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -10,13 +12,19 @@ declare global {
   interface Window {
     synchronizer: Synchronizer;
     eles: DrawingElement[];
+    Synchronizer?: Synchronizer;
   }
 }
 
 export class Synchronizer {
   areasMap: Map<string, Box> = new Map();
   elesMap: Map<Box, DrawingElement[]> = new Map();
+
   scrollTopMap: Map<Box, number> = new Map();
+  topPadding?: number;
+  constructor() {
+    window.Synchronizer = this;
+  }
 
   // add or get
   addArea(b: Box) {
@@ -41,8 +49,11 @@ export class Synchronizer {
   /*
     给没有分区的元素分区，然后记录这个分区
   */
-  partition(eles: DrawingElement[], area: Box) {
-    this.addArea(area);
+  partition(eles: DrawingElement[], area?: Box) {
+    if (area) {
+      this.addArea(area);
+    }
+
     const withoutIncludingParts = eles.filter((e) => !e.includingPart);
     withoutIncludingParts.forEach((ele) => {
       let boundingPoly: Polygon | undefined;
@@ -68,7 +79,12 @@ export class Synchronizer {
       const exists = this.elesMap.get(containsArea)!;
       exists.push(ele);
     });
-    window.eles = eles;
+
+    let contentArea: Box = new Box(1, 1, 2, 2);
+    this.areasMap.forEach((b) => {
+      if (new Polygon(contentArea).area() < new Polygon(b).area())
+        contentArea = b;
+    });
   }
 
   scrollTop(scrollArea: Box, scrollTop: number): boolean {
@@ -86,7 +102,6 @@ export class Synchronizer {
       this.scrollTopMap.set(b, scrollTop);
       delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
       const scrolledEles = this.elesMap.get(b);
-
       scrolledEles?.forEach((el) => {
         el.position.y += delta;
         debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 500)();
@@ -97,27 +112,46 @@ export class Synchronizer {
   }
 
   updateArea(newArea: Box) {
-    const ks = [...this.areasMap.keys()];
-    let i;
-    for (i = 0; i < ks.length; i++) {
-      const b = this.areasMap.get(ks[i]);
-      if (b && this.approximatelySame(b, newArea)) {
-        break;
-      }
-    }
-    const originalBox = this.areasMap.get(ks[i]);
-    if (!originalBox) return;
+    if (this.topPadding === undefined) return;
+    let contentArea: Box = new Box(-1, -1, 2, 2);
 
-    originalBox.xmin = newArea.xmin;
-    originalBox.xmax = newArea.xmax;
-    originalBox.ymin = newArea.ymin;
-    originalBox.ymax = newArea.ymax;
+    globalSynchronizer.value?.areasMap.forEach((b) => {
+      if (new Polygon(contentArea).area() < new Polygon(b).area())
+        contentArea = b;
+    });
+    const deltaXmin = newArea.xmin - contentArea.xmin;
+    const deltaXmax = newArea.xmax - contentArea.xmax;
+    const deltaYmin = newArea.ymin - (contentArea.ymin - this.topPadding);
+    const deltaYmax = newArea.ymax - (contentArea.ymax - this.topPadding);
 
-    this.areasMap.delete(ks[i]);
-    this.areasMap.set(
-      `${originalBox.xmin}-${originalBox.xmin}-${originalBox.ymin}-${originalBox.ymax}`,
-      originalBox
-    );
+    this.areasMap.forEach((b) => {
+      b.xmin += deltaXmin;
+      b.ymin += deltaYmin;
+      b.xmax += deltaXmax;
+      b.ymax += deltaYmax;
+      this.elesMap.get(b)?.forEach((e) => {
+        e.position.x += deltaXmin;
+        e.position.y += deltaYmin;
+      });
+    });
+
+    // replace these keys.
+    const updatedBoxes = [...this.areasMap.values()];
+    this.areasMap = new Map();
+    updatedBoxes.forEach((b) => {
+      this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
+    });
+    // test whether have some incompatable area box
+    [...this.areasMap.values()].forEach((k) => {
+      if (![...this.elesMap.keys()].find((k1) => k === k1))
+        console.log("false");
+    });
+  }
+
+  drawAllAreas() {
+    this.areasMap.forEach((b) => {
+      drawRectBorder(null, new Polygon(b), d3c.rgb("#14C0E0"), 1);
+    });
   }
 
   approximatelySame(a: Box, b: Box) {
@@ -137,6 +171,10 @@ export class Synchronizer {
     this.elesMap.forEach((els, box) => {
       els.length = 0;
     });
+  }
+
+  updateWindowInfo({ topPadding }: { topPadding: number }) {
+    if (topPadding !== undefined) this.topPadding = topPadding;
   }
 }
 export const globalSynchronizer: { value?: Synchronizer } = {};
