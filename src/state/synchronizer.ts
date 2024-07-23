@@ -79,17 +79,12 @@ export class Synchronizer {
       const exists = this.elesMap.get(containsArea)!;
       exists.push(ele);
     });
-
-    let contentArea: Box = new Box(1, 1, 2, 2);
-    this.areasMap.forEach((b) => {
-      if (new Polygon(contentArea).area() < new Polygon(b).area())
-        contentArea = b;
-    });
   }
 
   scrollTop(scrollArea: Box, scrollTop: number): boolean {
     const ks = [...this.areasMap.keys()];
     let b: Box | undefined;
+
     for (let i = 0; i < ks.length; i++) {
       b = this.areasMap.get(ks[i]);
       if (b && this.approximatelySame(b, scrollArea)) {
@@ -102,9 +97,10 @@ export class Synchronizer {
       this.scrollTopMap.set(b, scrollTop);
       delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
       const scrolledEles = this.elesMap.get(b);
+      // refer rest.json: logger.log(JSON.stringify([...this.areasMap.values()]));
       scrolledEles?.forEach((el) => {
         el.position.y += delta;
-        debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 500)();
+        debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 300)();
       });
       return !!scrolledEles?.length;
     }
