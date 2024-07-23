@@ -54,31 +54,33 @@ export class Synchronizer {
       this.addArea(area);
     }
 
-    const withoutIncludingParts = eles.filter((e) => !e.includingPart);
-    withoutIncludingParts.forEach((ele) => {
-      let boundingPoly: Polygon | undefined;
-      if (ele.type === DrawingType.freeDraw) {
-        boundingPoly = new Polygon(
-          (ele as FreeDrawing).oriBoundary[0].box.translate(
-            new Vector(ele.position.x, ele.position.y)
-          )
+    try {
+      const withoutIncludingParts = eles.filter((e) => !e.includingPart);
+      withoutIncludingParts.forEach((ele) => {
+        let boundingPoly: Polygon | undefined;
+        if (ele.type === DrawingType.freeDraw) {
+          boundingPoly = new Polygon(
+            (ele as FreeDrawing).oriBoundary[0]?.box.translate(
+              new Vector(ele.position.x, ele.position.y)
+            )
+          );
+        } else {
+          boundingPoly = getBoundryPoly(ele);
+        }
+
+        const allAreas = [...this.areasMap.values()];
+        allAreas.sort((a, b) =>
+          new Polygon(a).area > new Polygon(b).area ? 1 : -1
         );
-      } else {
-        boundingPoly = getBoundryPoly(ele);
-      }
+        if (!boundingPoly) return;
+        const containsArea = allAreas.find((a) => a.contains(boundingPoly));
+        if (!containsArea) return;
 
-      const allAreas = [...this.areasMap.values()];
-      allAreas.sort((a, b) =>
-        new Polygon(a).area > new Polygon(b).area ? 1 : -1
-      );
-      if (!boundingPoly) return;
-      const containsArea = allAreas.find((a) => a.contains(boundingPoly));
-      if (!containsArea) return;
-
-      ele.includingPart = containsArea;
-      const exists = this.elesMap.get(containsArea)!;
-      exists.push(ele);
-    });
+        ele.includingPart = containsArea;
+        const exists = this.elesMap.get(containsArea)!;
+        exists.push(ele);
+      });
+    } catch (e) {}
   }
 
   scrollTop(scrollArea: Box, scrollTop: number): boolean {
