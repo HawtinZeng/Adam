@@ -13,6 +13,7 @@ declare global {
     synchronizer: Synchronizer;
     eles: DrawingElement[];
     Synchronizer?: Synchronizer;
+    globalSynchronizer?: { value?: Synchronizer };
   }
 }
 
@@ -144,6 +145,9 @@ export class Synchronizer {
       if (![...this.elesMap.keys()].find((k1) => k === k1))
         console.log("false");
     });
+
+    console.log(this.elesMap);
+    console.log(this.areasMap);
   }
   // for debug
   drawAllAreas() {
@@ -176,3 +180,4 @@ export class Synchronizer {
   }
 }
 export const globalSynchronizer: { value?: Synchronizer } = {};
+window.globalSynchronizer = globalSynchronizer;

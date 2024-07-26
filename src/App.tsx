@@ -565,15 +565,9 @@ function App() {
         );
       }
     }
-    (window as any).ipcRenderer?.on(
-      "scrollElement",
-      extensionScrollElementHandler
-    );
+    window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
     return () => {
-      (window as any).ipcRenderer?.off(
-        "scrollElement",
-        extensionScrollElementHandler
-      );
+      window.ipcRenderer?.off("scrollElement", extensionScrollElementHandler);
     };
   }, [sceneData]);
 
@@ -727,33 +721,33 @@ function App() {
       setSeletedKey(-1);
       setTransparent();
     };
-    (window as any).ipcRenderer?.on("Alt1", alt1Handler);
-    (window as any).ipcRenderer?.on("Alt2", alt2Handler);
-    (window as any).ipcRenderer?.on("Alt3", alt3Handler);
-    (window as any).ipcRenderer?.on("Alt4", alt4Handler);
-    (window as any).ipcRenderer?.on("Alt5", alt5Handler);
-    (window as any).ipcRenderer?.on("Alt6", alt6Handler);
-    (window as any).ipcRenderer?.on("Alt7", alt7Handler);
-    (window as any).ipcRenderer?.on("Alt8", alt8Handler);
-    (window as any).ipcRenderer?.on("AltC", altCHandler);
-    (window as any).ipcRenderer?.on("AltQ", altQHandler);
-    (window as any).ipcRenderer?.on("changeWindow", changeWorkspace);
-    (window as any).ipcRenderer?.on("mouseWheel", globalScrollEles);
-    (window as any).ipcRenderer?.on("mousedrag", mousedragHandler); // mousedrag
+    window.ipcRenderer?.on("Alt1", alt1Handler);
+    window.ipcRenderer?.on("Alt2", alt2Handler);
+    window.ipcRenderer?.on("Alt3", alt3Handler);
+    window.ipcRenderer?.on("Alt4", alt4Handler);
+    window.ipcRenderer?.on("Alt5", alt5Handler);
+    window.ipcRenderer?.on("Alt6", alt6Handler);
+    window.ipcRenderer?.on("Alt7", alt7Handler);
+    window.ipcRenderer?.on("Alt8", alt8Handler);
+    window.ipcRenderer?.on("AltC", altCHandler);
+    window.ipcRenderer?.on("AltQ", altQHandler);
+    window.ipcRenderer?.on("changeWindow", changeWorkspace);
+    window.ipcRenderer?.on("mouseWheel", globalScrollEles);
+    window.ipcRenderer?.on("mousedrag", mousedragHandler); // mousedrag
     return () => {
-      (window as any).ipcRenderer?.off("Alt1", alt1Handler);
-      (window as any).ipcRenderer?.off("Alt2", alt2Handler);
-      (window as any).ipcRenderer?.off("Alt3", alt3Handler);
-      (window as any).ipcRenderer?.off("Alt4", alt4Handler);
-      (window as any).ipcRenderer?.off("Alt5", alt5Handler);
-      (window as any).ipcRenderer?.off("Alt6", alt6Handler);
-      (window as any).ipcRenderer?.off("Alt7", alt7Handler);
-      (window as any).ipcRenderer?.off("Alt8", alt8Handler);
-      (window as any).ipcRenderer?.off("AltC", altCHandler);
-      (window as any).ipcRenderer?.off("AltQ", altQHandler);
-      (window as any).ipcRenderer?.off("changeWindow", changeWorkspace);
-      (window as any).ipcRenderer?.off("mouseWheel", globalScrollEles);
-      (window as any).ipcRenderer?.off("mousedrag", mousedragHandler);
+      window.ipcRenderer?.off("Alt1", alt1Handler);
+      window.ipcRenderer?.off("Alt2", alt2Handler);
+      window.ipcRenderer?.off("Alt3", alt3Handler);
+      window.ipcRenderer?.off("Alt4", alt4Handler);
+      window.ipcRenderer?.off("Alt5", alt5Handler);
+      window.ipcRenderer?.off("Alt6", alt6Handler);
+      window.ipcRenderer?.off("Alt7", alt7Handler);
+      window.ipcRenderer?.off("Alt8", alt8Handler);
+      window.ipcRenderer?.off("AltC", altCHandler);
+      window.ipcRenderer?.off("AltQ", altQHandler);
+      window.ipcRenderer?.off("changeWindow", changeWorkspace);
+      window.ipcRenderer?.off("mouseWheel", globalScrollEles);
+      window.ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
@@ -800,6 +794,8 @@ function App() {
       screenShotter.current?.terminateScreenShot();
 
     if (selectedKey !== -1) {
+      console.log("change selected key");
+      window.ipcRenderer.send("blurAdamWindow");
       window.ipcRenderer.send("checkWindow");
     }
 

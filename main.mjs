@@ -58,8 +58,12 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   win.setIgnoreMouseEvents(ignore, options);
   if (ignore) {
     win.blur();
-  } else {
   }
+});
+
+ipcMain.on("blurAdamWindow", (_) => {
+  console.log("blur...");
+  win.blur();
 });
 
 ipcMain.on("checkWindow", (e) => {
@@ -77,11 +81,13 @@ v.addListener(function (e) {
 let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
-
+  console.log("currentWindow?.title");
+  console.log(currentWindow?.title);
   if (
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
     currentWindow?.title !== "Open" &&
+    currentWindow?.title !== "" &&
     preFocusedWindow?.id !== currentWindow.id
   ) {
     win.webContents.send("changeWindow", currentWindow);
