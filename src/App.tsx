@@ -85,6 +85,7 @@ const debugExtensionScroll = false;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
+let currentFocusedTabId: number = -1;
 
 const isNotEqual = (
   win1: BaseResult | undefined,
@@ -515,7 +516,10 @@ function App() {
     // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
   }, []);
-
+  function activeBrowserTabHandler(_, tabId) {
+    console.log(tabId);
+    // currentFocusedTabId = tabId;
+  }
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
@@ -571,10 +575,22 @@ function App() {
     };
   }, [sceneData]);
 
+  useEffect(() => {
+    window.ipcRenderer?.on("activeBrowserTab", activeBrowserTabHandler);
+    return () => {
+      window.ipcRenderer?.off("activeBrowserTab", activeBrowserTabHandler);
+    };
+  }, []);
+
   const changeWorkspace = async (e, windowInfo?: BaseResult | undefined) => {
     if (!windowInfo) return;
-
     currentFocusedWindow = windowInfo;
+    // use tabId as window id for chrome tabs.
+    // TODO, get the active tab in current active window.
+    if (windowInfo.title.includes("Chrome") && currentFocusedTabId !== -1) {
+      windowInfo.id = currentFocusedTabId;
+    }
+
     multipleScenes.set(sceneData.windowId, { ...sceneData });
     if (globalSynchronizer.value)
       multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
@@ -610,7 +626,7 @@ function App() {
   };
 
   function mousedragHandler(_: any, windowInfo: BaseResult) {
-    if (windowInfo.title === "Adam") return;
+    if (!windowInfo || windowInfo.title === "Adam") return;
     if (isNotEqual(windowInfo, currentFocusedWindow)) {
       if (globalSynchronizer.value)
         globalSynchronizer.value.updateArea(
@@ -626,7 +642,7 @@ function App() {
     // put not included elements into the areas of the current window
     globalSynchronizer.value?.partition(sceneData.elements);
     redrawAllEles(undefined, undefined, sceneData.elements);
-    // globalSynchronizer.value?.drawAllAreas();
+    globalSynchronizer.value?.drawAllAreas();
   }
 
   useEffect(() => {
@@ -733,7 +749,7 @@ function App() {
     window.ipcRenderer?.on("AltQ", altQHandler);
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
     window.ipcRenderer?.on("mouseWheel", globalScrollEles);
-    window.ipcRenderer?.on("mousedrag", mousedragHandler); // mousedrag
+    window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
       window.ipcRenderer?.off("Alt1", alt1Handler);
       window.ipcRenderer?.off("Alt2", alt2Handler);
@@ -794,7 +810,6 @@ function App() {
       screenShotter.current?.terminateScreenShot();
 
     if (selectedKey !== -1) {
-      console.log("change selected key");
       window.ipcRenderer.send("blurAdamWindow");
       window.ipcRenderer.send("checkWindow");
     }

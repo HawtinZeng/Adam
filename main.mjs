@@ -78,20 +78,16 @@ v.addListener(function (e) {
     setTimeout(changeWindowHandler, 10);
   }
 });
-let preFocusedWindow = undefined;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
-  console.log("currentWindow?.title");
-  console.log(currentWindow?.title);
+  if (!currentWindow) return;
   if (
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
     currentWindow?.title !== "Open" &&
-    currentWindow?.title !== "" &&
-    preFocusedWindow?.id !== currentWindow.id
+    currentWindow?.title !== ""
   ) {
     win.webContents.send("changeWindow", currentWindow);
-    preFocusedWindow = currentWindow;
   }
 }
 
@@ -204,6 +200,11 @@ server.on("connection", (socket) => {
 
   socket.on("scrollElement", (areaInfo) => {
     win.webContents.send("scrollElement", areaInfo);
+  });
+
+  socket.on("activeBrowserTab", (tabId) => {
+    win.webContents.send("activeBrowserTab", tabId);
+    changeWindowHandler();
   });
 });
 

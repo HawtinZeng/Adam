@@ -16,6 +16,10 @@ export default defineManifest(async (env) => ({
   version: `${major}.${minor}.${patch}.${label}`,
   version_name: version,
   description: "Listen for window change event",
+  background: {
+    service_worker: "src/background.ts",
+    type: "module",
+  },
   content_scripts: [
     {
       js: ["src/setup.ts"],
