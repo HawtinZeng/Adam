@@ -6,6 +6,12 @@ socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()} from backgroundts`);
 });
 
+socket.on("queryActiveTabId", async () => {
+  let queryOptions = { active: true, currentWindow: true };
+  let [tab] = await chrome.tabs.query(queryOptions);
+  socket.emit("deliverActiveTabId", tab?.id);
+});
+
 chrome.tabs.onCreated.addListener(function (tab) {
   socket.emit("activeBrowserTab", tab.id);
 });

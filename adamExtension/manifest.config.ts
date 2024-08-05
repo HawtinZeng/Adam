@@ -29,4 +29,5 @@ export default defineManifest(async (env) => ({
   action: {
     default_popup: "index.html",
   },
+  permissions: ["tabs"],
 }));

@@ -70,4 +70,4 @@ const id = setInterval(() => {
   } else if (count >= 8) {
     clearInterval(id);
   }
-}, 500);
+}, 100);

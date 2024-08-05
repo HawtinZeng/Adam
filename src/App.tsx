@@ -9,7 +9,7 @@ import {
 } from "@zenghawtin/graph2d";
 import { ElementRect } from "commonModule/types";
 import * as d3c from "d3-color";
-import { IpcRenderer } from "electron";
+import { IpcRenderer, IpcRendererEvent } from "electron";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
@@ -24,7 +24,6 @@ import {
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
   clearMainCanvas,
-  drawRectBorder,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -85,7 +84,6 @@ const debugExtensionScroll = false;
 export const showElePtLength = false;
 
 let currentFocusedWindow: BaseResult | undefined;
-let currentFocusedTabId: number = -1;
 
 const isNotEqual = (
   win1: BaseResult | undefined,
@@ -516,10 +514,6 @@ function App() {
     // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
     setTransparent();
   }, []);
-  function activeBrowserTabHandler(_, tabId) {
-    console.log(tabId);
-    // currentFocusedTabId = tabId;
-  }
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
@@ -554,19 +548,19 @@ function App() {
 
       if (debugExtensionScroll) {
         redrawAllEles(undefined, undefined, sceneData.elements);
-        drawRectBorder(
-          null,
-          new Polygon(
-            new Box(
-              Number(areaInfo.offsetX),
-              Number(areaInfo.offsetY),
-              Number(areaInfo.offsetX) + Number(areaInfo.width),
-              Number(areaInfo.offsetY) + Number(areaInfo.height)
-            )
-          ),
-          d3c.rgb("#14C0E0"),
-          1
-        );
+        // drawRectBorder(
+        //   null,
+        //   new Polygon(
+        //     new Box(
+        //       Number(areaInfo.offsetX),
+        //       Number(areaInfo.offsetY),
+        //       Number(areaInfo.offsetX) + Number(areaInfo.width),
+        //       Number(areaInfo.offsetY) + Number(areaInfo.height)
+        //     )
+        //   ),
+        //   d3c.rgb("#14C0E0"),
+        //   1
+        // );
       }
     }
     window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
@@ -576,34 +570,36 @@ function App() {
   }, [sceneData]);
 
   useEffect(() => {
-    window.ipcRenderer?.on("activeBrowserTab", activeBrowserTabHandler);
+    window.ipcRenderer?.on("activeBrowserTab", changeScene);
     return () => {
-      window.ipcRenderer?.off("activeBrowserTab", activeBrowserTabHandler);
+      window.ipcRenderer?.off("activeBrowserTab", changeScene);
     };
   }, []);
 
   const changeWorkspace = async (e, windowInfo?: BaseResult | undefined) => {
     if (!windowInfo) return;
+    // click the same window needn't change scene.
     currentFocusedWindow = windowInfo;
-    // use tabId as window id for chrome tabs.
-    // TODO, get the active tab in current active window.
-    if (windowInfo.title.includes("Chrome") && currentFocusedTabId !== -1) {
-      windowInfo.id = currentFocusedTabId;
+    if (windowInfo.title.includes("Chrome")) {
+      window.ipcRenderer.send("queryActiveTabId");
+    } else {
+      changeScene();
     }
+  };
 
+  function changeScene(_?: IpcRendererEvent, tabId?: number | undefined) {
     multipleScenes.set(sceneData.windowId, { ...sceneData });
     if (globalSynchronizer.value)
       multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
 
-    if (debugChangeWorkspace)
-      logger.log(
-        `save ${sceneData.windowId}, ${currentFocusedWindow.title}, ${sceneData.elements.length}`
-      );
-    const exist = multipleScenes.get(windowInfo.id);
-    const existSynchronizer = multipleSynchronizer.get(windowInfo.id);
+    if (!currentFocusedWindow) return;
+    if (tabId !== undefined) currentFocusedWindow.id = tabId;
+
+    const exist = multipleScenes.get(currentFocusedWindow.id);
+    const existSynchronizer = multipleSynchronizer.get(currentFocusedWindow.id);
 
     if (!existSynchronizer) {
-      globalSynchronizer.value = new Synchronizer();
+      globalSynchronizer.value = new Synchronizer(currentFocusedWindow.id);
     } else {
       globalSynchronizer.value = existSynchronizer;
     }
@@ -611,11 +607,7 @@ function App() {
     if (!exist) {
       sceneData.elements = [];
       sceneData.domElements = [];
-      sceneData.windowId = windowInfo.id;
-      if (debugChangeWorkspace)
-        logger.log(
-          `create ${windowInfo.id}, ${windowInfo.title}, ${sceneData.elements.length}`
-        );
+      sceneData.windowId = currentFocusedWindow.id;
 
       setSceneData({ ...sceneData });
       clearMainCanvas();
@@ -623,7 +615,7 @@ function App() {
       setSceneData({ ...exist });
       redrawAllEles(undefined, undefined, exist.elements);
     }
-  };
+  }
 
   function mousedragHandler(_: any, windowInfo: BaseResult) {
     if (!windowInfo || windowInfo.title === "Adam") return;

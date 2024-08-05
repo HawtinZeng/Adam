@@ -23,10 +23,11 @@ export class Synchronizer {
 
   scrollTopMap: Map<Box, number> = new Map();
   topPadding?: number;
-  constructor() {
-    window.Synchronizer = this;
-  }
 
+  windowId: number;
+  constructor(winId: number) {
+    this.windowId = winId;
+  }
   // add or get
   addArea(b: Box) {
     const bk = `${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`;
@@ -140,14 +141,6 @@ export class Synchronizer {
     updatedBoxes.forEach((b) => {
       this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
     });
-    // test whether have some incompatable area box
-    [...this.areasMap.values()].forEach((k) => {
-      if (![...this.elesMap.keys()].find((k1) => k === k1))
-        console.log("false");
-    });
-
-    console.log(this.elesMap);
-    console.log(this.areasMap);
   }
   // for debug
   drawAllAreas() {
@@ -177,6 +170,10 @@ export class Synchronizer {
 
   updateWindowInfo({ topPadding }: { topPadding: number }) {
     if (topPadding !== undefined) this.topPadding = topPadding;
+  }
+
+  getAreaNum() {
+    return [...this.areasMap.keys()].length;
   }
 }
 export const globalSynchronizer: { value?: Synchronizer } = {};

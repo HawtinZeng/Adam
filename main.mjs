@@ -62,12 +62,15 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
 });
 
 ipcMain.on("blurAdamWindow", (_) => {
-  console.log("blur...");
   win.blur();
 });
 
 ipcMain.on("checkWindow", (e) => {
   changeWindowHandler();
+});
+
+ipcMain.on("queryActiveTabId", () => {
+  server.emit("queryActiveTabId");
 });
 
 const v = new GlobalKeyboardListener();
@@ -78,9 +81,11 @@ v.addListener(function (e) {
     setTimeout(changeWindowHandler, 10);
   }
 });
+
+let lastActiveWindow;
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
-  if (!currentWindow) return;
+  if (!currentWindow || lastActiveWindow?.id === currentWindow.id) return;
   if (
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
@@ -88,6 +93,7 @@ async function changeWindowHandler() {
     currentWindow?.title !== ""
   ) {
     win.webContents.send("changeWindow", currentWindow);
+    lastActiveWindow = currentWindow;
   }
 }
 
@@ -205,6 +211,10 @@ server.on("connection", (socket) => {
   socket.on("activeBrowserTab", (tabId) => {
     win.webContents.send("activeBrowserTab", tabId);
     changeWindowHandler();
+  });
+
+  socket.on("deliverActiveTabId", (tabId) => {
+    win.webContents.send("activeBrowserTab", tabId);
   });
 });
 
