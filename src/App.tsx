@@ -527,7 +527,7 @@ function App() {
         if (!globalSynchronizer.value) return;
         globalSynchronizer.value.partition(sceneData.elements, b);
         globalSynchronizer.value.updateWindowInfo({
-          topPadding: areaInfo.topPadding,
+          topPadding: 0,
         });
       } catch (e) {}
 
@@ -569,17 +569,55 @@ function App() {
     };
   }, [sceneData]);
 
+  const changeScene = useCallback(
+    (_?: IpcRendererEvent, tabId?: number | undefined) => {
+      multipleScenes.set(sceneData.windowId, { ...sceneData });
+      if (globalSynchronizer.value) {
+        multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
+      }
+
+      if (!currentFocusedWindow) return;
+      if (tabId !== undefined) {
+        currentFocusedWindow.id = tabId;
+      }
+
+      const exist = multipleScenes.get(currentFocusedWindow.id);
+      const existSynchronizer = multipleSynchronizer.get(
+        currentFocusedWindow.id
+      );
+
+      if (!existSynchronizer) {
+        globalSynchronizer.value = new Synchronizer(currentFocusedWindow.id);
+      } else {
+        globalSynchronizer.value = existSynchronizer;
+      }
+
+      if (!exist) {
+        sceneData.elements = [];
+        sceneData.domElements = [];
+        sceneData.windowId = currentFocusedWindow.id;
+
+        setSceneData({ ...sceneData });
+        clearMainCanvas();
+      } else {
+        setSceneData({ ...exist });
+        redrawAllEles(undefined, undefined, exist.elements);
+      }
+    },
+    [sceneData, setSceneData]
+  );
   useEffect(() => {
     window.ipcRenderer?.on("activeBrowserTab", changeScene);
     return () => {
       window.ipcRenderer?.off("activeBrowserTab", changeScene);
     };
-  }, []);
+  }, [changeScene]);
 
   const changeWorkspace = async (e, windowInfo?: BaseResult | undefined) => {
     if (!windowInfo) return;
     // click the same window needn't change scene.
     currentFocusedWindow = windowInfo;
+
     if (windowInfo.title.includes("Chrome")) {
       window.ipcRenderer.send("queryActiveTabId");
     } else {
@@ -587,40 +625,11 @@ function App() {
     }
   };
 
-  function changeScene(_?: IpcRendererEvent, tabId?: number | undefined) {
-    multipleScenes.set(sceneData.windowId, { ...sceneData });
-    if (globalSynchronizer.value)
-      multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
-
-    if (!currentFocusedWindow) return;
-    if (tabId !== undefined) currentFocusedWindow.id = tabId;
-
-    const exist = multipleScenes.get(currentFocusedWindow.id);
-    const existSynchronizer = multipleSynchronizer.get(currentFocusedWindow.id);
-
-    if (!existSynchronizer) {
-      globalSynchronizer.value = new Synchronizer(currentFocusedWindow.id);
-    } else {
-      globalSynchronizer.value = existSynchronizer;
-    }
-
-    if (!exist) {
-      sceneData.elements = [];
-      sceneData.domElements = [];
-      sceneData.windowId = currentFocusedWindow.id;
-
-      setSceneData({ ...sceneData });
-      clearMainCanvas();
-    } else {
-      setSceneData({ ...exist });
-      redrawAllEles(undefined, undefined, exist.elements);
-    }
-  }
-
   function mousedragHandler(_: any, windowInfo: BaseResult) {
     if (!windowInfo || windowInfo.title === "Adam") return;
+    // windowInfo 出现问题
     if (isNotEqual(windowInfo, currentFocusedWindow)) {
-      if (globalSynchronizer.value)
+      if (globalSynchronizer.value) {
         globalSynchronizer.value.updateArea(
           new Box(
             windowInfo.bounds.x,
@@ -629,9 +638,16 @@ function App() {
             windowInfo.bounds.y + windowInfo.bounds.height
           )
         );
+      }
     }
 
     // put not included elements into the areas of the current window
+    console.log(
+      [...globalSynchronizer.value!.elesMap]
+        .map((entry) => entry[1])
+        .flat()
+        .map((el) => el.id)
+    );
     globalSynchronizer.value?.partition(sceneData.elements);
     redrawAllEles(undefined, undefined, sceneData.elements);
     globalSynchronizer.value?.drawAllAreas();
