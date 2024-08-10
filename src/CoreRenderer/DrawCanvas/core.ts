@@ -9,6 +9,7 @@ import {
 import {
   debugShowEleId,
   debugShowHandlesPosition,
+  showEleId,
   showElePtLength,
 } from "src/App";
 import {
@@ -342,6 +343,11 @@ export function redrawAllEles(
     if (showElePtLength) {
       const textPos = el.points[0];
       drawText(globalAppCtx!, textPos, el.points.length.toString());
+    }
+
+    if (showEleId) {
+      const textPos = el.points[0];
+      drawText(globalAppCtx!, textPos, el.id);
     }
 
     if (debugShowEleId) {

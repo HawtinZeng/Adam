@@ -22,11 +22,13 @@ export class Synchronizer {
   elesMap: Map<Box, DrawingElement[]> = new Map();
 
   scrollTopMap: Map<Box, number> = new Map();
-  topPadding?: number;
 
   windowId: number;
-  constructor(winId: number) {
+  title: string;
+
+  constructor(winId: number, title: string) {
     this.windowId = winId;
+    this.title = title;
   }
   // add or get
   addArea(b: Box) {
@@ -51,9 +53,10 @@ export class Synchronizer {
   /*
     给没有分区的元素分区，然后记录这个分区
   */
-  partition(eles: DrawingElement[], area?: Box) {
+  partition({ elements: eles }, area?: Box) {
     if (area) {
       this.addArea(area);
+      console.log(`add area: ${area.xmin}`);
     }
 
     try {
@@ -79,6 +82,9 @@ export class Synchronizer {
         if (!containsArea) return;
 
         ele.includingPart = containsArea;
+
+        console.log(`put into ${containsArea.xmin}`);
+
         const exists = this.elesMap.get(containsArea)!;
         exists.push(ele);
       });
@@ -112,7 +118,6 @@ export class Synchronizer {
   }
 
   updateArea(newArea: Box) {
-    if (this.topPadding === undefined) return;
     let contentArea: Box = new Box(-1, -1, 2, 2);
 
     globalSynchronizer.value?.areasMap.forEach((b) => {
@@ -121,8 +126,8 @@ export class Synchronizer {
     });
     const deltaXmin = newArea.xmin - contentArea.xmin;
     const deltaXmax = newArea.xmax - contentArea.xmax;
-    const deltaYmin = newArea.ymin - (contentArea.ymin - this.topPadding);
-    const deltaYmax = newArea.ymax - (contentArea.ymax - this.topPadding);
+    const deltaYmin = newArea.ymin - contentArea.ymin;
+    const deltaYmax = newArea.ymax - contentArea.ymax;
 
     this.areasMap.forEach((b) => {
       b.xmin += deltaXmin;
@@ -166,10 +171,6 @@ export class Synchronizer {
     this.elesMap.forEach((els, box) => {
       els.length = 0;
     });
-  }
-
-  updateWindowInfo({ topPadding }: { topPadding: number }) {
-    if (topPadding !== undefined) this.topPadding = topPadding;
   }
 
   getAreaNum() {

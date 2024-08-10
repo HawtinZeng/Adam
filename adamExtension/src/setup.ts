@@ -16,7 +16,7 @@ socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
 const latency = 0;
-const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
+const scrollerListener = new ScrollListener(8); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
   const scrollingElement: ElementRect = {
@@ -60,14 +60,14 @@ const throttledScrollEmitter = throttle(emitScroll, latency);
 
 let count = 0;
 const id = setInterval(() => {
-  if (count < 8 && document.readyState === "complete") {
+  if (count < 1 && document.readyState === "complete") {
     scrollerListener.addListenerTo(document, throttledScrollEmitter);
     scrollerListener.scrollables.forEach((scrollable) => {
       emitScroll({ target: scrollable } as unknown as Event);
     });
     loggerIns.log(scrollerListener.scrollables.size);
     count++;
-  } else if (count >= 8) {
+  } else if (count >= 1) {
     clearInterval(id);
   }
 }, 100);

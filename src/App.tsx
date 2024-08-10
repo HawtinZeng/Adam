@@ -44,7 +44,7 @@ import {
 import { Point } from "src/Utils/Data/geometry";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
-import { UpdatingElement } from "src/drawingElements/data/scene";
+import { Scene, UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import { useDrawingOperator } from "src/hooks/useDrawingOperator";
@@ -82,6 +82,7 @@ export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
 const debugExtensionScroll = false;
 export const showElePtLength = false;
+export const showEleId = true;
 
 let currentFocusedWindow: BaseResult | undefined;
 
@@ -525,10 +526,7 @@ function App() {
       );
       try {
         if (!globalSynchronizer.value) return;
-        globalSynchronizer.value.partition(sceneData.elements, b);
-        globalSynchronizer.value.updateWindowInfo({
-          topPadding: 0,
-        });
+        globalSynchronizer.value.partition(sceneData, b);
       } catch (e) {}
 
       if (!globalSynchronizer.value) return;
@@ -571,6 +569,14 @@ function App() {
 
   const changeScene = useCallback(
     (_?: IpcRendererEvent, tabId?: number | undefined) => {
+      // console.log(globalSynchronizer.value?.windowId);
+      // console.log([
+      //   sceneData.elements[0]?.includingPart?.xmin,
+      //   sceneData.elements[0]?.includingPart?.xmax,
+      //   sceneData.elements[0]?.includingPart?.ymin,
+      //   sceneData.elements[0]?.includingPart?.ymax,
+      // ]);
+
       multipleScenes.set(sceneData.windowId, { ...sceneData });
       if (globalSynchronizer.value) {
         multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
@@ -587,19 +593,22 @@ function App() {
       );
 
       if (!existSynchronizer) {
-        globalSynchronizer.value = new Synchronizer(currentFocusedWindow.id);
+        globalSynchronizer.value = new Synchronizer(
+          currentFocusedWindow.id,
+          currentFocusedWindow.title
+        );
       } else {
         globalSynchronizer.value = existSynchronizer;
       }
 
       if (!exist) {
-        sceneData.elements = [];
-        sceneData.domElements = [];
-        sceneData.windowId = currentFocusedWindow.id;
+        const createdScene = new Scene([], [], []);
+        createdScene.windowId = currentFocusedWindow.id;
 
-        setSceneData({ ...sceneData });
+        setSceneData(createdScene);
         clearMainCanvas();
       } else {
+        console.log(exist.elements[0]?.position.x);
         setSceneData({ ...exist });
         redrawAllEles(undefined, undefined, exist.elements);
       }
@@ -627,28 +636,20 @@ function App() {
 
   function mousedragHandler(_: any, windowInfo: BaseResult) {
     if (!windowInfo || windowInfo.title === "Adam") return;
-    // windowInfo 出现问题
-    if (isNotEqual(windowInfo, currentFocusedWindow)) {
-      if (globalSynchronizer.value) {
-        globalSynchronizer.value.updateArea(
-          new Box(
-            windowInfo.bounds.x,
-            windowInfo.bounds.y,
-            windowInfo.bounds.x + windowInfo.bounds.width,
-            windowInfo.bounds.y + windowInfo.bounds.height
-          )
-        );
-      }
-    }
+    if (globalSynchronizer.value)
+      setTimeout(
+        () =>
+          globalSynchronizer.value!.updateArea(
+            new Box(
+              windowInfo.bounds.x,
+              windowInfo.bounds.y,
+              windowInfo.bounds.x + windowInfo.bounds.width,
+              windowInfo.bounds.y + windowInfo.bounds.height
+            )
+          ),
+        100
+      ); // 等待操作系统将对应窗口激活
 
-    // put not included elements into the areas of the current window
-    console.log(
-      [...globalSynchronizer.value!.elesMap]
-        .map((entry) => entry[1])
-        .flat()
-        .map((el) => el.id)
-    );
-    globalSynchronizer.value?.partition(sceneData.elements);
     redrawAllEles(undefined, undefined, sceneData.elements);
     globalSynchronizer.value?.drawAllAreas();
   }

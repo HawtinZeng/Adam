@@ -78,7 +78,7 @@ v.addListener(function (e) {
   if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {
     setTimeout(changeWindowHandler, 10);
   } else if (e.name === "MOUSE LEFT" && e.state === "DOWN") {
-    setTimeout(changeWindowHandler, 10);
+    setTimeout(changeWindowHandler, 10); // 等待操作系统将对应窗口激活
   }
 });
 

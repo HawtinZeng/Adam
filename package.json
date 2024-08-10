@@ -4,7 +4,7 @@
   "private": true,
   "main": "main.mjs",
   "author": "ZengHawtin",
-  "description": "adam: drawing editor in any window",
+  "description": "adam: a drawing editor in any window in windows machines",
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
