@@ -60,7 +60,7 @@ const throttledScrollEmitter = throttle(emitScroll, latency);
 
 let count = 0;
 const id = setInterval(() => {
-  if (count < 1 && document.readyState === "complete") {
+  if (count < 1 && document.readyState === "interactive") {
     scrollerListener.addListenerTo(document, throttledScrollEmitter);
     scrollerListener.scrollables.forEach((scrollable) => {
       emitScroll({ target: scrollable } as unknown as Event);

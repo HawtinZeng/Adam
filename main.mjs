@@ -115,9 +115,11 @@ app.whenReady().then(async () => {
       globalMousePress === "unPressing" ? "pressing" : "unPressing";
   });
 
-  mouseEvt.on("mouseup", () => {
+  mouseEvt.on("mouseup", async () => {
     globalMousePress =
       globalMousePress === "unPressing" ? "pressing" : "unPressing";
+    const winInfo = await activeWindow();
+    win.webContents.send("mousedrag", winInfo);
   });
 
   // adam won't be focused at start up

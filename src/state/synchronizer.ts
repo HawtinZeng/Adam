@@ -82,6 +82,7 @@ export class Synchronizer {
         if (!containsArea) return;
 
         ele.includingPart = containsArea;
+        ele.includingWindow = this.windowId;
 
         console.log(`put into ${containsArea.xmin}`);
 
@@ -124,6 +125,7 @@ export class Synchronizer {
       if (new Polygon(contentArea).area() < new Polygon(b).area())
         contentArea = b;
     });
+
     const deltaXmin = newArea.xmin - contentArea.xmin;
     const deltaXmax = newArea.xmax - contentArea.xmax;
     const deltaYmin = newArea.ymin - contentArea.ymin;
@@ -137,12 +139,16 @@ export class Synchronizer {
       this.elesMap.get(b)?.forEach((e) => {
         e.position.x += deltaXmin;
         e.position.y += deltaYmin;
+
+        console.log(
+          `change element: ${e.id}, ${e.position.x} @ ${this.windowId}`
+        );
       });
     });
 
     // replace these keys.
     const updatedBoxes = [...this.areasMap.values()];
-    this.areasMap = new Map();
+    this.areasMap.clear();
     updatedBoxes.forEach((b) => {
       this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
     });

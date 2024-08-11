@@ -569,14 +569,6 @@ function App() {
 
   const changeScene = useCallback(
     (_?: IpcRendererEvent, tabId?: number | undefined) => {
-      // console.log(globalSynchronizer.value?.windowId);
-      // console.log([
-      //   sceneData.elements[0]?.includingPart?.xmin,
-      //   sceneData.elements[0]?.includingPart?.xmax,
-      //   sceneData.elements[0]?.includingPart?.ymin,
-      //   sceneData.elements[0]?.includingPart?.ymax,
-      // ]);
-
       multipleScenes.set(sceneData.windowId, { ...sceneData });
       if (globalSynchronizer.value) {
         multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
@@ -585,6 +577,7 @@ function App() {
       if (!currentFocusedWindow) return;
       if (tabId !== undefined) {
         currentFocusedWindow.id = tabId;
+        sceneData.windowId = tabId;
       }
 
       const exist = multipleScenes.get(currentFocusedWindow.id);
@@ -608,9 +601,12 @@ function App() {
         setSceneData(createdScene);
         clearMainCanvas();
       } else {
-        console.log(exist.elements[0]?.position.x);
         setSceneData({ ...exist });
         redrawAllEles(undefined, undefined, exist.elements);
+
+        console.log(globalSynchronizer.value!.windowId);
+        console.log(exist.windowId);
+        console.log(exist.elements.map((e) => e.position.x));
       }
     },
     [sceneData, setSceneData]
@@ -636,19 +632,19 @@ function App() {
 
   function mousedragHandler(_: any, windowInfo: BaseResult) {
     if (!windowInfo || windowInfo.title === "Adam") return;
-    if (globalSynchronizer.value)
-      setTimeout(
-        () =>
-          globalSynchronizer.value!.updateArea(
-            new Box(
-              windowInfo.bounds.x,
-              windowInfo.bounds.y,
-              windowInfo.bounds.x + windowInfo.bounds.width,
-              windowInfo.bounds.y + windowInfo.bounds.height
-            )
-          ),
-        100
-      ); // 等待操作系统将对应窗口激活
+    if (
+      globalSynchronizer.value &&
+      globalSynchronizer.value.windowId === sceneData.windowId
+    ) {
+      globalSynchronizer.value.updateArea(
+        new Box(
+          windowInfo.bounds.x,
+          windowInfo.bounds.y,
+          windowInfo.bounds.x + windowInfo.bounds.width,
+          windowInfo.bounds.y + windowInfo.bounds.height
+        )
+      );
+    }
 
     redrawAllEles(undefined, undefined, sceneData.elements);
     globalSynchronizer.value?.drawAllAreas();
