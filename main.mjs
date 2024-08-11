@@ -169,6 +169,13 @@ app.whenReady().then(async () => {
   globalShortcut.register("Alt+Q", () => {
     win.webContents.send("AltQ");
   });
+  globalShortcut.register("Alt+D", () => {
+    win.webContents.send("back");
+  });
+  globalShortcut.register("Alt+F", () => {
+    win.webContents.send("forward");
+  });
+
   globalShortcut.register("Ctrl+Q", () => {
     app.quit();
   });

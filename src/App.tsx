@@ -13,7 +13,7 @@ import { IpcRenderer, IpcRendererEvent } from "electron";
 // const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, merge, throttle } from "lodash";
+import { cloneDeep, merge, remove, throttle } from "lodash";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
@@ -51,6 +51,7 @@ import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
 import { logger } from "src/setup";
+import { Action, History } from "src/state/history";
 import {
   multipleScenes,
   multipleSynchronizer,
@@ -68,6 +69,18 @@ import {
   selectedKeyAtom,
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
+
+type ResponseStatus = "succeeded" | "failed" | "unknown";
+export class FunctionResponse {
+  status: ResponseStatus = "unknown";
+  info: string = "happy coding!";
+  constructor(status: ResponseStatus, info?: string) {
+    this.status = status;
+    if (info !== undefined) {
+      this.info = info;
+    }
+  }
+}
 declare global {
   interface Window {
     ipcRenderer: IpcRenderer;
@@ -76,28 +89,14 @@ declare global {
 
 window.Buffer = require("buffer/").Buffer;
 
-const debugChangeWorkspace = false;
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
 const debugExtensionScroll = false;
 export const showElePtLength = false;
-export const showEleId = true;
+export const showEleId = false;
 
 let currentFocusedWindow: BaseResult | undefined;
-
-const isNotEqual = (
-  win1: BaseResult | undefined,
-  win2: BaseResult | undefined
-) => {
-  if (win1 === undefined || win2 === undefined) return false;
-  return (
-    win1.bounds.x !== win2.bounds.x ||
-    win1.bounds.y !== win2.bounds.y ||
-    win1.bounds.width !== win2.bounds.width ||
-    win1.bounds.height !== win2.bounds.height
-  );
-};
 
 let stream: MediaStream | undefined;
 const cap = new Map<string, ImageCapture>();
@@ -147,6 +146,8 @@ function App() {
   const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
 
   const [sceneData, setSceneData] = useAtom(sceneAtom);
+
+  const history = useRef<History>(new History());
 
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
@@ -512,7 +513,7 @@ function App() {
 
   // initialize adam
   useEffect(() => {
-    // 第一次运行，会聚焦到terminal中，导致后续存放的windowId放到了terminal对应的window中
+    // 第一次运行，会聚焦到 terminal 中，导致后续存放的 windowId 放到了 terminal 对应的 window 中
     setTransparent();
   }, []);
   useEffect(() => {
@@ -575,25 +576,29 @@ function App() {
       }
 
       if (!currentFocusedWindow) return;
+
       if (tabId !== undefined) {
         currentFocusedWindow.id = tabId;
-        sceneData.windowId = tabId;
+      }
+
+      if (currentFocusedWindow.title.includes("Chrome")) {
+        const existSynchronizer = multipleSynchronizer.get(
+          currentFocusedWindow.id
+        );
+
+        if (!existSynchronizer) {
+          globalSynchronizer.value = new Synchronizer(
+            currentFocusedWindow.id,
+            currentFocusedWindow.title
+          );
+        } else {
+          globalSynchronizer.value = existSynchronizer;
+        }
+      } else {
+        globalSynchronizer.value = undefined;
       }
 
       const exist = multipleScenes.get(currentFocusedWindow.id);
-      const existSynchronizer = multipleSynchronizer.get(
-        currentFocusedWindow.id
-      );
-
-      if (!existSynchronizer) {
-        globalSynchronizer.value = new Synchronizer(
-          currentFocusedWindow.id,
-          currentFocusedWindow.title
-        );
-      } else {
-        globalSynchronizer.value = existSynchronizer;
-      }
-
       if (!exist) {
         const createdScene = new Scene([], [], []);
         createdScene.windowId = currentFocusedWindow.id;
@@ -603,11 +608,9 @@ function App() {
       } else {
         setSceneData({ ...exist });
         redrawAllEles(undefined, undefined, exist.elements);
-
-        console.log(globalSynchronizer.value!.windowId);
-        console.log(exist.windowId);
-        console.log(exist.elements.map((e) => e.position.x));
       }
+
+      history.current.changeScene(currentFocusedWindow.id);
     },
     [sceneData, setSceneData]
   );
@@ -646,6 +649,7 @@ function App() {
       );
     }
 
+    globalSynchronizer.value?.partition(sceneData);
     redrawAllEles(undefined, undefined, sceneData.elements);
     globalSynchronizer.value?.drawAllAreas();
   }
@@ -742,6 +746,59 @@ function App() {
       setSeletedKey(-1);
       setTransparent();
     };
+
+    function moveHead(direction: "back" | "forward") {
+      const action: Action =
+        direction === "back"
+          ? history.current.back()
+          : history.current.forward();
+
+      const res = excuteAction(action);
+      if (res.status !== "succeeded") {
+        logger.error(res.info);
+      } else {
+        setSceneData({ ...sceneData });
+      }
+    }
+
+    function excuteAction(act: Action) {
+      const res = new FunctionResponse("succeeded");
+      const t = act.type;
+      switch (t) {
+        case "add": {
+          sceneData.elements.push(...act.newElements);
+          break;
+        }
+
+        case "delete": {
+          const deleteIds = act.oldElements.map((i) => i.id);
+          const deletedEles = remove(sceneData.elements, (ele) =>
+            deleteIds.includes(ele.id)
+          );
+          if (deletedEles.length === 0) {
+            res.status = "failed";
+            res.info = "delete nothing";
+          }
+          break;
+        }
+
+        case "update": {
+          act.newElements.forEach((newEle) => {
+            const id = newEle.id,
+              foundIdx = sceneData.elements.findIndex((e) => e.id === id);
+            if (foundIdx === -1) {
+              res.status = "failed";
+              res.info = "not found element needing update in SceneData";
+            } else {
+              sceneData.elements[foundIdx] = newEle;
+            }
+          });
+          break;
+        }
+      }
+      return res;
+    }
+
     window.ipcRenderer?.on("Alt1", alt1Handler);
     window.ipcRenderer?.on("Alt2", alt2Handler);
     window.ipcRenderer?.on("Alt3", alt3Handler);
@@ -752,6 +809,9 @@ function App() {
     window.ipcRenderer?.on("Alt8", alt8Handler);
     window.ipcRenderer?.on("AltC", altCHandler);
     window.ipcRenderer?.on("AltQ", altQHandler);
+    window.ipcRenderer?.on("back", () => moveHead("back"));
+    window.ipcRenderer?.on("forward", () => moveHead("forward"));
+
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
     window.ipcRenderer?.on("mouseWheel", globalScrollEles);
     window.ipcRenderer?.on("mousedrag", mousedragHandler);

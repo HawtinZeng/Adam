@@ -51,14 +51,18 @@ export class Logger {
     }, 0);
   }
 
-  error(e: Error) {
-    if (!this.enable || !e) return;
+  error(errMsg: Error | string) {
+    if (!this.enable || !errMsg) return;
+
     this.errCount += 1;
+    if (errMsg instanceof Error) {
+      errMsg = errMsg.message;
+    }
+
     console.log(
       cyan(this.errCount) +
         "    |    " +
-        red(e.message) +
-        yellow(JSON.stringify(e)) +
+        red(errMsg) +
         "    |    " +
         new Date().toLocaleTimeString()
     );
