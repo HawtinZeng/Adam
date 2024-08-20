@@ -1,7 +1,7 @@
 import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import { debounce } from "lodash";
-import { drawRectBorder } from "src/CoreRenderer/DrawCanvas/core";
+import { drawRectBorder, drawText } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
@@ -24,10 +24,12 @@ export class Synchronizer {
   scrollTopMap: Map<Box, number> = new Map();
 
   windowId: number;
+  windowBox: Box;
   title: string;
 
-  constructor(winId: number, title: string) {
+  constructor(winId: number, initialWindowBox: Box, title: string) {
     this.windowId = winId;
+    this.windowBox = initialWindowBox;
     this.title = title;
   }
   // add or get
@@ -56,7 +58,6 @@ export class Synchronizer {
   partition({ elements: eles }, area?: Box) {
     if (area) {
       this.addArea(area);
-      console.log(`add area: ${area.xmin}`);
     }
 
     try {
@@ -83,8 +84,6 @@ export class Synchronizer {
 
         ele.includingPart = containsArea;
         ele.includingWindow = this.windowId;
-
-        console.log(`put into ${containsArea.xmin}`);
 
         const exists = this.elesMap.get(containsArea)!;
         exists.push(ele);
@@ -118,18 +117,17 @@ export class Synchronizer {
     return false;
   }
 
-  updateArea(newArea: Box) {
-    let contentArea: Box = new Box(-1, -1, 2, 2);
+  /**
+   *
+   * @param newArea 新的最大的Box，即为窗口的Box
+   */
+  updateArea(changedWindowBox: Box) {
+    const deltaXmin = changedWindowBox.xmin - this.windowBox.xmin;
+    const deltaXmax = changedWindowBox.xmax - this.windowBox.xmax;
+    const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
+    const deltaYmax = changedWindowBox.ymax - this.windowBox.ymax;
 
-    globalSynchronizer.value?.areasMap.forEach((b) => {
-      if (new Polygon(contentArea).area() < new Polygon(b).area())
-        contentArea = b;
-    });
-
-    const deltaXmin = newArea.xmin - contentArea.xmin;
-    const deltaXmax = newArea.xmax - contentArea.xmax;
-    const deltaYmin = newArea.ymin - contentArea.ymin;
-    const deltaYmax = newArea.ymax - contentArea.ymax;
+    this.windowBox = changedWindowBox;
 
     this.areasMap.forEach((b) => {
       b.xmin += deltaXmin;
@@ -139,10 +137,6 @@ export class Synchronizer {
       this.elesMap.get(b)?.forEach((e) => {
         e.position.x += deltaXmin;
         e.position.y += deltaYmin;
-
-        console.log(
-          `change element: ${e.id}, ${e.position.x} @ ${this.windowId}`
-        );
       });
     });
 
@@ -155,8 +149,19 @@ export class Synchronizer {
   }
   // for debug
   drawAllAreas() {
+    let count = 0;
     this.areasMap.forEach((b) => {
-      drawRectBorder(null, new Polygon(b), d3c.rgb("#14C0E0"), 1);
+      count++;
+
+      // console.log(
+      //   `${this.elesMap.get(b)?.[0]?.id} - time: ${new Date().getTime()}`
+      // );
+      const el = this.elesMap.get(b)?.[0];
+      drawRectBorder(null, new Polygon(b), d3c.rgb("#14C0E0"), 10 * count);
+      if (el) {
+        const textPos = { x: b.xmin, y: b.ymin };
+        drawText(null, textPos, el.id);
+      }
     });
   }
 

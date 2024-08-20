@@ -527,6 +527,7 @@ function App() {
       );
       try {
         if (!globalSynchronizer.value) return;
+        console.log(`height: ${b.height}`);
         globalSynchronizer.value.partition(sceneData, b);
       } catch (e) {}
 
@@ -589,6 +590,12 @@ function App() {
         if (!existSynchronizer) {
           globalSynchronizer.value = new Synchronizer(
             currentFocusedWindow.id,
+            new Box(
+              currentFocusedWindow.bounds.x,
+              currentFocusedWindow.bounds.y,
+              currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
+              currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
+            ),
             currentFocusedWindow.title
           );
         } else {
@@ -845,6 +852,7 @@ function App() {
     }
 
     redrawAllEles(undefined, undefined, els);
+    globalSynchronizer.value?.drawAllAreas();
   }
   useEffect(() => {
     sceneData.updatingElements = [];

@@ -710,12 +710,16 @@ export function createDrawingCvs(
   return canvas;
 }
 
-function drawText(
-  ctx: CanvasRenderingContext2D,
+export function drawText(
+  ctx: CanvasRenderingContext2D | null,
   pos: Point,
   text: string,
   color: string = "red"
 ) {
+  if (!ctx) ctx = globalAppCtx;
+
+  if (!ctx) return;
+
   ctx.save();
   const fontSize = 30;
   const fontStyle = "Arial";
