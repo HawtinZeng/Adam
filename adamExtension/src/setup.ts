@@ -16,7 +16,6 @@ socket.on("connect", () => {
 const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
-  console.log(e.target);
   const scrollingElement: ElementRect = {
     width: 0,
     height: 0,

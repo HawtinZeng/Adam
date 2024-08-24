@@ -139,7 +139,6 @@ export class Synchronizer {
     const deltaXmax = changedWindowBox.xmax - this.windowBox.xmax;
     const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
     const deltaYmax = changedWindowBox.ymax - this.windowBox.ymax;
-
     this.windowBox = changedWindowBox;
 
     this.areasMap.forEach((b) => {

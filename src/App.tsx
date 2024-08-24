@@ -656,8 +656,9 @@ function App() {
     if (
       globalSynchronizer.value &&
       (currentFocusedWindow?.containedWin === windowInfo.id ||
-        currentFocusedWindow?.containedWin === undefined) //not chrome page
+        !currentFocusedWindow?.title.includes("Chrome"))
     ) {
+      // currentFocusedWindow?.containedWin === undefined) //not chrome page
       globalSynchronizer.value.updateArea(
         new Box(
           windowInfo.bounds.x,
