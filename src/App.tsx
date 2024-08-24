@@ -95,6 +95,7 @@ const showDebugPanel = false;
 const debugExtensionScroll = false;
 export const showElePtLength = false;
 export const showEleId = true;
+const debugDrawAllAreas = false;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
 
@@ -583,41 +584,37 @@ function App() {
         currentFocusedWindow.id = tabId;
       }
 
-      if (currentFocusedWindow.title.includes("Chrome")) {
-        const existSynchronizer = multipleSynchronizer.get(
-          currentFocusedWindow.id
-        );
+      const existSynchronizer = multipleSynchronizer.get(
+        currentFocusedWindow.id
+      );
 
-        if (!existSynchronizer) {
-          globalSynchronizer.value = new Synchronizer(
-            currentFocusedWindow.id,
-            new Box(
-              currentFocusedWindow.bounds.x,
-              currentFocusedWindow.bounds.y,
-              currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
-              currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
-            ),
-            currentFocusedWindow.title
-          );
-          // initialize the window box, which will control all eles without area
-          const b = new Box(
+      if (!existSynchronizer) {
+        globalSynchronizer.value = new Synchronizer(
+          currentFocusedWindow.id,
+          new Box(
             currentFocusedWindow.bounds.x,
             currentFocusedWindow.bounds.y,
             currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
             currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
-          );
-          globalSynchronizer.value.partition(
-            {
-              elements:
-                multipleScenes.get(currentFocusedWindow.id)?.elements || [],
-            },
-            b
-          );
-        } else {
-          globalSynchronizer.value = existSynchronizer;
-        }
+          ),
+          currentFocusedWindow.title
+        );
+        // initialize the window box, which will control all eles without area
+        const b = new Box(
+          currentFocusedWindow.bounds.x,
+          currentFocusedWindow.bounds.y,
+          currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
+          currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
+        );
+        globalSynchronizer.value.partition(
+          {
+            elements:
+              multipleScenes.get(currentFocusedWindow.id)?.elements || [],
+          },
+          b
+        );
       } else {
-        globalSynchronizer.value = undefined;
+        globalSynchronizer.value = existSynchronizer;
       }
 
       const exist = multipleScenes.get(currentFocusedWindow.id);
@@ -658,7 +655,8 @@ function App() {
     if (!windowInfo || windowInfo.title === "Adam") return;
     if (
       globalSynchronizer.value &&
-      currentFocusedWindow?.containedWin === windowInfo.id
+      (currentFocusedWindow?.containedWin === windowInfo.id ||
+        currentFocusedWindow?.containedWin === undefined) //not chrome page
     ) {
       globalSynchronizer.value.updateArea(
         new Box(
@@ -670,7 +668,7 @@ function App() {
       );
       globalSynchronizer.value?.partition(sceneData);
       redrawAllEles(undefined, undefined, sceneData.elements);
-      globalSynchronizer.value?.drawAllAreas();
+      if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
     }
   }
 
@@ -865,7 +863,7 @@ function App() {
     }
 
     redrawAllEles(undefined, undefined, els);
-    globalSynchronizer.value?.drawAllAreas();
+    if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
   }
   useEffect(() => {
     sceneData.updatingElements = [];
