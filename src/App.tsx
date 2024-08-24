@@ -518,6 +518,7 @@ function App() {
   }, []);
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
+      console.log("extensionScrollElementHandler");
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
       const b = new Box(
         areaInfo.offsetX,
@@ -527,7 +528,6 @@ function App() {
       );
       try {
         if (!globalSynchronizer.value) return;
-        console.log(`height: ${b.height}`);
         globalSynchronizer.value.partition(sceneData, b);
       } catch (e) {}
 
@@ -598,6 +598,14 @@ function App() {
             ),
             currentFocusedWindow.title
           );
+          // initialize the window box, which will control all eles without area
+          const b = new Box(
+            currentFocusedWindow.bounds.x,
+            currentFocusedWindow.bounds.y,
+            currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
+            currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
+          );
+          globalSynchronizer.value.partition(sceneData, b);
         } else {
           globalSynchronizer.value = existSynchronizer;
         }
@@ -617,6 +625,8 @@ function App() {
         redrawAllEles(undefined, undefined, exist.elements);
       }
 
+      // console.log(`changeScene: ${currentFocusedWindow.id}`);
+      console.log(globalSynchronizer.value?.areasMap.size);
       history.current.changeScene(currentFocusedWindow.id);
     },
     [sceneData, setSceneData]
@@ -632,6 +642,7 @@ function App() {
     if (!windowInfo) return;
     // click the same window needn't change scene.
     currentFocusedWindow = windowInfo;
+    // console.log(`changeWorkspace: ${currentFocusedWindow.id}`);
 
     if (windowInfo.title.includes("Chrome")) {
       window.ipcRenderer.send("queryActiveTabId");
@@ -646,6 +657,8 @@ function App() {
       globalSynchronizer.value &&
       globalSynchronizer.value.windowId === sceneData.windowId
     ) {
+      console.log(windowInfo.bounds.y);
+
       globalSynchronizer.value.updateArea(
         new Box(
           windowInfo.bounds.x,

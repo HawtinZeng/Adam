@@ -58,6 +58,7 @@ export class Synchronizer {
   partition({ elements: eles }, area?: Box) {
     if (area) {
       this.addArea(area);
+      console.log("add");
     }
 
     try {

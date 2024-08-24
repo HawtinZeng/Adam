@@ -51,6 +51,9 @@ const createWindow = () => {
       pathname: require("path").join(__dirname, "build/index.html"),
     });
     win.loadURL(startURL);
+
+    //  initialize
+    changeWindowHandler();
   }
 };
 

@@ -1,6 +1,4 @@
-import { throttle } from "lodash";
 import { io } from "socket.io-client";
-import { loggerIns } from "../../commonModule/devTools/logger";
 import { ElementRect } from "../../commonModule/types";
 import { ScrollListener } from "./scrollListener";
 
@@ -19,6 +17,7 @@ const latency = 0;
 const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
+  console.log(e.target);
   const scrollingElement: ElementRect = {
     width: 0,
     height: 0,
@@ -28,7 +27,6 @@ function emitScroll(e: Event) {
     scrollTop: 0,
     scrollHeight: 0,
   };
-
   const trigger = e.target;
 
   if (trigger instanceof Document) {
@@ -56,18 +54,4 @@ function emitScroll(e: Event) {
   scrollingElement.topPadding = window.outerHeight - window.innerHeight;
   socket.emit("scrollElement", JSON.stringify(scrollingElement));
 }
-const throttledScrollEmitter = throttle(emitScroll, latency);
-
-let count = 0;
-const id = setInterval(() => {
-  if (count < 1 && document.readyState === "complete") {
-    scrollerListener.addListenerTo(document, throttledScrollEmitter);
-    scrollerListener.scrollables.forEach((scrollable) => {
-      emitScroll({ target: scrollable } as unknown as Event);
-    });
-    loggerIns.log(scrollerListener.scrollables.size);
-    count++;
-  } else if (count >= 1) {
-    clearInterval(id);
-  }
-}, 100);
+scrollerListener.addListenerTo(document, emitScroll);
