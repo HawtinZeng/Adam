@@ -13,7 +13,6 @@ socket.on("connect", () => {
   console.log("connected from client");
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
-const latency = 0;
 const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {

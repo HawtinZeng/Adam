@@ -94,9 +94,9 @@ export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
 const debugExtensionScroll = false;
 export const showElePtLength = false;
-export const showEleId = false;
+export const showEleId = true;
 
-let currentFocusedWindow: BaseResult | undefined;
+let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
 
 let stream: MediaStream | undefined;
 const cap = new Map<string, ImageCapture>();
@@ -518,7 +518,6 @@ function App() {
   }, []);
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
-      console.log("extensionScrollElementHandler");
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
       const b = new Box(
         areaInfo.offsetX,
@@ -579,6 +578,8 @@ function App() {
       if (!currentFocusedWindow) return;
 
       if (tabId !== undefined) {
+        if (!currentFocusedWindow.containedWin)
+          currentFocusedWindow.containedWin = currentFocusedWindow.id;
         currentFocusedWindow.id = tabId;
       }
 
@@ -605,7 +606,13 @@ function App() {
             currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
             currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
           );
-          globalSynchronizer.value.partition(sceneData, b);
+          globalSynchronizer.value.partition(
+            {
+              elements:
+                multipleScenes.get(currentFocusedWindow.id)?.elements || [],
+            },
+            b
+          );
         } else {
           globalSynchronizer.value = existSynchronizer;
         }
@@ -624,9 +631,6 @@ function App() {
         setSceneData({ ...exist });
         redrawAllEles(undefined, undefined, exist.elements);
       }
-
-      // console.log(`changeScene: ${currentFocusedWindow.id}`);
-      console.log(globalSynchronizer.value?.areasMap.size);
       history.current.changeScene(currentFocusedWindow.id);
     },
     [sceneData, setSceneData]
@@ -642,7 +646,6 @@ function App() {
     if (!windowInfo) return;
     // click the same window needn't change scene.
     currentFocusedWindow = windowInfo;
-    // console.log(`changeWorkspace: ${currentFocusedWindow.id}`);
 
     if (windowInfo.title.includes("Chrome")) {
       window.ipcRenderer.send("queryActiveTabId");
@@ -655,10 +658,8 @@ function App() {
     if (!windowInfo || windowInfo.title === "Adam") return;
     if (
       globalSynchronizer.value &&
-      globalSynchronizer.value.windowId === sceneData.windowId
+      currentFocusedWindow?.containedWin === windowInfo.id
     ) {
-      console.log(windowInfo.bounds.y);
-
       globalSynchronizer.value.updateArea(
         new Box(
           windowInfo.bounds.x,
@@ -667,11 +668,10 @@ function App() {
           windowInfo.bounds.y + windowInfo.bounds.height
         )
       );
+      globalSynchronizer.value?.partition(sceneData);
+      redrawAllEles(undefined, undefined, sceneData.elements);
+      globalSynchronizer.value?.drawAllAreas();
     }
-
-    globalSynchronizer.value?.partition(sceneData);
-    redrawAllEles(undefined, undefined, sceneData.elements);
-    globalSynchronizer.value?.drawAllAreas();
   }
 
   useEffect(() => {

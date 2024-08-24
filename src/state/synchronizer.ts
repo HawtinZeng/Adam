@@ -55,14 +55,27 @@ export class Synchronizer {
   /*
     给没有分区的元素分区，然后记录这个分区
   */
-  partition({ elements: eles }, area?: Box) {
+  partition({ elements: eles }: { elements: DrawingElement[] }, area?: Box) {
     if (area) {
       this.addArea(area);
-      console.log("add");
     }
 
     try {
-      const withoutIncludingParts = eles.filter((e) => !e.includingPart);
+      const withoutIncludingParts = eles.filter((e) => {
+        const replaceIncludingPart =
+          e.includingPart &&
+          area &&
+          e.includingPart.contains(area) &&
+          !e.includingPart.equal_to(area);
+        if (replaceIncludingPart) {
+          const i = this.elesMap
+            .get(e.includingPart!)!
+            .findIndex((allOnes) => allOnes === e);
+          this.elesMap.get(e.includingPart!)?.splice(i, 1);
+        }
+
+        return !e.includingPart || replaceIncludingPart;
+      });
       withoutIncludingParts.forEach((ele) => {
         let boundingPoly: Polygon | undefined;
         if (ele.type === DrawingType.freeDraw) {
@@ -84,7 +97,6 @@ export class Synchronizer {
         if (!containsArea) return;
 
         ele.includingPart = containsArea;
-        ele.includingWindow = this.windowId;
 
         const exists = this.elesMap.get(containsArea)!;
         exists.push(ele);
