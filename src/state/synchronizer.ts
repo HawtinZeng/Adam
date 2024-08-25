@@ -139,6 +139,7 @@ export class Synchronizer {
     const deltaXmax = changedWindowBox.xmax - this.windowBox.xmax;
     const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
     const deltaYmax = changedWindowBox.ymax - this.windowBox.ymax;
+    const changedVec = new Vector(deltaXmin, deltaYmin);
     this.windowBox = changedWindowBox;
 
     this.areasMap.forEach((b) => {
@@ -146,9 +147,16 @@ export class Synchronizer {
       b.ymin += deltaYmin;
       b.xmax += deltaXmax;
       b.ymax += deltaYmax;
+
       this.elesMap.get(b)?.forEach((e) => {
         e.position.x += deltaXmin;
         e.position.y += deltaYmin;
+        e.boundary.forEach(
+          (bd, idx) => (e.boundary[idx] = bd.translate(changedVec))
+        );
+        e.excludeArea.forEach((pol, idx) => {
+          e.excludeArea[idx] = pol.translate(changedVec);
+        });
       });
     });
 
@@ -201,4 +209,3 @@ export class Synchronizer {
   }
 }
 export const globalSynchronizer: { value?: Synchronizer } = {};
-window.globalSynchronizer = globalSynchronizer;

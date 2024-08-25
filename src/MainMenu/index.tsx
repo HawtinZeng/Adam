@@ -298,7 +298,6 @@ function MainMenu() {
 
   useEffect(() => {
     setTimeout(updateSubMenuPosition, 10);
-    // logger.log("updateSubMenuPosition");
   }, [selectedKey]);
 
   useEffect(() => {

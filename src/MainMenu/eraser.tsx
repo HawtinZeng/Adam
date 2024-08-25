@@ -57,6 +57,7 @@ export function Eraser() {
         hitedEles.push(ele);
       }
     });
+
     return hitedEles;
   };
 
@@ -64,6 +65,7 @@ export function Eraser() {
     if (disableDrawing) return;
     mousePressed.current = true;
     collectUpdatingElements(e);
+
     appendEraserPoints(e);
 
     setSceneAtom({ ...sceneState });

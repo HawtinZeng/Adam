@@ -1,6 +1,7 @@
 import { Button } from "@mui/material";
 import {
   Box,
+  Circle,
   Edge,
   Line,
   Point as PointZ,
@@ -24,6 +25,7 @@ import {
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
   clearMainCanvas,
+  drawCircle,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -94,8 +96,8 @@ export const debugShowHandlesPosition = false;
 const showDebugPanel = false;
 const debugExtensionScroll = false;
 export const showElePtLength = false;
-export const showEleId = true;
-const debugDrawAllAreas = false;
+export const showEleId = false;
+const debugDrawAllAreas = true;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
 
@@ -651,14 +653,15 @@ function App() {
     }
   };
 
+  //  triggered when drag window
   function mousedragHandler(_: any, windowInfo: BaseResult) {
-    if (!windowInfo || windowInfo.title === "Adam") return;
+    if (!windowInfo || windowInfo.title === "Adam" || windowInfo.title === "")
+      return;
     if (
       globalSynchronizer.value &&
       (currentFocusedWindow?.containedWin === windowInfo.id ||
         !currentFocusedWindow?.title.includes("Chrome"))
     ) {
-      // currentFocusedWindow?.containedWin === undefined) //not chrome page
       globalSynchronizer.value.updateArea(
         new Box(
           windowInfo.bounds.x,
@@ -669,6 +672,11 @@ function App() {
       );
       globalSynchronizer.value?.partition(sceneData);
       redrawAllEles(undefined, undefined, sceneData.elements);
+      sceneData.elements.forEach((e) => {
+        e.boundary.forEach((p) => {
+          [...p.vertices].forEach((pt) => drawCircle(null, new Circle(pt, 10)));
+        });
+      });
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
     }
   }
@@ -966,8 +974,11 @@ function App() {
             </div>
             <MainMenu />
             {showDebugPanel && (
-              <>
+              <div style={{ color: "red" }}>
                 <div>{`updatingElements: ${sceneData.updatingElements.length}`}</div>
+                <div>{`updatingElements: ${JSON.stringify(
+                  sceneData.updatingElements[0]
+                )}`}</div>
                 <div>{`updatingEle position: ${sceneData.updatingElements[0]?.ele.position.x}, ${sceneData.updatingElements[0]?.ele.position.y}`}</div>
                 <div>{`updatingEle scale: ${sceneData.updatingElements[0]?.ele.scale.x}, ${sceneData.updatingElements[0]?.ele.scale.y}`}</div>
                 <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
@@ -996,7 +1007,7 @@ function App() {
                 >
                   保存到window.snapshots
                 </Button>
-              </>
+              </div>
             )}
             {isShowShiftTip.current && (
               <DraggableTransparent

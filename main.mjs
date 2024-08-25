@@ -78,9 +78,9 @@ ipcMain.on("queryActiveTabId", () => {
 
 const v = new GlobalKeyboardListener();
 v.addListener(function (e) {
-  if ((e.name === "LEFT ALT" || e.name === "RIGHT ALT") && e.state === "UP") {
+  if (e.name === "LEFT ALT" || e.name === "RIGHT ALT" || e.name === "TAB") {
     setTimeout(changeWindowHandler, 10);
-  } else if (e.name === "MOUSE LEFT" && e.state === "DOWN") {
+  } else if (e.name === "MOUSE LEFT") {
     setTimeout(changeWindowHandler, 10); // 等待操作系统将对应窗口激活
   }
 });
@@ -93,7 +93,8 @@ async function changeWindowHandler() {
     currentWindow?.id &&
     currentWindow?.title !== "Adam" &&
     currentWindow?.title !== "Open" &&
-    currentWindow?.title !== ""
+    currentWindow?.title !== "" &&
+    currentWindow?.title !== "Task Switching"
   ) {
     win.webContents.send("changeWindow", currentWindow);
     lastActiveWindow = currentWindow;

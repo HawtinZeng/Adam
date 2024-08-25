@@ -241,11 +241,10 @@ const getIsDeletedFlag = (arr: Uint8ClampedArray) => {
 let globalAppCtx: CanvasRenderingContext2D | null = null,
   globalCvs: HTMLCanvasElement | null = null;
 /**
- *
  * @param appCtx
  * @param appCanvas
  * @param elements 需要重绘的元素，从cache中拿图像
- * @param u 不从cache中拿图像的元素，重新新建cache
+ * @param uE 需要重新绘制operator的元素
  * @returns
  */
 export function redrawAllEles(
@@ -675,11 +674,7 @@ export function createDrawingCvs(
       } else {
         const strokePoints = getStrokePoints(
           points.map((pt) => {
-            const ptObj = new PointZ(pt.x, pt.y)
-              .translate(
-                new Vector(freeDrawing.position.x, freeDrawing.position.y)
-              )
-              .rotate(freeDrawing.rotation);
+            const ptObj = new PointZ(pt.x, pt.y);
 
             return { x: ptObj.x, y: ptObj.y, pressure: pt.pressure };
           }),
@@ -756,7 +751,7 @@ function drawEraserOutline(
   if (updatingEraser !== undefined && eraserOutlinePoints[updatingEraser])
     fillPolygon(
       [...eraserOutlinePoints[updatingEraser].vertices].map((pt) => {
-        return [pt.x, pt.y];
+        return [pt.x - ele.position.x, pt.y - ele.position.y];
       }),
       "rgb(100 0 0 / 100%)",
       ctx

@@ -289,14 +289,6 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.boundary = allPols[0];
           drawingEle.oriBoundary = cloneDeep(allPols[0]);
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
-          // console.log(drawingEle.rotateOrigin);
-          // drawCircle(
-          //   null,
-          //   new Circle(
-          //     new PointZ(drawingEle.rotateOrigin.x, drawingEle.rotateOrigin.y),
-          //     100
-          //   )
-          // );
         }
 
         if (allPols[1]) {
