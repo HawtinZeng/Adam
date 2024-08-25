@@ -123,6 +123,7 @@ export class Synchronizer {
       // refer rest.json: logger.log(JSON.stringify([...this.areasMap.values()]));
       scrolledEles?.forEach((el) => {
         el.position.y += delta;
+        el.rotateOrigin.y += delta;
         debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 300)();
       });
       return !!scrolledEles?.length;
@@ -157,6 +158,9 @@ export class Synchronizer {
         e.excludeArea.forEach((pol, idx) => {
           e.excludeArea[idx] = pol.translate(changedVec);
         });
+
+        e.rotateOrigin.x += changedVec.x;
+        e.rotateOrigin.y += changedVec.y;
       });
     });
 

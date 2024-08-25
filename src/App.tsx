@@ -673,6 +673,10 @@ function App() {
       globalSynchronizer.value?.partition(sceneData);
       redrawAllEles(undefined, undefined, sceneData.elements);
       sceneData.elements.forEach((e) => {
+        drawCircle(
+          null,
+          new Circle(new PointZ(e.rotateOrigin.x, e.rotateOrigin.y), 10)
+        );
         e.boundary.forEach((p) => {
           [...p.vertices].forEach((pt) => drawCircle(null, new Circle(pt, 10)));
         });

@@ -267,6 +267,7 @@ export function redrawAllEles(
       needClearIdx.push(idx);
       return;
     }
+
     if ((el as FreeDrawing).strokeOptions?.haveTrailling) return;
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
@@ -275,12 +276,24 @@ export function redrawAllEles(
       if (!cachedCvs) return;
       drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
 
+      globalAppCtx!.save();
+      const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
+      if (eleCliping) {
+        globalAppCtx!.beginPath();
+        globalAppCtx!.rect(
+          eleCliping.xmin,
+          eleCliping.ymin,
+          eleCliping.width,
+          eleCliping.height
+        );
+        globalAppCtx!.clip();
+      }
+
       // For image element.
       if (el.type === DrawingType.img) {
         const img = el as ImageElement;
         if (el.type === "img") {
           const rotateOrigin = img.rotateOrigin;
-          globalAppCtx!.save();
 
           globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
           globalAppCtx!.rotate(el.rotation);
@@ -302,20 +315,6 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else {
-        globalAppCtx!.save();
-
-        const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
-        if (eleCliping) {
-          globalAppCtx!.beginPath();
-          globalAppCtx!.rect(
-            eleCliping.xmin,
-            eleCliping.ymin,
-            eleCliping.width,
-            eleCliping.height
-          );
-          globalAppCtx!.clip();
-        }
-
         const rotateOrigin = el.rotateOrigin;
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
@@ -328,9 +327,8 @@ export function redrawAllEles(
           cachedCvs!.width,
           cachedCvs!.height
         );
-
-        globalAppCtx!.restore();
       }
+      globalAppCtx!.restore();
     } else {
       drawNeedntCacheEle(el);
     }
