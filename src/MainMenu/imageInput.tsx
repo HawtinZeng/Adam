@@ -1,5 +1,5 @@
 import x from "@stylexjs/stylex";
-import { Box, Point, Polygon, Vector } from "@zenghawtin/graph2d";
+import { Box, Circle, Point, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom } from "jotai";
 import React, {
   ChangeEvent,
@@ -9,8 +9,11 @@ import React, {
   useState,
 } from "react";
 import { ReactSVG } from "react-svg";
+import { debugArrow } from "src/App";
+import { drawCircle, getTriangle } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
+  ArrowShapeElement,
   CircleShapeElement,
   DrawingType,
   FreeDrawing,
@@ -251,6 +254,55 @@ export function getBoundryPoly(ele: DrawingElement) {
       pos.y + circle.radius * 2 * circle.scale.y
     );
     return new Polygon(bbx).rotate(ele.rotation, bbx.center);
+  } else if (ele.type === DrawingType.arrow) {
+    const arrow = ele as ArrowShapeElement;
+    const endPt = {
+      x: arrow.points[1].x + arrow.position.x,
+      y: arrow.points[1].y + arrow.position.y,
+    };
+    console.log(arrow.rotation);
+
+    const [endPos, startPos] = [
+      {
+        x: arrow.points[1].x + arrow.position.x,
+        y: arrow.points[1].y + arrow.position.y,
+      },
+      {
+        x: arrow.points[0].x + arrow.position.x,
+        y: arrow.points[0].y + arrow.position.y,
+      },
+    ];
+
+    const lineVec = new Vector(endPos.x - startPos.x, endPos.y - startPos.y);
+    const verticalToBottom = new Vector(0, 1);
+    const rotation = lineVec.invert().angleTo(verticalToBottom);
+    const [v1x, v1y, v2x, v2y, v3x, v3y] = getTriangle(
+      endPt.x,
+      endPt.y,
+      arrow.strokeWidth * 4,
+      -rotation
+    );
+
+    const halfThickness = arrow.strokeWidth / 2;
+    const downVec = lineVec.normalize().rotate90CCW();
+    const upVec = lineVec.normalize().rotate90CW();
+    const realDVec = downVec.scale(halfThickness, halfThickness);
+    const realUVec = upVec.scale(halfThickness, halfThickness);
+
+    const pol = new Polygon([
+      new Point(v3x, v3y),
+      new Point(v1x, v1y),
+      new Point(endPos.x + realUVec.x, endPos.y + realUVec.y),
+      new Point(startPos.x + realUVec.x, startPos.y + realUVec.y),
+      new Point(startPos.x + realDVec.x, startPos.y + realDVec.y),
+      new Point(endPos.x + realDVec.x, endPos.y + realDVec.y),
+      new Point(v2x, v2y),
+    ]);
+    if (debugArrow)
+      [...pol.vertices].forEach((v) => {
+        drawCircle(null, new Circle(v, 10));
+      });
+    return pol;
   } else if (ele.type === DrawingType.freeDraw) {
     const free = ele as FreeDrawing;
     const pos = free.position;

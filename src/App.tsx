@@ -93,10 +93,13 @@ window.Buffer = require("buffer/").Buffer;
 
 export const debugShowEleId = false;
 export const debugShowHandlesPosition = false;
-const showDebugPanel = false;
-const debugExtensionScroll = false;
+export const debugArrow = false;
 export const showElePtLength = false;
 export const showEleId = false;
+
+const debugBAndR = false;
+const showDebugPanel = false;
+const debugExtensionScroll = false;
 const debugDrawAllAreas = true;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
@@ -538,6 +541,7 @@ function App() {
         b,
         areaInfo.scrollTop
       );
+      console.log(needUpdating);
       if (needUpdating) {
         redrawAllEles(
           undefined,
@@ -672,15 +676,18 @@ function App() {
       );
       globalSynchronizer.value?.partition(sceneData);
       redrawAllEles(undefined, undefined, sceneData.elements);
-      sceneData.elements.forEach((e) => {
-        drawCircle(
-          null,
-          new Circle(new PointZ(e.rotateOrigin.x, e.rotateOrigin.y), 10)
-        );
-        e.boundary.forEach((p) => {
-          [...p.vertices].forEach((pt) => drawCircle(null, new Circle(pt, 10)));
+      if (debugBAndR)
+        sceneData.elements.forEach((e) => {
+          drawCircle(
+            null,
+            new Circle(new PointZ(e.rotateOrigin.x, e.rotateOrigin.y), 10)
+          );
+          e.boundary.forEach((p) => {
+            [...p.vertices].forEach((pt) =>
+              drawCircle(null, new Circle(pt, 10))
+            );
+          });
         });
-      });
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
     }
   }
@@ -715,6 +722,10 @@ function App() {
       } else {
         setSeletedKey(3);
       }
+    };
+
+    const AltToggleHandler = () => {
+      setSeletedKey(-1);
     };
 
     const alt1Handler = () => {
@@ -830,6 +841,7 @@ function App() {
       return res;
     }
 
+    window.ipcRenderer?.on("Alt`", AltToggleHandler);
     window.ipcRenderer?.on("Alt1", alt1Handler);
     window.ipcRenderer?.on("Alt2", alt2Handler);
     window.ipcRenderer?.on("Alt3", alt3Handler);
@@ -847,6 +859,7 @@ function App() {
     window.ipcRenderer?.on("mouseWheel", globalScrollEles);
     window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
+      window.ipcRenderer?.on("Alt`", AltToggleHandler);
       window.ipcRenderer?.off("Alt1", alt1Handler);
       window.ipcRenderer?.off("Alt2", alt2Handler);
       window.ipcRenderer?.off("Alt3", alt3Handler);

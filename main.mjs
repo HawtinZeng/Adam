@@ -140,6 +140,9 @@ app.whenReady().then(async () => {
   });
 
   // global shortcuts
+  globalShortcut.register("Alt+`", () => {
+    win.webContents.send("Alt`");
+  });
   globalShortcut.register("Alt+1", () => {
     win.webContents.send("Alt1");
   });

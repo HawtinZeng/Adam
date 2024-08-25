@@ -360,8 +360,11 @@ function drawNeedntCacheEle(el: DrawingElement) {
     const a = el as ArrowShapeElement;
 
     if (a.points.length === 2) {
-      const endPos = a.points[1];
-      const startPos = a.points[0];
+      const [endPos, startPos] = [
+        { x: a.points[1].x + a.position.x, y: a.points[1].y + a.position.y },
+        { x: a.points[0].x + a.position.x, y: a.points[0].y + a.position.y },
+      ];
+
       const reverseDir = new Vector(
         startPos.x - endPos.x,
         startPos.y - endPos.y
@@ -372,8 +375,8 @@ function drawNeedntCacheEle(el: DrawingElement) {
       globalAppCtx!.save();
 
       globalAppCtx!.beginPath();
-      globalAppCtx!.moveTo(a.points[0].x, a.points[0].y);
-      globalAppCtx!.lineTo(a.points[1].x, a.points[1].y);
+      globalAppCtx!.moveTo(startPos.x, startPos.y);
+      globalAppCtx!.lineTo(endPos.x, endPos.y);
 
       globalAppCtx!.lineCap = "round";
       globalAppCtx!.lineWidth = a.strokeWidth;
@@ -528,14 +531,11 @@ export function removeBlankEle(
   });
 }
 
-function drawTriangleWithHeight(
-  ctx: CanvasRenderingContext2D,
+export function getTriangle(
   x: number,
   y: number,
   height: number,
-  color: string,
-  rotation: number = 0,
-  lineStyle: "dashed" | "solid" = "solid"
+  rotation: number = 0
 ) {
   const width = (height * Math.sqrt(3)) / 2; // Calculate the base width of the equilateral triangle
 
@@ -551,6 +551,20 @@ function drawTriangleWithHeight(
   const [rx1, ry1] = rotate(x1, y1, x, y, rotation);
   const [rx2, ry2] = rotate(x2, y2, x, y, rotation);
   const [rx3, ry3] = rotate(x3, y3, x, y, rotation);
+
+  return [rx1, ry1, rx2, ry2, rx3, ry3];
+}
+
+function drawTriangleWithHeight(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  height: number,
+  color: string,
+  rotation: number = 0,
+  lineStyle: "dashed" | "solid" = "solid"
+) {
+  const [rx1, ry1, rx2, ry2, rx3, ry3] = getTriangle(x, y, height, rotation);
 
   ctx.save();
   ctx.beginPath();
