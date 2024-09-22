@@ -101,7 +101,7 @@ export function NotePanel(props: {
   const colorHex = colorConfigs[colorIdx]?.key ?? "#ffffff";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [scene, setScene] = useAtom(sceneAtom);
-  const [_, setSelectedKey] = useAtom(selectedKeyAtom);
+  const [selectedKey, setSelectedKey] = useAtom(selectedKeyAtom);
   const disableDrawing = useSetAtom(disableDrawingAtom);
   const [isDragging, setIsDragging] = useState(false);
   const customizeTextareaStyle = colorHex
@@ -153,7 +153,8 @@ export function NotePanel(props: {
     if (idx !== -1) {
       scene.domElements.splice(idx, 1);
     }
-    setTransparent();
+
+    if (selectedKey === -1) setTransparent();
     setScene({ ...scene, domElements: [...scene.domElements] });
   };
 
@@ -162,7 +163,7 @@ export function NotePanel(props: {
       props.ele.position.x = 0;
       props.ele.position.y = 0;
       setScene({ ...scene, domElements: [...scene.domElements] });
-      setTransparent();
+      if (selectedKey === -1) setTransparent();
     }
   };
 
@@ -219,7 +220,7 @@ export function NotePanel(props: {
         onMouseLeave={() => {
           if (!isDragging) {
             disableDrawing(false);
-            setTransparent();
+            if (selectedKey === -1) setTransparent();
           }
         }}
       >

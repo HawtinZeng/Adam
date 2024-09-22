@@ -712,7 +712,11 @@ function App() {
     };
 
     const AltToggleHandler = () => {
-      setSeletedKey(-1);
+      if (selectedKey !== -1) {
+        setSeletedKey(-1);
+      } else {
+        setSeletedKey(2);
+      }
     };
 
     const alt1Handler = () => {
