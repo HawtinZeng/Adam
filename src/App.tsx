@@ -11,7 +11,6 @@ import {
 import { ElementRect } from "commonModule/types";
 import * as d3c from "d3-color";
 import { IpcRenderer, IpcRendererEvent } from "electron";
-// const { desktopCapturer, remote } = require("electron");
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, merge, remove, throttle } from "lodash";
@@ -524,6 +523,7 @@ function App() {
   }, []);
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
+      console.log("extensionScrollElementHandler");
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
       const b = new Box(
         areaInfo.offsetX,
@@ -554,19 +554,6 @@ function App() {
 
       if (debugExtensionScroll) {
         redrawAllEles(undefined, undefined, sceneData.elements);
-        // drawRectBorder(
-        //   null,
-        //   new Polygon(
-        //     new Box(
-        //       Number(areaInfo.offsetX),
-        //       Number(areaInfo.offsetY),
-        //       Number(areaInfo.offsetX) + Number(areaInfo.width),
-        //       Number(areaInfo.offsetY) + Number(areaInfo.height)
-        //     )
-        //   ),
-        //   d3c.rgb("#14C0E0"),
-        //   1
-        // );
       }
     }
     window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
@@ -972,6 +959,8 @@ function App() {
     dragEnd,
     globalKeydown,
   ]);
+  const domElements = useMemo(() => <DomElements />, []);
+
   return (
     <>
       {useMemo(
@@ -983,9 +972,9 @@ function App() {
                 cursor: cursorSvg ?? "default",
               }}
             >
-              <DrawCanvas />
-              <DomElements />
               <BackgroundCanvas />
+              <DrawCanvas />
+              {domElements}
             </div>
             <MainMenu />
             {showDebugPanel && (
@@ -1198,7 +1187,6 @@ function App() {
         ).normalize();
 
         const scalar1 = offset.dot(firstDir);
-
         const scalar2 = offset.dot(secondDir);
 
         if (lockScale) {

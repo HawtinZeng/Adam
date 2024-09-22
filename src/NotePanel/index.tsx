@@ -8,6 +8,7 @@ import { DomElement } from "src/CoreRenderer/basicTypes";
 import { colorConfigs } from "src/MainMenu";
 import { ColorsSubPanel } from "src/PenPanel/color";
 import { getComplementaryColor } from "src/Utils/color";
+import { setTransparent, unsetTransparent } from "src/commonUtils";
 import {
   draggableTrans,
   menuContainer,
@@ -92,18 +93,17 @@ const noteStyles = stylex.create({
 });
 export function NotePanel(props: {
   status?: "creating" | "sticking";
-  text?: string;
   ele?: DomElement;
   color?: number;
 }) {
-  const { status = "creating", text = "" } = props;
+  const { status = "creating" } = props;
   const [colorIdx, setColor] = useState(props.color ?? 5);
   const colorHex = colorConfigs[colorIdx]?.key ?? "#ffffff";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [scene, setScene] = useAtom(sceneAtom);
   const [_, setSelectedKey] = useAtom(selectedKeyAtom);
   const disableDrawing = useSetAtom(disableDrawingAtom);
-
+  const [isDragging, setIsDragging] = useState(false);
   const customizeTextareaStyle = colorHex
     ? {
         backgroundColor: colorHex,
@@ -153,7 +153,17 @@ export function NotePanel(props: {
     if (idx !== -1) {
       scene.domElements.splice(idx, 1);
     }
+    setTransparent();
     setScene({ ...scene, domElements: [...scene.domElements] });
+  };
+
+  const resetPos = () => {
+    if (props.ele) {
+      props.ele.position.x = 0;
+      props.ele.position.y = 0;
+      setScene({ ...scene, domElements: [...scene.domElements] });
+      setTransparent();
+    }
   };
 
   const saveNote = () => {
@@ -173,19 +183,24 @@ export function NotePanel(props: {
   const saveContentSticking = () => {
     if (props.ele && status === "sticking") {
       props.ele.text = textareaRef.current?.value ?? "";
-      setScene({ ...scene, domElements: [...scene.domElements] });
     }
   };
-  // console.log(`re-render: ${new Date().getTime()}`);
 
   return (
     <Draggable
       cancel="#btn"
+      position={props.ele?.position}
       onDrag={(_, d) => {
         if (props.ele) {
           props.ele.position.x = d.x;
           props.ele.position.y = d.y;
         }
+      }}
+      onStart={() => {
+        setIsDragging(true);
+      }}
+      onStop={() => {
+        setIsDragging(false);
       }}
     >
       <div
@@ -195,8 +210,18 @@ export function NotePanel(props: {
             ? { ...menuContainer.areaBorder, ...draggableTrans.corner }
             : {}
         )}
-        onMouseEnter={() => disableDrawing(true)}
-        onMouseLeave={() => disableDrawing(false)}
+        onMouseEnter={() => {
+          if (!isDragging) {
+            disableDrawing(true);
+            unsetTransparent();
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isDragging) {
+            disableDrawing(false);
+            setTransparent();
+          }
+        }}
       >
         <div {...stylex.props(noteStyles.head)}>
           &nbsp;
@@ -213,11 +238,7 @@ export function NotePanel(props: {
             color={colorIdx}
           />
         </div>
-        <div
-          {...stylex.props(noteStyles.body)}
-          id="btn"
-          onMouseLeave={saveContentSticking}
-        >
+        <div {...stylex.props(noteStyles.body)} id="btn">
           <Textarea
             ref={textareaRef}
             aria-label="minimum height"
@@ -226,7 +247,8 @@ export function NotePanel(props: {
             id="btn"
             {...stylex.props(noteStyles.textarea)}
             style={customizeTextareaStyle}
-            defaultValue={text}
+            defaultValue={props.ele ? props.ele.text : ""}
+            onInput={saveContentSticking}
           />
         </div>
         {status === "creating" && (
@@ -244,8 +266,21 @@ export function NotePanel(props: {
             {...stylex.props(noteStyles.foot, noteStyles.stickingFoot)}
             id="btn"
           >
-            <Button variant="outlined" size="large" onClick={deleteNote}>
-              删除
+            <Button
+              variant="outlined"
+              color="error"
+              size="large"
+              onClick={deleteNote}
+            >
+              删除便签
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              color="info"
+              onClick={resetPos}
+            >
+              重置位置
             </Button>
           </div>
         )}

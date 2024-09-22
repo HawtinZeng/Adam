@@ -13,6 +13,7 @@ import { PenPanelComposal } from "src/MainMenu/penPanelCompose";
 import { NotePanel } from "src/NotePanel/index";
 import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanelCompose } from "src/ShapePanel/shapePanelCompose";
+import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { ScreenShotPanel } from "src/screenShot/ScreenShotPanel/index";
 import { sceneAtom } from "src/state/sceneState";
@@ -311,7 +312,10 @@ function MainMenu() {
   }, [canvasTrigger, checkHit, sceneState, selectedKey]);
 
   return (
-    <>
+    <div
+      onMouseEnter={() => unsetTransparent()}
+      onMouseLeave={() => selectedKey === -1 && setTransparent()}
+    >
       <Menu
         btnConfigs={menuConfigs}
         setParentHoverKey={setHoveredKey}
@@ -331,7 +335,7 @@ function MainMenu() {
           {menuConfigs[selectedKey].subMenu}
         </DraggableTransparent>
       ) : null}
-    </>
+    </div>
   );
 }
 export default MainMenu;

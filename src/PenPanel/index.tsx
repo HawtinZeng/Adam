@@ -259,7 +259,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   const stopCurrentDrawing = () => {
-    setSceneAtom(sceneState);
+    setSceneAtom({ ...sceneState });
     setTimeout(() => {
       const drawingEle = sceneState.updatingElements[
         sceneState.updatingElements.length - 1

@@ -1,10 +1,7 @@
 import stylex from "@stylexjs/stylex";
-import { useAtomValue } from "jotai";
 import React, { ReactNode, Ref, forwardRef, useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import { Point } from "src/Utils/Data/geometry";
-import { setTransparent, unsetTransparent } from "src/commonUtils";
-import { selectedKeyAtom } from "src/state/uiState";
 export const menuContainer = stylex.create({
   flexContent: {
     backgroundColor: "#ffffff",
@@ -50,7 +47,6 @@ export const DraggableTransparent = forwardRef(
     const needBorder = props.needBorder ?? true;
     const needPadding = props.needPadding ?? true;
     const defaultPosition = props.defaultPosition ?? new Point(0, 0);
-    const selectedKey = useAtomValue(selectedKeyAtom);
 
     const onDrag = props.onDrag;
     const [hasIni, setHasIni] = useState(false);
@@ -96,15 +92,6 @@ export const DraggableTransparent = forwardRef(
           )}
           ref={ref as Ref<HTMLDivElement>}
           style={hasIni ? { visibility: "visible" } : { visibility: "hidden" }}
-          onMouseEnter={() => {
-            unsetTransparent();
-            // console.log("unsetTransparent");
-          }}
-          onMouseLeave={() => {
-            if (selectedKey === -1) {
-              setTransparent();
-            }
-          }}
         >
           {props.children}
         </div>

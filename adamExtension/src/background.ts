@@ -19,3 +19,11 @@ chrome.tabs.onCreated.addListener(function (tab) {
 chrome.tabs.onActivated.addListener(function (tabInfo) {
   socket.emit("activeBrowserTab", tabInfo.tabId);
 });
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "getFocusStatus") {
+    chrome.windows.getCurrent((window) => {
+      sendResponse({ focused: window.focused });
+    });
+    return true;
+  }
+});

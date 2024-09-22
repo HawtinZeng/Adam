@@ -50,6 +50,13 @@ function emitScroll(e: Event) {
     scrollingElement.scrollHeight = (trigger as any)?.scrollHeight;
   }
   scrollingElement.topPadding = window.outerHeight - window.innerHeight;
-  socket.emit("scrollElement", JSON.stringify(scrollingElement));
+  chrome.runtime.sendMessage(
+    { action: "getFocusStatus" },
+    (res: { focused: boolean }) => {
+      if (res.focused) {
+        socket.emit("scrollElement", JSON.stringify(scrollingElement));
+      }
+    }
+  );
 }
 scrollerListener.addListenerTo(document, emitScroll);
