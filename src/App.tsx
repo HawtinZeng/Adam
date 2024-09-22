@@ -531,6 +531,7 @@ function App() {
         areaInfo.offsetX + areaInfo.width,
         areaInfo.offsetY + areaInfo.height
       );
+
       try {
         if (!globalSynchronizer.value) return;
         globalSynchronizer.value.partition(sceneData, b);
@@ -541,7 +542,6 @@ function App() {
         b,
         areaInfo.scrollTop
       );
-      console.log(needUpdating);
       if (needUpdating) {
         redrawAllEles(
           undefined,
@@ -944,9 +944,7 @@ function App() {
   useEffect(() => {
     const wrapper = canvasEventTrigger.current!;
     wrapper.addEventListener("mousedown", detectElesInterceted);
-
     wrapper.addEventListener("mousedown", dragStart);
-    // wrapper.addEventListener("mousemove", notifyMainProcess);
 
     wrapper.addEventListener("mouseup", dragEnd);
 
@@ -1080,9 +1078,13 @@ function App() {
         const zerothEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
         ][0] as Edge;
+
+        if (!zerothEdge) return;
+
         const thirdEdge = [
           ...dragInfo.current!.originalBoundary!.edges,
         ][3] as Edge;
+        if (!thirdEdge) return;
 
         const zeroDir = new Vector(
           zerothEdge.start,

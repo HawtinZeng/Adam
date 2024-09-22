@@ -54,6 +54,7 @@ export class Synchronizer {
   }
   /*
     给没有分区的元素分区，然后记录这个分区
+    给在大区域的元素转移到小区域
   */
   partition({ elements: eles }: { elements: DrawingElement[] }, area?: Box) {
     if (area) {
@@ -67,15 +68,10 @@ export class Synchronizer {
           area &&
           e.includingPart.contains(area) &&
           !e.includingPart.equal_to(area);
-        if (replaceIncludingPart) {
-          const i = this.elesMap
-            .get(e.includingPart!)!
-            .findIndex((allOnes) => allOnes === e);
-          this.elesMap.get(e.includingPart!)?.splice(i, 1);
-        }
 
         return !e.includingPart || replaceIncludingPart;
       });
+
       withoutIncludingParts.forEach((ele) => {
         let boundingPoly: Polygon | undefined;
         if (ele.type === DrawingType.freeDraw) {
@@ -94,7 +90,21 @@ export class Synchronizer {
         );
         if (!boundingPoly) return;
         const containsArea = allAreas.find((a) => a.contains(boundingPoly));
-        if (!containsArea) return;
+        if (
+          !containsArea ||
+          (ele.includingPart &&
+            new Polygon(containsArea).area >
+              new Polygon(ele.includingPart).area)
+        )
+          return;
+
+        // Avoid mistaking deleting the unchanged ele from box
+        if (ele.includingPart) {
+          const i = this.elesMap
+            .get(ele.includingPart!)!
+            .findIndex((allOnes) => allOnes === ele);
+          this.elesMap.get(ele.includingPart!)?.splice(i, 1);
+        }
 
         ele.includingPart = containsArea;
 
@@ -120,7 +130,7 @@ export class Synchronizer {
       this.scrollTopMap.set(b, scrollTop);
       delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
       const scrolledEles = this.elesMap.get(b);
-      // refer rest.json: logger.log(JSON.stringify([...this.areasMap.values()]));
+
       scrolledEles?.forEach((el) => {
         el.position.y += delta;
         el.rotateOrigin.y += delta;
@@ -177,9 +187,6 @@ export class Synchronizer {
     this.areasMap.forEach((b) => {
       count++;
 
-      // console.log(
-      //   `${this.elesMap.get(b)?.[0]?.id} - time: ${new Date().getTime()}`
-      // );
       const el = this.elesMap.get(b)?.[0];
       drawRectBorder(null, new Polygon(b), d3c.rgb("#14C0E0"), 10 * count);
       if (el) {

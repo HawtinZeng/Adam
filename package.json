@@ -60,7 +60,8 @@
     "make": "electron-forge make --trace-deprecation",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "ex:dev": "cd adamExtension && nr dev"
   },
   "eslintConfig": {
     "extends": [
