@@ -55,7 +55,8 @@ export function SizeSlider(props: { controledAtom: PrimitiveAtom<number> }) {
       }
     },
     [isMouseDown, offset, setOffset]
-  ); // Add dependencies here
+  );
+  // Add dependencies here
 
   const mouseDown = (e) => {
     setIsMouseDown(true);

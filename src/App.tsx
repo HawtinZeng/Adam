@@ -13,9 +13,14 @@ import * as d3c from "d3-color";
 import { IpcRenderer, IpcRendererEvent } from "electron";
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, merge, remove, throttle } from "lodash";
-import { nanoid } from "nanoid";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { cloneDeep, remove, throttle } from "lodash";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
 import {
@@ -32,12 +37,10 @@ import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   CircleShapeElement,
   DrawingType,
-  FreeDrawing,
   ImageElement,
   RectangleShapeElement,
-  newFreeDrawingElement,
 } from "src/CoreRenderer/drawingElementsTypes";
-import MainMenu, { colorConfigs, menuConfigs } from "src/MainMenu";
+import MainMenu, { colorConfigs } from "src/MainMenu";
 import {
   getBoundryPoly,
   getExcludeBoundaryPoly,
@@ -97,7 +100,7 @@ export const showElePtLength = false;
 export const showEleId = false;
 
 const debugBAndR = false;
-const showDebugPanel = false;
+const showDebugPanel = true;
 const debugExtensionScroll = false;
 const debugDrawAllAreas = true;
 
@@ -153,6 +156,8 @@ function App() {
   const [sceneData, setSceneData] = useAtom(sceneAtom);
 
   const history = useRef<History>(new History());
+
+  const [screenLog, sscreenLog] = useState("default screenLog");
 
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
@@ -424,8 +429,13 @@ function App() {
             );
             const currentLine = new Line(new PointZ(x, y), rotationCenter);
 
-            const deltaRotation = originalLine.norm.angleTo(currentLine.norm);
-            el.rotation = deltaRotation + originalRotation;
+            const deltaRotation = originalLine.norm.angleTo(currentLine.norm); // in radian between 0 to 2 * PI
+
+            const caclRotation = deltaRotation + originalRotation;
+            el.rotation =
+              caclRotation > 2 * Math.PI
+                ? caclRotation - 2 * Math.PI
+                : caclRotation;
 
             el.boundary[0] = getBoundryPoly(el)!;
           }
@@ -435,26 +445,6 @@ function App() {
     },
     [sceneData, setSceneData, currentKeyboard]
   );
-  const drawAPoint = (p: Point) => {
-    const newFreeElement = merge(cloneDeep(newFreeDrawingElement), {
-      id: nanoid(),
-      position: { x: 0, y: 0 },
-      points: [{ x: p.x, y: p.y }],
-    } as FreeDrawing);
-    // default property
-    const subMenuStrokeOption =
-      menuConfigs[0]?.btnConfigs?.[selectedKey]?.strokeOptions;
-    newFreeElement.strokeOptions = cloneDeep(subMenuStrokeOption!);
-
-    // updated property, size是ui控件的直径
-    if (newFreeElement.strokeOptions !== undefined) {
-      newFreeElement.strokeOptions.size = size / 4;
-      newFreeElement.strokeOptions.strokeColor =
-        colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
-    }
-
-    sceneData.elements.push(newFreeElement);
-  };
 
   const globalKeydown = useCallback(
     (e: KeyboardEvent) => {
@@ -880,6 +870,7 @@ function App() {
     }
 
     redrawAllEles(undefined, undefined, els);
+
     if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
   }
   useEffect(() => {
@@ -967,69 +958,68 @@ function App() {
 
   return (
     <>
-      {useMemo(
-        () => (
-          <>
-            <div
-              ref={canvasEventTrigger}
-              style={{
-                cursor: cursorSvg ?? "default",
-              }}
-            >
-              <BackgroundCanvas />
-              <DrawCanvas />
-              {domElements}
-            </div>
-            <MainMenu />
-            {showDebugPanel && (
-              <div style={{ color: "red" }}>
-                <div>{`updatingElements: ${sceneData.updatingElements.length}`}</div>
-                <div>{`updatingElements: ${JSON.stringify(
-                  sceneData.updatingElements[0]
-                )}`}</div>
-                <div>{`updatingEle position: ${sceneData.updatingElements[0]?.ele.position.x}, ${sceneData.updatingElements[0]?.ele.position.y}`}</div>
-                <div>{`updatingEle scale: ${sceneData.updatingElements[0]?.ele.scale.x}, ${sceneData.updatingElements[0]?.ele.scale.y}`}</div>
-                <div>{`updatingEle rotation: ${sceneData.updatingElements[0]?.ele.rotation}`}</div>
-                <div>{`updatingEle rotationOrigin: ${sceneData.updatingElements[0]?.ele.rotateOrigin.x}, ${sceneData.updatingElements[0]?.ele.rotateOrigin.y}`}</div>
-                <div>{`updatingEle polygon[0] orientation: ${
-                  sceneData.updatingElements[0]?.ele.boundary[0] &&
-                  [
-                    ...sceneData.updatingElements[0]?.ele.boundary[0].faces,
-                  ][0].orientation()
-                }`}</div>
-                <div>{`elements: ${sceneData.elements.length}`}</div>
-                <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
-                <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
-                <div>{`height: ${bg?.height}`}</div>
-                <Button
-                  variant="contained"
-                  size="large"
-                  style={{ zIndex: "999" }}
-                  onClick={() => {
-                    // @ts-ignore
-
-                    window.snapshots = window.snapshots ? window.snapshots : [];
-                    // @ts-ignore
-                    window.snapshots.push(cloneDeep(sceneData.elements));
-                  }}
-                >
-                  保存到window.snapshots
-                </Button>
-              </div>
-            )}
-            {isShowShiftTip.current && (
-              <DraggableTransparent
-                horizontal={true}
-                needBorder={true}
-                needPadding={true}
-                customCls="shiftTip"
-              >
-                按住Shift键锁定比例
-              </DraggableTransparent>
-            )}
-          </>
-        ),
-        [cursorSvg, sceneData.elements, sceneData.updatingElements] // append mousePos to check real-time mouse position
+      <div
+        ref={canvasEventTrigger}
+        style={{
+          cursor: cursorSvg ?? "default",
+        }}
+      >
+        <BackgroundCanvas />
+        <DrawCanvas />
+        {domElements}
+      </div>
+      <MainMenu />
+      {showDebugPanel && (
+        <div
+          style={{
+            color: "red",
+            backgroundColor: "#ffffff",
+            display: "inline-block",
+            padding: "15px",
+          }}
+        >
+          <div>{`updatingElements: ${sceneData.updatingElements.length}`}</div>
+          <div>{`updatingEle position: ${sceneData.updatingElements[0]?.ele.position.x}, ${sceneData.updatingElements[0]?.ele.position.y}`}</div>
+          <div>{`updatingEle scale: ${sceneData.updatingElements[0]?.ele.scale.x}, ${sceneData.updatingElements[0]?.ele.scale.y}`}</div>
+          <div>{`updatingEle rotation: ${
+            ((sceneData.updatingElements[0]?.ele.rotation ?? 0) * 180) / Math.PI
+          }`}</div>
+          <div>{`updatingEle rotationOrigin: ${sceneData.updatingElements[0]?.ele.rotateOrigin.x}, ${sceneData.updatingElements[0]?.ele.rotateOrigin.y}`}</div>
+          <div>{`updatingEle polygon[0] orientation: ${
+            sceneData.updatingElements[0]?.ele.boundary[0] &&
+            [
+              ...sceneData.updatingElements[0]?.ele.boundary[0].faces,
+            ][0].orientation()
+          }`}</div>
+          <div>{`elements: ${sceneData.elements.length}`}</div>
+          <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
+          <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
+          <div>{`height: ${bg?.height}`}</div>
+          <Button
+            variant="contained"
+            size="large"
+            style={{ zIndex: "999" }}
+            onClick={() => {
+              // @ts-ignore
+              window.snapshots = window.snapshots ? window.snapshots : [];
+              // @ts-ignore
+              window.snapshots.push(cloneDeep(sceneData.elements));
+            }}
+          >
+            保存到window.snapshots
+          </Button>
+          <div>{screenLog} </div>
+        </div>
+      )}
+      {isShowShiftTip.current && (
+        <DraggableTransparent
+          horizontal={true}
+          needBorder={true}
+          needPadding={true}
+          customCls="shiftTip"
+        >
+          按住Shift键锁定比例
+        </DraggableTransparent>
       )}
     </>
   );
