@@ -51,10 +51,10 @@
   },
   "scripts": {
     "re": "nf start",
-    "start:react": "cross-env BROWSER=none PORT=5000 craco start",
+    "start:react": "cross-env BROWSER=none craco start --config craco.config.js",
     "build": "craco build",
-    "start:electron": "cross-env  ELECTRON_NO_ATTACH_CONSOLE=true PORT=5000 electron ./main.mjs --enable-logging",
-    "waitStartElectron": "cross-env PORT=5000 node ./waitStartElectron.js --enable-logging",
+    "start:electron": "cross-env  ELECTRON_NO_ATTACH_CONSOLE=true PORT=9000 electron ./main.mjs --enable-logging",
+    "waitStartElectron": "cross-env PORT=9000 node ./waitStartElectron.js --enable-logging",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make --trace-deprecation",

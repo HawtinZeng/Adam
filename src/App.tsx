@@ -513,7 +513,6 @@ function App() {
   }, []);
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
-      console.log("extensionScrollElementHandler");
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
       const b = new Box(
         areaInfo.offsetX,
@@ -865,7 +864,10 @@ function App() {
     if (currentFocusedWindow && confirmedScrollPage) {
       if (currentFocusedWindow.title.includes("Chrome")) {
       } else if (currentFocusedWindow.title.includes("Cursor")) {
-        els.forEach((e) => (e.position.y += delta * 50));
+        els.forEach((e) => {
+          e.position.y += delta * 50;
+          e.rotateOrigin.y += delta * 50;
+        });
       }
     }
 

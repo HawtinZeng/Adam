@@ -1,5 +1,5 @@
-import styleXPlugin from "@stylexjs/babel-plugin";
-import path from "path";
+const styleXPlugin = require("@stylexjs/babel-plugin");
+const path = require("path");
 const StylexPlugin = require("@stylexjs/webpack-plugin");
 module.exports = {
   babel: {
@@ -93,8 +93,14 @@ module.exports = {
       return eslintConfig;
     },
   },
-  devServer: (devServerConfig, { env, paths, proxy, allowedHost }) => {
-    devServerConfig.port = 3000;
-    return devServerConfig;
+  devServer: {
+    static: {
+      directory: path.join(__dirname, "public"),
+    },
+    compress: true,
+    port: 9000,
+    client: {
+      overlay: false,
+    },
   },
 };
