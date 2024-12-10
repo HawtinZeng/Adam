@@ -7,7 +7,7 @@ import { DrawingElement } from "src/CoreRenderer/basicTypes";
   
     const oldEle = cloneDeep(newEle);
     ele.position.x += 100;
-    history.update([oldEle], [cloneDeep(ele)]);
+    history.update([oldEle], [cloneDeep(ele)]);q
 */
 export type Action = {
   type: "add" | "update" | "delete";

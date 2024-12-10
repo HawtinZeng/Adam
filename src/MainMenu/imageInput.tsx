@@ -320,14 +320,13 @@ export function getExcludeBoundaryPoly(ele: DrawingElement) {
   if (ele.type === DrawingType.freeDraw) {
     const free = ele as FreeDrawing;
     const ori = free.oriexcludeArea;
-    ori.map((pol) => {
+
+    return ori.map((pol) => {
       const tranPol = pol.translate(
         new Vector(free.position.x, free.position.y)
       );
-      const bbx = tranPol.box;
 
-      return tranPol.rotate(ele.rotation, bbx.center);
+      return tranPol.rotate(ele.rotation, free.rotateOrigin);
     });
-    return ori;
   }
 }

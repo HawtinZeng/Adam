@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Circle, Point as PointZ, Polygon } from "@zenghawtin/graph2d";
+import { Circle, Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import getStroke from "perfect-freehand";
 import React, { useEffect, useRef } from "react";
@@ -105,6 +105,8 @@ export function Eraser() {
     sceneState.updatingElements.forEach((up) => {
       up.ele.excludeArea.push(
         new Polygon(eraserOutlinePoints.map((pt) => new PointZ(pt.x, pt.y)))
+          .translate(new Vector(-up.ele.position.x, -up.ele.position.y))
+          .rotate(-up.ele.rotation, up.ele.rotateOrigin)
       );
     });
   };

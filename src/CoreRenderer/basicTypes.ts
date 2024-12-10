@@ -1,4 +1,4 @@
-import {
+import Flatten, {
   Box,
   Circle,
   Face,
@@ -49,7 +49,7 @@ export interface DrawingElement {
   needCacheCanvas: boolean;
   locator?: HTMLCanvasElement;
 
-  rotateOrigin: Point; // 旋转中心
+  rotateOrigin: Flatten.Point; // 旋转中心
 
   includingPart?: Box;
 }

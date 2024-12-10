@@ -315,6 +315,7 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else {
+        // FreeDraw
         const rotateOrigin = el.rotateOrigin;
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
@@ -884,9 +885,10 @@ export function drawRectBorder(
 }
 
 export function drawPolygonPointIndex(
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D | undefined,
   polygon: Polygon
 ) {
+  if (!ctx) ctx = globalAppCtx!;
   ctx.save();
 
   ctx.beginPath();

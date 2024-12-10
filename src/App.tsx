@@ -30,6 +30,7 @@ import {
 import {
   clearMainCanvas,
   drawCircle,
+  drawPolygonPointIndex,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -370,6 +371,10 @@ function App() {
         ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
 
         ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
+
+        ele.excludeArea.forEach((exclude) => {
+          drawPolygonPointIndex(undefined, exclude);
+        });
 
         setSceneData({ ...sceneData });
         return;
