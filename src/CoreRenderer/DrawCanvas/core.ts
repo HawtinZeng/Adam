@@ -321,6 +321,8 @@ export function redrawAllEles(
         globalAppCtx!.rotate(el.rotation);
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
+        el.excludeArea.forEach((ex) => drawPolygonPointIndex(undefined, ex));
+
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,
@@ -764,7 +766,7 @@ function drawEraserOutline(
   if (updatingEraser !== undefined && eraserOutlinePoints[updatingEraser])
     fillPolygon(
       [...eraserOutlinePoints[updatingEraser].vertices].map((pt) => {
-        return [pt.x - ele.position.x, pt.y - ele.position.y];
+        return [pt.x, pt.y];
       }),
       "rgb(100 0 0 / 100%)",
       ctx
@@ -888,6 +890,7 @@ export function drawPolygonPointIndex(
   ctx: CanvasRenderingContext2D | undefined,
   polygon: Polygon
 ) {
+  if (!polygon) return;
   if (!ctx) ctx = globalAppCtx!;
   ctx.save();
 

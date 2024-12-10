@@ -105,8 +105,8 @@ export function Eraser() {
     sceneState.updatingElements.forEach((up) => {
       up.ele.excludeArea.push(
         new Polygon(eraserOutlinePoints.map((pt) => new PointZ(pt.x, pt.y)))
-          .translate(new Vector(-up.ele.position.x, -up.ele.position.y))
           .rotate(-up.ele.rotation, up.ele.rotateOrigin)
+          .translate(new Vector(-up.ele.position.x, -up.ele.position.y))
       );
     });
   };
