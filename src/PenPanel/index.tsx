@@ -291,10 +291,10 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
         }
 
-        if (allPols[1]) {
-          drawingEle.excludeArea = allPols[1];
-          drawingEle.oriexcludeArea = allPols[1];
-        }
+        // if (allPols[1]) {
+        //   drawingEle.excludeArea = allPols[1];
+        //   drawingEle.oriexcludeArea = allPols[1];
+        // }
       }
       if (
         !sceneState.updatingElements.find(
