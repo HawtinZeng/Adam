@@ -278,18 +278,6 @@ export function redrawAllEles(
       drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
 
       globalAppCtx!.save();
-      const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
-      if (eleCliping) {
-        globalAppCtx!.beginPath();
-        globalAppCtx!.rect(
-          eleCliping.xmin,
-          eleCliping.ymin,
-          eleCliping.width,
-          eleCliping.height
-        );
-        globalAppCtx!.clip();
-      }
-
       // For image element.
       if (el.type === DrawingType.img) {
         const img = el as ImageElement;
@@ -358,6 +346,18 @@ export function redrawAllEles(
     if (debugShowEleId) {
       const textPos = el.points[0];
       drawText(globalAppCtx!, textPos, el.id);
+    }
+    // clip the area beyond window
+    const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
+    if (eleCliping) {
+      globalAppCtx!.beginPath();
+      globalAppCtx!.rect(
+        eleCliping.xmin,
+        eleCliping.ymin,
+        eleCliping.width,
+        eleCliping.height
+      );
+      globalAppCtx!.clip();
     }
   });
 }
