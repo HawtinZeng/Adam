@@ -31,6 +31,7 @@ import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   CircleShapeElement,
   DrawingType,
+  FreeDrawing,
   ImageElement,
   RectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTemplate";
@@ -95,7 +96,7 @@ export const showElePtLength = false;
 export const showEleId = false;
 
 const debugBAndR = false;
-const showDebugPanel = true;
+const showDebugPanel = false;
 const debugExtensionScroll = false;
 const debugDrawAllAreas = true;
 
@@ -162,10 +163,11 @@ function App() {
     startPos: Point;
     originalScale?: Point;
     originalHandles?: Transform2DOperator;
-    originalPt?: Point;
+    originalPos?: Point;
     originalRotation?: number;
     originalRotateOrigin?: Point;
     originalBoundary?: Polygon;
+    originalOutlinePoints?: Point[]; // FreeDraw outlinePoints
   } | null>(null);
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
@@ -210,7 +212,7 @@ function App() {
         dragInfo.current = {
           type: "move",
           startPos: { x: e.clientX, y: e.clientY },
-          originalPt: { x: ele.position.x, y: ele.position.y },
+          originalPos: { x: ele.position.x, y: ele.position.y },
           originalRotateOrigin: ele.rotateOrigin,
         };
         setCursorSvg("move");
@@ -219,15 +221,16 @@ function App() {
 
       // drag handler
       if (!dragInfo.current && u?.handleOperator && currentHandle.current) {
-        const img = u.ele as ImageElement;
+        const ele = u.ele;
         const [_, dir] = currentHandle.current!;
         dragInfo.current = {
           type: dir === TransformHandle.ro ? "rotate" : "resize",
           startPos: { x: e.clientX, y: e.clientY },
-          originalScale: { ...img.scale },
-          originalRotation: img.rotation,
+          originalScale: { ...ele.scale },
+          originalRotation: ele.rotation,
           originalHandles: cloneDeep(u.handleOperator)!,
-          originalBoundary: cloneDeep(img.boundary[0]),
+          originalBoundary: cloneDeep(ele.boundary[0]),
+          originalOutlinePoints: cloneDeep((ele as FreeDrawing).outlinePoints),
         };
         return;
       }
@@ -253,7 +256,6 @@ function App() {
           new PointZ(e.clientX, e.clientY)
         );
         if (isHit) {
-          logger.log(isHit);
           dragStart(e, ele);
           if (sceneData.updatingElements.find((u) => u.ele === ele)) {
             return;
@@ -324,7 +326,7 @@ function App() {
           u.ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
-        logger.log(isHit);
+        // logger.log(isHit);
         if (isHit) {
           setCursorSvg("move");
         } else {
@@ -343,7 +345,7 @@ function App() {
     (e: MouseEvent) => {
       if (!dragInfo.current) return;
       // move
-      const { type, startPos, originalPt, originalRotateOrigin } =
+      const { type, startPos, originalPos, originalRotateOrigin } =
         dragInfo.current;
       if (type === "move") {
         const u = sceneData.updatingElements[0];
@@ -353,8 +355,8 @@ function App() {
           y: e.clientY - startPos.y,
         };
         ele.position = {
-          x: originalPt!.x + offset.x,
-          y: originalPt!.y + offset.y,
+          x: originalPos!.x + offset.x,
+          y: originalPos!.y + offset.y,
         };
 
         ele.rotateOrigin = {
@@ -397,10 +399,21 @@ function App() {
                 diffX,
                 lockScale
               );
-            } else {
-              // FreeDrawing
+            } else if (el.type === DrawingType.freeDraw) {
+              scalingFreedraw(
+                el as FreeDrawing,
+                dir,
+                oriHandles,
+                updatedScale,
+                oriScale,
+                diffY,
+                updatedPt,
+                diffX,
+                lockScale
+              );
             }
           } else {
+            // rotation
             if (
               el.type === DrawingType.img ||
               el.type === DrawingType.rectangle ||
@@ -496,7 +509,7 @@ function App() {
         el.boundary[0] = getBoundryPoly(el)!;
       }
       // resize & move
-      setSceneData({ ...sceneData });
+      // setSceneData({ ...sceneData });
       dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
@@ -646,6 +659,7 @@ function App() {
         )
       );
       globalSynchronizer.value?.partition(sceneData);
+
       redrawAllEles(undefined, undefined, sceneData.elements);
       if (debugBAndR)
         sceneData.elements.forEach((e) => {
@@ -1059,7 +1073,6 @@ function App() {
 
         pts[0] = pts[0].translate(deltaVec!);
         pts[1] = pts[1].translate(deltaVec!);
-
         break;
       }
 
@@ -1293,6 +1306,311 @@ function App() {
 
     img.position = { x: updatedPt!.x, y: updatedPt!.y };
     img.scale = updatedScale;
+  }
+
+  /**
+   * 缩放 FreeDraw 元素时，会改变points的值
+   */
+  function scalingFreedraw(
+    el: FreeDrawing,
+    dir: string,
+    oriHandles: Transform2DOperator,
+    updatedScale: { x: number; y: number },
+    oriScale: Point,
+    diffY: number,
+    updatedPt: { x: number; y: number },
+    diffX: number,
+    lockScale: boolean
+  ) {
+    const offset = new Vector(diffX, diffY);
+    let deltaVec: Vector;
+    let pts = dragInfo.current!.originalBoundary!.vertices;
+    switch (dir) {
+      case TransformHandle.n: {
+        const boundaryVer = new Polygon(dragInfo.current!.originalBoundary!.box)
+          .vertices;
+
+        const bottomLeft = boundaryVer.reduce((pre, pt) => {
+          const xCandi = pt.x <= pre.x ? pt : pre;
+          const yCandi = xCandi.y > pre.y ? xCandi : pre;
+
+          return yCandi;
+        }, boundaryVer[0]);
+        const topLeft = boundaryVer.reduce((pre, pt) => {
+          const xCandi = pt.x <= pre.x ? pt : pre;
+          const yCandi = xCandi.y < pre.y ? xCandi : pre;
+
+          return yCandi;
+        }, boundaryVer[0]);
+
+        drawCircle(null, new Circle(bottomLeft, 10), "green");
+        drawCircle(null, new Circle(topLeft, 10), "yellow");
+
+        const dir = new Vector(bottomLeft, topLeft).normalize();
+
+        const delta = offset.dot(dir);
+        const pts = dragInfo.current?.originalOutlinePoints;
+
+        const poly = new Polygon(pts!.map((p) => new PointZ(p.x, p.y)));
+        const transPoly = poly.translate(
+          new Vector(
+            -(topLeft.x - el.position.x),
+            -(bottomLeft.y - el.position.y)
+          )
+        );
+
+        const scaleFactor =
+          (delta + bottomLeft.y - topLeft.y) / (bottomLeft.y - topLeft.y);
+
+        const scaledPoly = transPoly
+          .scale(1, scaleFactor)
+          .translate(
+            new Vector(topLeft.x - el.position.x, bottomLeft.y - el.position.y)
+          );
+
+        el.outlinePoints = scaledPoly.vertices.map((v) => {
+          return {
+            x: v.x,
+            y: v.y,
+          };
+        });
+
+        el.oriBoundary[0] = scaledPoly;
+
+        break;
+      }
+
+      case TransformHandle.ne: {
+        // change the boundary of scaling image.
+
+        const zerothEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+
+        if (!zerothEdge) return;
+
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+        if (!thirdEdge) return;
+
+        const zeroDir = new Vector(
+          zerothEdge.start,
+          zerothEdge.end
+        ).normalize();
+        const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
+
+        const scalar3 = offset.dot(thirdDir);
+        const scalar0 = offset.dot(zeroDir);
+
+        if (lockScale) {
+          const leftBottom = cloneDeep(pts[3]);
+          const scaleX =
+            (zeroDir.scale(scalar0, scalar0).length * Math.sign(scalar0) +
+              zerothEdge.length) /
+            zerothEdge.length;
+          pts = pts
+            .map((p) => p.translate(-leftBottom.x, -leftBottom.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleX, scaleX))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(leftBottom.x, leftBottom.y));
+        } else {
+          pts[1] = pts[1].translate(offset);
+          pts[0] = pts[0].translate(thirdDir.scale(scalar3, scalar3));
+          pts[2] = pts[2].translate(zeroDir.scale(scalar0, scalar0));
+        }
+
+        break;
+      }
+
+      case TransformHandle.e: {
+        const zorothEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const dir = new Vector(zorothEdge.start, zorothEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        // change the boundary of scaling image.
+        pts[1] = pts[1].translate(deltaVec!);
+        pts[2] = pts[2].translate(deltaVec!);
+        break;
+      }
+
+      case TransformHandle.se: {
+        // change the boundary of scaling image.
+
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+
+        const zeroDir = new Vector(
+          secondEdge.start,
+          secondEdge.end
+        ).normalize();
+        const thirdDir = new Vector(thirdEdge.end, thirdEdge.start).normalize();
+
+        const scalar0 = offset.dot(zeroDir);
+        const scalar3 = offset.dot(thirdDir);
+        if (lockScale) {
+          const leftTopPt = cloneDeep(pts[0]);
+          const scaleX =
+            (zeroDir.scale(scalar0, scalar0).length * Math.sign(scalar0) +
+              secondEdge.length) /
+            secondEdge.length;
+          pts = pts
+            .map((p) => p.translate(-leftTopPt.x, -leftTopPt.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleX, scaleX))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(leftTopPt.x, leftTopPt.y));
+        } else {
+          pts[2] = pts[2].translate(offset);
+          pts[1] = pts[1].translate(zeroDir.scale(scalar0, scalar0));
+          pts[3] = pts[3].translate(thirdDir.scale(scalar3, scalar3));
+        }
+        break;
+      }
+
+      case TransformHandle.s: {
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][1] as Edge;
+        const dir = new Vector(secondEdge.start, secondEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        pts[2] = pts[2].translate(deltaVec!);
+        pts[3] = pts[3].translate(deltaVec!);
+        break;
+      }
+
+      case TransformHandle.sw: {
+        // change the boundary of scaling image.
+
+        const firstEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][1] as Edge;
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][2] as Edge;
+
+        const firstDir = new Vector(firstEdge.start, firstEdge.end).normalize();
+        const secondDir = new Vector(
+          secondEdge.start,
+          secondEdge.end
+        ).normalize();
+
+        const scalar1 = offset.dot(firstDir);
+        const scalar2 = offset.dot(secondDir);
+
+        if (lockScale) {
+          const rightTop = cloneDeep(pts[1]);
+          const scaleX =
+            (secondDir.scale(scalar2, scalar2).length * Math.sign(scalar2) +
+              secondEdge.length) /
+            secondEdge.length;
+          pts = pts
+            .map((p) => p.translate(-rightTop.x, -rightTop.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleX, scaleX))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(rightTop.x, rightTop.y));
+        } else {
+          pts[0] = pts[0].translate(secondDir.scale(scalar2, scalar2));
+          pts[2] = pts[2].translate(firstDir.scale(scalar1, scalar1));
+          pts[3] = pts[3].translate(offset);
+        }
+
+        break;
+      }
+
+      case TransformHandle.w: {
+        const secondEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][2] as Edge;
+        const dir = new Vector(secondEdge.start, secondEdge.end).normalize();
+        const delta = offset.dot(dir);
+        deltaVec = dir.scale(delta, delta);
+
+        pts[0] = pts[0].translate(deltaVec!);
+        pts[3] = pts[3].translate(deltaVec!);
+
+        break;
+      }
+
+      case TransformHandle.nw: {
+        // change the boundary of scaling image.
+
+        const zeroEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][0] as Edge;
+        const thirdEdge = [
+          ...dragInfo.current!.originalBoundary!.edges,
+        ][3] as Edge;
+
+        const zeroDir = new Vector(zeroEdge.end, zeroEdge.start).normalize();
+        const thirdDir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
+
+        const scalar0 = offset.dot(zeroDir);
+
+        const scalar3 = offset.dot(thirdDir);
+
+        if (lockScale) {
+          const rightBottom = cloneDeep(pts[2]);
+          const scaleX =
+            (zeroDir.scale(scalar0, scalar0).length * Math.sign(scalar0) +
+              zeroEdge.length) /
+            zeroEdge.length;
+          pts = pts
+            .map((p) => p.translate(-rightBottom.x, -rightBottom.y))
+            .map((p) => p.rotate(-img.rotation))
+            .map((p) => p.scale(scaleX, scaleX))
+            .map((p) => p.rotate(img.rotation))
+            .map((p) => p.translate(rightBottom.x, rightBottom.y));
+        } else {
+          pts[0] = pts[0].translate(offset);
+          pts[3] = pts[3].translate(zeroDir.scale(scalar0, scalar0));
+          pts[1] = pts[1].translate(thirdDir.scale(scalar3, scalar3));
+        }
+        break;
+      }
+    }
+
+    // el.boundary[0] = dragInfo.current!.originalBoundary!;
+    // img.boundary[0] = new Polygon(pts);
+
+    // const rightEdge = [...img.boundary[0].edges][1] as Edge;
+    // const bottomEdge = [...img.boundary[0].edges][2] as Edge;
+    // updatedScale.y =
+    //   (rightEdge.length *
+    //     Math.sign(
+    //       rightEdge.end.rotate(-img.rotation).y -
+    //         rightEdge.start.rotate(-img.rotation).y
+    //     )) /
+    //   img.height;
+    // updatedScale.x =
+    //   (bottomEdge.length *
+    //     Math.sign(
+    //       bottomEdge.start.rotate(-img.rotation).x -
+    //         bottomEdge.end.rotate(-img.rotation).x
+    //     )) /
+    //   img.width;
+
+    // const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
+    // const finalPos = img.boundary[0].vertices[0].rotate(
+    //   -img.rotation,
+    //   rotateOrigin
+    // );
+    // updatedPt.x = finalPos.x;
+    // updatedPt.y = finalPos.y;
+
+    // img.position = { x: updatedPt!.x, y: updatedPt!.y };
+    // img.scale = updatedScale;
   }
 }
 

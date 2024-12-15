@@ -2,17 +2,19 @@ import Flatten, { Polygon } from "@zenghawtin/graph2d";
 import {
   AStrokeOptions,
   DrawingElement,
-  Point,
+  Point as PointSim,
 } from "src/CoreRenderer/basicTypes";
 
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
-  readonly points: Point[];
+  readonly points: PointSim[];
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 
   oriBoundary: Polygon[]; // 局部坐标
   oriexcludeArea: Polygon[];
+
+  outlinePoints: PointSim[];
 }
 
 export enum DrawingType {

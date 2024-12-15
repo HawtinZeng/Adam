@@ -1,4 +1,11 @@
-import { Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
+import {
+  Circle,
+  Point,
+  Point as PointZ,
+  Polygon,
+  Vector,
+} from "@zenghawtin/graph2d";
+
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
@@ -17,7 +24,7 @@ import {
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
-import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
+import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   ArrowShapeElement,
   CircleShapeElement,
@@ -99,6 +106,8 @@ export function renderDrawCanvas(
     sceneData.updatingElements,
     (up) => up.type
   ) as Partial<Record<ActionType, UpdatingElement[]>>;
+
+  // console.log("groupedElements", JSON.stringify(groupedElements));
   groupedElements.addPoints?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
     if (ele.needCacheCanvas) {
@@ -157,7 +166,6 @@ export function renderDrawCanvas(
   groupedElements.transform?.forEach((u) => {
     const img = u.ele as ImageElement;
     if (!img.boundary[0]) return;
-
     let handleOperator;
     if (u.ele.type !== DrawingType.freeDraw) {
       handleOperator = new Transform2DOperator(
@@ -179,8 +187,7 @@ export function renderDrawCanvas(
         img.rotation,
         appCtx,
         Math.sign(u.ele.scale.y) === -1,
-        undefined,
-        false
+        undefined
       );
     }
     u.handleOperator = handleOperator;
@@ -258,16 +265,10 @@ export function redrawAllEles(
     console.error("globalAppCtx or globalCvs is not initialized");
     return;
   }
+
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
 
-  const needClearIdx: number[] = [];
-
   elements.forEach((el, idx) => {
-    if (el.type === DrawingType.freeDraw && el.points.length === 0) {
-      needClearIdx.push(idx);
-      return;
-    }
-
     if ((el as FreeDrawing).strokeOptions?.haveTrailling) return;
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
@@ -314,13 +315,19 @@ export function redrawAllEles(
           cachedCvs!.width,
           cachedCvs!.height
         );
-      } else {
+      } else if (el.type === DrawingType.freeDraw) {
         // FreeDraw
+        el.points.forEach((v) => {
+          drawCircle(null, new Circle(new Point(v.x, v.y), 10));
+        });
+
+        const cachedCvs = createFreeDrawCvs(el, globalCvs!);
+
         const rotateOrigin = el.rotateOrigin;
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
-        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,
@@ -352,13 +359,29 @@ export function redrawAllEles(
       const textPos = el.points[0];
       drawText(globalAppCtx!, textPos, el.id);
     }
-
-    el.boundary.forEach((ex) => drawPolygonPointIndex(undefined, ex, "green"));
-
-    el.excludeArea.forEach((ex) =>
-      drawPolygonPointIndex(undefined, ex, "green")
-    );
   });
+}
+
+// after transform FreeDraw, we need to record the pts of FreeDraw, then we need to update the cached canvas of this element. we use outlinePoints to recorder the pts of this FreeDraw element
+export function createFreeDrawCvs(
+  ele: DrawingElement,
+  appCanvas: HTMLCanvasElement
+) {
+  if (ele.type === DrawingType.freeDraw) {
+    const freeDraw = ele as FreeDrawing;
+
+    const numberPts = freeDraw.outlinePoints.map((p) => {
+      return [p.x, p.y];
+    });
+
+    const canvas = document.createElement("canvas") as HTMLCanvasElement;
+    canvas.width = appCanvas.width;
+    canvas.height = appCanvas.height;
+    const ctx = canvas.getContext("2d")!;
+    fillPolygon(numberPts, freeDraw.strokeColor!, ctx);
+    drawingCanvasCache.ele2DrawingCanvas.set(ele, canvas!);
+    return canvas;
+  }
 }
 
 function drawNeedntCacheEle(el: DrawingElement) {
@@ -704,6 +727,12 @@ export function createDrawingCvs(
           strokePoints,
           strokeOptions as StrokeOptions
         );
+        (ele as FreeDrawing).outlinePoints = outlinePoints.map((pt) => {
+          return {
+            x: pt[0],
+            y: pt[1],
+          };
+        });
         fillPolygon(outlinePoints, strokeColor!, ctx);
       }
       break;
