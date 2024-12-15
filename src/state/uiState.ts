@@ -26,3 +26,5 @@ export const hoveringDomsAtom = atom<DomElement | null>(null);
 export const disableDrawingAtom = atom<boolean>(false);
 
 export const cursorSvgAtom = atom<string | null>(null);
+
+export const screenLogAtom = atom<string>("default screenLog");

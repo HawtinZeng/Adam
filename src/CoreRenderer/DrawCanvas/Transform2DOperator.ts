@@ -2,7 +2,6 @@ import { Box, Edge, Point, Polygon } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import {
   drawHandles,
-  drawPolygonPointIndex,
   drawRectBorder,
   rotate,
 } from "src/CoreRenderer/DrawCanvas/core";
@@ -94,7 +93,7 @@ export class Transform2DOperator {
     const offsetAlignDiagonal = this.pointW / 2;
 
     // for debug
-    drawPolygonPointIndex(this.ctx, this.rect.polygon);
+    // drawPolygonPointIndex(this.ctx, this.rect.polygon);
     if (pts.length !== 8) return;
     const referenceWN = pts[0];
     this.handleOperator[TransformHandle.nw] = new Polygon(

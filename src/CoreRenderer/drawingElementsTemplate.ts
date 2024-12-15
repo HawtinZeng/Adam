@@ -11,7 +11,7 @@ export interface FreeDrawing extends DrawingElement {
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 
-  oriBoundary: Polygon[];
+  oriBoundary: Polygon[]; // 局部坐标
   oriexcludeArea: Polygon[];
 }
 
@@ -29,7 +29,6 @@ export enum DrawingType {
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [],
-  excludeArea: [],
   needSimulate: true,
 
   id: "will be overwritten",
@@ -47,7 +46,10 @@ export const newFreeDrawingElement: FreeDrawing = {
   position: { x: 0, y: 0 },
   rotation: 0,
   strokeOptions: {} as AStrokeOptions,
+
   boundary: [] as Flatten.Polygon[],
+  excludeArea: [],
+
   scale: {
     x: 1,
     y: 1,

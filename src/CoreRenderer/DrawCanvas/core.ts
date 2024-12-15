@@ -26,7 +26,7 @@ import {
   ImageElement,
   PolylineShapeElement,
   RectangleShapeElement,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { TransformHandles } from "src/CoreRenderer/utilsTypes";
 import { throttleRAF } from "src/animations/requestAniThrottle";
 import {
@@ -321,8 +321,6 @@ export function redrawAllEles(
         globalAppCtx!.rotate(el.rotation);
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
-        el.excludeArea.forEach((ex) => drawPolygonPointIndex(undefined, ex));
-
         globalAppCtx!.drawImage(
           cachedCvs!,
           el.position.x,
@@ -354,6 +352,12 @@ export function redrawAllEles(
       const textPos = el.points[0];
       drawText(globalAppCtx!, textPos, el.id);
     }
+
+    el.boundary.forEach((ex) => drawPolygonPointIndex(undefined, ex, "green"));
+
+    el.excludeArea.forEach((ex) =>
+      drawPolygonPointIndex(undefined, ex, "green")
+    );
   });
 }
 
@@ -888,7 +892,8 @@ export function drawRectBorder(
 
 export function drawPolygonPointIndex(
   ctx: CanvasRenderingContext2D | undefined,
-  polygon: Polygon
+  polygon: Polygon,
+  color?: string
 ) {
   if (!polygon) return;
   if (!ctx) ctx = globalAppCtx!;
@@ -900,7 +905,8 @@ export function drawPolygonPointIndex(
     ctx.lineTo(pt.x, pt.y);
     const fontSize = 20;
     const fontStyle = "Arial";
-    ctx.fillStyle = "red";
+    ctx.fillStyle = color ?? "red";
+    console.log(color);
     ctx.font = `${fontSize}px ${fontStyle}`;
     ctx.fillText(`${i}`, pt.x, pt.y);
   });

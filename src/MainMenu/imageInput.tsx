@@ -20,7 +20,7 @@ import {
   ImageElement,
   RectangleShapeElement,
   newImgElement,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { cloneDeepGenId } from "src/common/utils";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import add from "src/images/svgs/addButton.svg";

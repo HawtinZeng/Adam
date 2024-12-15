@@ -8,7 +8,7 @@ import Flatten, {
 } from "@zenghawtin/graph2d";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
-import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
+import { DrawingType } from "src/CoreRenderer/drawingElementsTemplate";
 import { URL } from "url";
 
 export type Point = {
@@ -44,7 +44,7 @@ export interface DrawingElement {
   imgSrc?: URL;
 
   boundary: Polygon[];
-  excludeArea: Polygon[];
+  excludeArea: Polygon[]; // 世界坐标
 
   needCacheCanvas: boolean;
   locator?: HTMLCanvasElement;

@@ -5,7 +5,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ptIsContained } from "src/CoreRenderer/basicTypes";
-import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
+import { DrawingType } from "src/CoreRenderer/drawingElementsTemplate";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { ImageInput } from "src/MainMenu/imageInput";

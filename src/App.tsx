@@ -14,13 +14,7 @@ import { IpcRenderer, IpcRendererEvent } from "electron";
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, remove, throttle } from "lodash";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
 import {
@@ -30,7 +24,6 @@ import {
 import {
   clearMainCanvas,
   drawCircle,
-  drawPolygonPointIndex,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -40,7 +33,7 @@ import {
   DrawingType,
   ImageElement,
   RectangleShapeElement,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import MainMenu, { colorConfigs } from "src/MainMenu";
 import {
   getBoundryPoly,
@@ -71,6 +64,7 @@ import {
   cursorSvgAtom,
   customColor,
   eraserRadius,
+  screenLogAtom,
   selectedKeyAtom,
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
@@ -158,7 +152,7 @@ function App() {
 
   const history = useRef<History>(new History());
 
-  const [screenLog, sscreenLog] = useState("default screenLog");
+  const [screenLog, sscreenLog] = useAtom(screenLogAtom);
 
   const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
   const isShowShiftTip = useRef<boolean>(false);
@@ -367,86 +361,82 @@ function App() {
           x: originalRotateOrigin!.x + offset.x,
           y: originalRotateOrigin!.y + offset.y,
         };
+      } else {
+        // transform
+        if (!currentHandle.current) return;
 
-        ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
-
-        ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
-
-        ele.excludeArea.forEach((exclude) => {
-          drawPolygonPointIndex(undefined, exclude);
-        });
-
-        setSceneData({ ...sceneData });
-        return;
-      }
-
-      // transform
-      if (!currentHandle.current) return;
-
-      const [x, y] = [e.clientX, e.clientY];
-      const [startX, startY, oriScale, oriHandles, originalRotation] = [
-        dragInfo.current.startPos.x,
-        dragInfo.current.startPos.y,
-        dragInfo.current.originalScale!,
-        dragInfo.current.originalHandles!,
-        dragInfo.current.originalRotation!,
-      ];
-      let [diffX, diffY] = [x - startX, y - startY];
-      const [el, dir] = currentHandle.current!;
-      if (el && dir) {
-        const updatedScale = { x: oriScale.x, y: oriScale.y };
-        const updatedPt = { x: el.position.x, y: el.position.y };
-        const lockScale = isShowShiftTip.current && currentKeyboard === "Shift";
-        if (dir !== TransformHandle.ro) {
-          if (
-            el.type === DrawingType.img ||
-            el.type === DrawingType.rectangle ||
-            el.type === DrawingType.circle
-          ) {
-            scalingImg(
-              el,
-              dir,
-              oriHandles,
-              updatedScale,
-              oriScale,
-              diffY,
-              updatedPt,
-              diffX,
-              lockScale
-            );
+        const [x, y] = [e.clientX, e.clientY];
+        const [startX, startY, oriScale, oriHandles, originalRotation] = [
+          dragInfo.current.startPos.x,
+          dragInfo.current.startPos.y,
+          dragInfo.current.originalScale!,
+          dragInfo.current.originalHandles!,
+          dragInfo.current.originalRotation!,
+        ];
+        let [diffX, diffY] = [x - startX, y - startY];
+        const [el, dir] = currentHandle.current!;
+        if (el && dir) {
+          const updatedScale = { x: oriScale.x, y: oriScale.y };
+          const updatedPt = { x: el.position.x, y: el.position.y };
+          const lockScale =
+            isShowShiftTip.current && currentKeyboard === "Shift";
+          if (dir !== TransformHandle.ro) {
+            if (
+              el.type === DrawingType.img ||
+              el.type === DrawingType.rectangle ||
+              el.type === DrawingType.circle
+            ) {
+              scalingImg(
+                el,
+                dir,
+                oriHandles,
+                updatedScale,
+                oriScale,
+                diffY,
+                updatedPt,
+                diffX,
+                lockScale
+              );
+            } else {
+              // FreeDrawing
+            }
           } else {
-            // FreeDrawing
-          }
-        } else {
-          if (
-            el.type === DrawingType.img ||
-            el.type === DrawingType.rectangle ||
-            el.type === DrawingType.circle ||
-            el.type === DrawingType.freeDraw
-          ) {
-            const rotationCenter = new PointZ(
-              el.rotateOrigin.x,
-              el.rotateOrigin.y
-            );
-            const originalLine = new Line(
-              new PointZ(startX, startY),
-              rotationCenter
-            );
-            const currentLine = new Line(new PointZ(x, y), rotationCenter);
+            if (
+              el.type === DrawingType.img ||
+              el.type === DrawingType.rectangle ||
+              el.type === DrawingType.circle ||
+              el.type === DrawingType.freeDraw
+            ) {
+              const rotationCenter = new PointZ(
+                el.rotateOrigin.x,
+                el.rotateOrigin.y
+              );
+              const originalLine = new Line(
+                new PointZ(startX, startY),
+                rotationCenter
+              );
+              const currentLine = new Line(new PointZ(x, y), rotationCenter);
 
-            const deltaRotation = originalLine.norm.angleTo(currentLine.norm); // in radian between 0 to 2 * PI
+              const deltaRotation = originalLine.norm.angleTo(currentLine.norm); // in radian between 0 to 2 * PI
 
-            const caclRotation = deltaRotation + originalRotation;
-            el.rotation =
-              caclRotation > 2 * Math.PI
-                ? caclRotation - 2 * Math.PI
-                : caclRotation;
+              const caclRotation = deltaRotation + originalRotation;
+              el.rotation =
+                caclRotation > 2 * Math.PI
+                  ? caclRotation - 2 * Math.PI
+                  : caclRotation;
 
-            el.boundary[0] = getBoundryPoly(el)!;
+              el.boundary[0] = getBoundryPoly(el)!;
+            }
           }
         }
-        setSceneData({ ...sceneData });
       }
+
+      sceneData.updatingElements.forEach(({ ele }) => {
+        ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+        ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
+      });
+
+      setSceneData({ ...sceneData });
     },
     [sceneData, setSceneData, currentKeyboard]
   );
@@ -872,6 +862,10 @@ function App() {
         els.forEach((e) => {
           e.position.y += delta * 50;
           e.rotateOrigin.y += delta * 50;
+
+          e.boundary = getBoundryPoly(e) ? [getBoundryPoly(e)!] : [];
+
+          e.excludeArea = getExcludeBoundaryPoly(e) ?? [];
         });
       }
     }
@@ -1004,8 +998,7 @@ function App() {
           <div>{`height: ${bg?.height}`}</div>
           <Button
             variant="contained"
-            size="large"
-            style={{ zIndex: "999" }}
+            style={{ zIndex: "999", marginRight: "10px" }}
             onClick={() => {
               // @ts-ignore
               window.snapshots = window.snapshots ? window.snapshots : [];
@@ -1013,7 +1006,15 @@ function App() {
               window.snapshots.push(cloneDeep(sceneData.elements));
             }}
           >
-            保存到window.snapshots
+            save to window.snapshots
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              sscreenLog("");
+            }}
+          >
+            clear screenLog
           </Button>
           <div>{screenLog} </div>
         </div>

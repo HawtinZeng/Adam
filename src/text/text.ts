@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { onlyRedrawOneElement } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
-import { DrawingType } from "src/CoreRenderer/drawingElementsTypes";
+import { DrawingType } from "src/CoreRenderer/drawingElementsTemplate";
 import { AnimationScheduler } from "src/animations/requestAniThrottle";
 import { lightBlue } from "src/theme/colors";
 

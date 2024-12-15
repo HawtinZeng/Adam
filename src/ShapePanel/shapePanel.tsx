@@ -14,7 +14,7 @@ import {
   newCircleShapeElement,
   newPolylineShapeElement,
   newRectangleShapeElement,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { colorConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { getBoundryPoly } from "src/MainMenu/imageInput";

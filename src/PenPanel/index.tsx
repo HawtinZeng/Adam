@@ -14,7 +14,7 @@ import { Point } from "src/CoreRenderer/basicTypes";
 import {
   FreeDrawing,
   newFreeDrawingElement,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { colorConfigs, menuConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
 import { nextFrame } from "src/animations/requestAniThrottle";
@@ -26,6 +26,7 @@ import {
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
+  screenLogAtom,
   selectedKeyAtom,
   subMenuIdx,
 } from "src/state/uiState";
@@ -202,6 +203,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
     };
   }, [cvsTrigger, penPanelMousedown]); // [] 可用于仅执行一次逻辑, penPanelMousedown连续触发使用最新的值
 
+  const [screenLog, sscreenLog] = useAtom(screenLogAtom);
   const startAnimationLoop = async () => {
     // @ts-ignore
     for await (const _ of nextFrame(60)) {
@@ -285,16 +287,19 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
             context: ctx,
             imageData: imgd,
           }) ?? [];
+
+        // sscreenLog(JSON.stringify(allPols[1]));
+
         if (allPols[0]) {
           drawingEle.boundary = allPols[0];
           drawingEle.oriBoundary = cloneDeep(allPols[0]);
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
         }
 
-        // if (allPols[1]) {
-        //   drawingEle.excludeArea = allPols[1];
-        //   drawingEle.oriexcludeArea = allPols[1];
-        // }
+        if (allPols[1]) {
+          drawingEle.excludeArea = allPols[1];
+          drawingEle.oriexcludeArea = allPols[1];
+        }
       }
       if (
         !sceneState.updatingElements.find(

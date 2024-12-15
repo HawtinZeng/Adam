@@ -6,7 +6,7 @@ import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   DrawingType,
   FreeDrawing,
-} from "src/CoreRenderer/drawingElementsTypes";
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { getBoundryPoly } from "src/MainMenu/imageInput";
 declare global {
   interface Window {

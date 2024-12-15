@@ -4,7 +4,7 @@ import { DrawingElement } from "src/CoreRenderer/basicTypes";
   例如：
     history.add([cloneDeep(newEle)]);
     sceneData.elements.push(newEle)
-  
+
     const oldEle = cloneDeep(newEle);
     ele.position.x += 100;
     history.update([oldEle], [cloneDeep(ele)]);q

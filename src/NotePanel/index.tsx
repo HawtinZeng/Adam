@@ -111,7 +111,7 @@ export function NotePanel(props: {
       }
     : {};
   const Textarea = styled(BaseTextareaAutosize)(
-    ({ theme }) => `
+    ({ theme }) => `   
     box-sizing: border-box;
     width: 100%;
     font-family: 'IBM Plex Sans', sans-serif;
