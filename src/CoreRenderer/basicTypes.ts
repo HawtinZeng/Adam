@@ -43,7 +43,7 @@ export interface DrawingElement {
   scale: Point;
   imgSrc?: URL;
 
-  boundary: Polygon[];
+  boundary: Polygon[]; // 世界坐标
   excludeArea: Polygon[]; // 世界坐标
 
   needCacheCanvas: boolean;

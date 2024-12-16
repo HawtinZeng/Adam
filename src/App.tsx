@@ -166,8 +166,9 @@ function App() {
     originalPos?: Point;
     originalRotation?: number;
     originalRotateOrigin?: Point;
-    originalBoundary?: Polygon;
+    originalBoundary?: Polygon; // world coordinates
     originalOutlinePoints?: Point[]; // FreeDraw outlinePoints
+    originalBoundaryRelative?: Polygon; // FreeDraw oriBoundary[0]
   } | null>(null);
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
@@ -230,6 +231,9 @@ function App() {
           originalRotation: ele.rotation,
           originalHandles: cloneDeep(u.handleOperator)!,
           originalBoundary: cloneDeep(ele.boundary[0]),
+          originalBoundaryRelative: cloneDeep(
+            (ele as FreeDrawing).oriBoundary[0]
+          ),
           originalOutlinePoints: cloneDeep((ele as FreeDrawing).outlinePoints),
         };
         return;
@@ -507,6 +511,9 @@ function App() {
         el.position = newPos;
         el.rotateOrigin = realNewOri;
         el.boundary[0] = getBoundryPoly(el)!;
+      } else if (u.ele.type === DrawingType.freeDraw) {
+        // drawCircle(null, new Circle(changedOrigin, 10), "yellow");
+        // drawPolygonPointIndex(undefined, poly, "yellow");
       }
       // resize & move
       // setSceneData({ ...sceneData });
@@ -1325,10 +1332,14 @@ function App() {
     const offset = new Vector(diffX, diffY);
     let deltaVec: Vector;
     let pts = dragInfo.current!.originalBoundary!.vertices;
+
+    let scaleOrigin = new PointZ();
+
     switch (dir) {
       case TransformHandle.n: {
-        const boundaryVer = new Polygon(dragInfo.current!.originalBoundary!.box)
-          .vertices;
+        const boundaryVer = new Polygon(
+          dragInfo.current!.originalBoundaryRelative!.box
+        ).vertices;
 
         const bottomLeft = boundaryVer.reduce((pre, pt) => {
           const xCandi = pt.x <= pre.x ? pt : pre;
@@ -1343,30 +1354,28 @@ function App() {
           return yCandi;
         }, boundaryVer[0]);
 
-        drawCircle(null, new Circle(bottomLeft, 10), "green");
-        drawCircle(null, new Circle(topLeft, 10), "yellow");
-
-        const dir = new Vector(bottomLeft, topLeft).normalize();
+        const dir = new Vector(
+          bottomLeft
+            .rotate(el.rotation, el.rotateOrigin)
+            .translate(new Vector(el.position.x, el.position.y)),
+          topLeft
+            .rotate(el.rotation, el.rotateOrigin)
+            .translate(new Vector(el.position.x, el.position.y))
+        ).normalize();
 
         const delta = offset.dot(dir);
         const pts = dragInfo.current?.originalOutlinePoints;
 
         const poly = new Polygon(pts!.map((p) => new PointZ(p.x, p.y)));
-        const transPoly = poly.translate(
-          new Vector(
-            -(topLeft.x - el.position.x),
-            -(bottomLeft.y - el.position.y)
-          )
-        );
+
+        const transPoly = poly.translate(new Vector(-topLeft.x, -bottomLeft.y));
 
         const scaleFactor =
           (delta + bottomLeft.y - topLeft.y) / (bottomLeft.y - topLeft.y);
 
         const scaledPoly = transPoly
           .scale(1, scaleFactor)
-          .translate(
-            new Vector(topLeft.x - el.position.x, bottomLeft.y - el.position.y)
-          );
+          .translate(new Vector(topLeft.x, bottomLeft.y));
 
         el.outlinePoints = scaledPoly.vertices.map((v) => {
           return {
@@ -1376,7 +1385,6 @@ function App() {
         });
 
         el.oriBoundary[0] = scaledPoly;
-
         break;
       }
 
@@ -1581,36 +1589,39 @@ function App() {
       }
     }
 
-    // el.boundary[0] = dragInfo.current!.originalBoundary!;
-    // img.boundary[0] = new Polygon(pts);
+    // const freeDraw = el as FreeDrawing;
+    // const bbx = freeDraw.oriBoundary[0].box;
 
-    // const rightEdge = [...img.boundary[0].edges][1] as Edge;
-    // const bottomEdge = [...img.boundary[0].edges][2] as Edge;
-    // updatedScale.y =
-    //   (rightEdge.length *
-    //     Math.sign(
-    //       rightEdge.end.rotate(-img.rotation).y -
-    //         rightEdge.start.rotate(-img.rotation).y
-    //     )) /
-    //   img.height;
-    // updatedScale.x =
-    //   (bottomEdge.length *
-    //     Math.sign(
-    //       bottomEdge.start.rotate(-img.rotation).x -
-    //         bottomEdge.end.rotate(-img.rotation).x
-    //     )) /
-    //   img.width;
+    // const changedOrigin = bbx.center
+    //   .rotate(
+    //     freeDraw.rotation,
+    //     new PointZ(freeDraw.rotateOrigin.x, freeDraw.rotateOrigin.y)
+    //   )
+    //   .translate(new Vector(freeDraw.position.x, freeDraw.position.y));
 
-    // const rotateOrigin = new PointZ(img.rotateOrigin.x, img.rotateOrigin.y);
-    // const finalPos = img.boundary[0].vertices[0].rotate(
-    //   -img.rotation,
-    //   rotateOrigin
-    // );
-    // updatedPt.x = finalPos.x;
-    // updatedPt.y = finalPos.y;
+    // drawCircle(null, new Circle(new PointZ(bbx.xmin, bbx.ymax), 10), "yellow");
+    // // console.log(bbx.xmin);
 
-    // img.position = { x: updatedPt!.x, y: updatedPt!.y };
-    // img.scale = updatedScale;
+    // const leftBottom = new PointZ(bbx.xmin, bbx.ymax)
+    //   .rotate(
+    //     freeDraw.rotation,
+    //     new PointZ(freeDraw.rotateOrigin.x, freeDraw.rotateOrigin.y)
+    //   )
+    //   .translate(new Vector(freeDraw.position.x, freeDraw.position.y));
+
+    // // drawCircle(null, new Circle(leftBottom, 10), "blue");
+
+    // const updatedLB = leftBottom.rotate(-el.rotation, changedOrigin);
+
+    // const delta = new Vector(updatedLB.x - bbx.xmin, updatedLB.y - bbx.ymax);
+    // console.log(delta.x);
+    // console.log(delta.y);
+    // freeDraw.oriBoundary[0].vertices.map((v, idx) => {
+    //   freeDraw.oriBoundary[0].vertices[idx] = v.translate(delta);
+    // });
+
+    // // drawCircle(null, new Circle(updatedLB, 10), "blue");
+    // freeDraw.rotateOrigin = changedOrigin;
   }
 }
 

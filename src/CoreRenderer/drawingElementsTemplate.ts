@@ -14,7 +14,7 @@ export interface FreeDrawing extends DrawingElement {
   oriBoundary: Polygon[]; // 局部坐标
   oriexcludeArea: Polygon[];
 
-  outlinePoints: PointSim[];
+  outlinePoints: PointSim[]; //局部坐标
 }
 
 export enum DrawingType {

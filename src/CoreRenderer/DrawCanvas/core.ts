@@ -305,24 +305,26 @@ export function redrawAllEles(
         );
       } else if (el.type === DrawingType.freeDraw) {
         // FreeDraw
+
         el.points.forEach((v) => {
           drawCircle(null, new Circle(new Point(v.x, v.y), 10));
         });
+        const freeDraw = el as FreeDrawing;
+        // const cachedCvs = createFreeDrawCvs(el, globalCvs!);
 
-        const cachedCvs = createFreeDrawCvs(el, globalCvs!);
+        const numberPts = freeDraw.outlinePoints.map((p) => {
+          return [p.x, p.y];
+        });
 
         const rotateOrigin = el.rotateOrigin;
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
 
-        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
-        globalAppCtx!.drawImage(
-          cachedCvs!,
-          el.position.x,
-          el.position.y,
-          cachedCvs!.width,
-          cachedCvs!.height
+        globalAppCtx!.translate(
+          -rotateOrigin.x + el.position.x,
+          -rotateOrigin.y + el.position.y
         );
+        fillPolygon(numberPts, freeDraw.strokeColor!, globalAppCtx!);
       }
       globalAppCtx!.restore();
     } else {
