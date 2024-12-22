@@ -8,6 +8,7 @@ import Flatten, {
 } from "@zenghawtin/graph2d";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
+import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { DrawingType } from "src/CoreRenderer/drawingElementsTemplate";
 import { URL } from "url";
 
@@ -53,6 +54,8 @@ export interface DrawingElement {
   scaleOrigin: Flatten.Point; // 缩放中心
 
   includingPart?: Box;
+
+  handleOperator?: Transform2DOperator;
 }
 
 export type DomElement = {

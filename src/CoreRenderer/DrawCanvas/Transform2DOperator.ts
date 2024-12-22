@@ -1,4 +1,4 @@
-import { Box, Edge, Point, Polygon } from "@zenghawtin/graph2d";
+import { Box, Edge, Point, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import {
   drawHandles,
@@ -219,7 +219,11 @@ export class Transform2DOperator {
       );
     }
   }
-
+  offsetN(delta: number) {
+    // TODO, we need to change the point value to update the position of polygon vertices.
+    this.rect.polygon.vertices[0].translate(new Vector(0, delta));
+    this.rect.polygon.vertices[1].translate(new Vector(0, delta));
+  }
   draw() {
     if (Object.keys(this.handleOperator).length < 8) return;
     const cornerPolygon = new Polygon(

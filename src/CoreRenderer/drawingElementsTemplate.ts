@@ -4,6 +4,7 @@ import {
   DrawingElement,
   Point as PointSim,
 } from "src/CoreRenderer/basicTypes";
+import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 
 export interface FreeDrawing extends DrawingElement {
   readonly type: DrawingType.freeDraw;
@@ -11,10 +12,12 @@ export interface FreeDrawing extends DrawingElement {
   needSimulate: boolean;
   strokeOptions: AStrokeOptions;
 
-  oriBoundary: Polygon[]; // 局部坐标
+  oriBoundary: Polygon[]; // 相对坐标
   oriexcludeArea: Polygon[];
 
-  outlinePoints: PointSim[]; //局部坐标
+  outlinePoints: PointSim[]; // 相对坐标
+
+  handleOperator: Transform2DOperator; // 世界坐标
 }
 
 export enum DrawingType {

@@ -1,10 +1,4 @@
-import {
-  Circle,
-  Point,
-  Point as PointZ,
-  Polygon,
-  Vector,
-} from "@zenghawtin/graph2d";
+import { Point, Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
 
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
@@ -166,7 +160,7 @@ export function renderDrawCanvas(
   groupedElements.transform?.forEach((u) => {
     const img = u.ele as ImageElement;
     if (!img.boundary[0]) return;
-    let handleOperator;
+    let handleOperator: Transform2DOperator;
     if (u.ele.type !== DrawingType.freeDraw) {
       handleOperator = new Transform2DOperator(
         img.boundary[0],
@@ -183,21 +177,30 @@ export function renderDrawCanvas(
         handleOperator.draw.bind(handleOperator)
       );
     } else {
-      const freeDrawBox = (u.ele as FreeDrawing).oriBoundary[0].box.translate(
-        new Vector(u.ele.position.x, u.ele.position.y)
-      );
-      const freeDrawPol = new Polygon(freeDrawBox);
-      handleOperator = new Transform2DOperator(
-        freeDrawPol.rotate(
-          u.ele.rotation,
-          new PointZ(u.ele.rotateOrigin.x, u.ele.rotateOrigin.y)
-        ),
-        img.rotation,
-        appCtx,
-        Math.sign(u.ele.scale.y) === -1,
-        undefined
-      );
-      u.handleOperator = handleOperator;
+      if (!(u.ele as FreeDrawing).handleOperator) {
+        const freeDrawBox = (u.ele as FreeDrawing).oriBoundary[0].box.translate(
+          new Vector(u.ele.position.x, u.ele.position.y)
+        );
+        const freeDrawPol = new Polygon(freeDrawBox);
+
+        (u.ele as FreeDrawing).handleOperator =
+          u.handleOperator =
+          handleOperator =
+            new Transform2DOperator(
+              freeDrawPol.rotate(
+                u.ele.rotation,
+                new PointZ(u.ele.rotateOrigin.x, u.ele.rotateOrigin.y)
+              ),
+              img.rotation,
+              appCtx,
+              Math.sign(u.ele.scale.y) === -1,
+              undefined
+            );
+      } else {
+        handleOperator = u.handleOperator = (
+          u.ele as FreeDrawing
+        ).handleOperator;
+      }
       redrawAllEles(
         appCtx,
         appCanvas,
@@ -292,7 +295,6 @@ export function redrawAllEles(
         const img = el as ImageElement;
         if (el.type === "img") {
           const rotateOrigin = img.rotateOrigin;
-          console.log(el.rotation);
           globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
           globalAppCtx!.rotate(el.rotation);
           globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
@@ -322,12 +324,10 @@ export function redrawAllEles(
         globalAppCtx!.translate(el.position.x, el.position.y);
 
         // ATTENSION: we must scale after rotation
-        if (el.scaleOrigin) {
-          drawCircle(null, new Circle(el.scaleOrigin, 10), "yellow");
-          globalAppCtx!.translate(el.scaleOrigin.x, el.scaleOrigin.y);
-          globalAppCtx!.scale(el.scale.x, el.scale.y);
-          globalAppCtx!.translate(-el.scaleOrigin.x, -el.scaleOrigin.y);
-        }
+        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+        globalAppCtx!.scale(el.scale.x, el.scale.y);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
       globalAppCtx!.restore();
@@ -741,6 +741,7 @@ export function createDrawingCvs(
         });
         fillPolygon(outlinePoints, strokeColor!, ctx);
       }
+
       break;
     case DrawingType.img: {
       const i = ele as ImageElement;
@@ -925,6 +926,30 @@ export function drawRectBorder(
   ctx.restore();
 }
 
+export function drawLine(
+  ctx: CanvasRenderingContext2D | null,
+  pts: Point[],
+  color: string,
+  thickness: number = 5
+) {
+  if (!ctx) ctx = globalAppCtx!;
+  ctx.save();
+
+  ctx.strokeStyle = color;
+  ctx.lineWidth = thickness;
+
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.forEach((p) => {
+    ctx.lineTo(p.x, p.y);
+  });
+  ctx.lineTo(pts[0].x, pts[0].y);
+
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
 export function drawPolygonPointIndex(
   ctx: CanvasRenderingContext2D | undefined,
   polygon: Polygon,
@@ -937,6 +962,8 @@ export function drawPolygonPointIndex(
   ctx.beginPath();
   ctx.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
   polygon.vertices.forEach((pt, i) => {
+    ctx.strokeStyle = color ?? "red";
+
     ctx.lineTo(pt.x, pt.y);
     const fontSize = 20;
     const fontStyle = "Arial";

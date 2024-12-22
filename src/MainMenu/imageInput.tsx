@@ -10,7 +10,11 @@ import React, {
 } from "react";
 import { ReactSVG } from "react-svg";
 import { debugArrow } from "src/App";
-import { drawCircle, getTriangle } from "src/CoreRenderer/DrawCanvas/core";
+import {
+  drawCircle,
+  drawPolygonPointIndex,
+  getTriangle,
+} from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   ArrowShapeElement,
@@ -331,12 +335,23 @@ export function getBoundryPoly(ele: DrawingElement) {
         )
         .translate(new Vector(pos.x, pos.y));
     } else {
+      drawPolygonPointIndex(
+        undefined,
+        free.oriBoundary[0]
+          .translate(new Vector(pos.x, pos.y))
+          .rotate(
+            ele.rotation,
+            new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+          ),
+        "red"
+      );
+
       return free.oriBoundary[0]
+        .translate(new Vector(pos.x, pos.y))
         .rotate(
           ele.rotation,
           new Point(free.rotateOrigin.x, free.rotateOrigin.y)
-        )
-        .translate(new Vector(pos.x, pos.y));
+        );
     }
   }
 }
