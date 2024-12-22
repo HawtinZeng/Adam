@@ -174,6 +174,14 @@ export function renderDrawCanvas(
         appCtx,
         Math.sign(u.ele.scale.y) === -1
       );
+      u.handleOperator = handleOperator;
+      redrawAllEles(
+        appCtx,
+        appCanvas,
+        elements,
+        u.ele,
+        handleOperator.draw.bind(handleOperator)
+      );
     } else {
       const freeDrawBox = (u.ele as FreeDrawing).oriBoundary[0].box.translate(
         new Vector(u.ele.position.x, u.ele.position.y)
@@ -189,15 +197,15 @@ export function renderDrawCanvas(
         Math.sign(u.ele.scale.y) === -1,
         undefined
       );
+      u.handleOperator = handleOperator;
+      redrawAllEles(
+        appCtx,
+        appCanvas,
+        elements,
+        u.ele,
+        handleOperator.draw.bind(handleOperator)
+      );
     }
-    u.handleOperator = handleOperator;
-    redrawAllEles(
-      appCtx,
-      appCanvas,
-      elements,
-      u.ele,
-      handleOperator.draw.bind(handleOperator)
-    );
   });
 }
 
@@ -273,8 +281,9 @@ export function redrawAllEles(
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
 
-      if (!cachedCvs) cachedCvs = createDrawingCvs(el, globalCvs!)!;
-      if (!cachedCvs) return;
+      if (!cachedCvs)
+        throw new Error(`cannot find the canvas cache of ${el.id}`);
+
       drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
 
       globalAppCtx!.save();
@@ -283,7 +292,7 @@ export function redrawAllEles(
         const img = el as ImageElement;
         if (el.type === "img") {
           const rotateOrigin = img.rotateOrigin;
-
+          console.log(el.rotation);
           globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
           globalAppCtx!.rotate(el.rotation);
           globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
@@ -304,27 +313,22 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else if (el.type === DrawingType.freeDraw) {
-        // FreeDraw
-
-        el.points.forEach((v) => {
-          drawCircle(null, new Circle(new Point(v.x, v.y), 10));
-        });
-        const freeDraw = el as FreeDrawing;
-        // const cachedCvs = createFreeDrawCvs(el, globalCvs!);
-
-        const numberPts = freeDraw.outlinePoints.map((p) => {
-          return [p.x, p.y];
-        });
-
         const rotateOrigin = el.rotateOrigin;
+
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
-        globalAppCtx!.translate(
-          -rotateOrigin.x + el.position.x,
-          -rotateOrigin.y + el.position.y
-        );
-        fillPolygon(numberPts, freeDraw.strokeColor!, globalAppCtx!);
+        globalAppCtx!.translate(el.position.x, el.position.y);
+
+        // ATTENSION: we must scale after rotation
+        if (el.scaleOrigin) {
+          drawCircle(null, new Circle(el.scaleOrigin, 10), "yellow");
+          globalAppCtx!.translate(el.scaleOrigin.x, el.scaleOrigin.y);
+          globalAppCtx!.scale(el.scale.x, el.scale.y);
+          globalAppCtx!.translate(-el.scaleOrigin.x, -el.scaleOrigin.y);
+        }
+        globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
       globalAppCtx!.restore();
     } else {
@@ -937,7 +941,6 @@ export function drawPolygonPointIndex(
     const fontSize = 20;
     const fontStyle = "Arial";
     ctx.fillStyle = color ?? "red";
-    console.log(color);
     ctx.font = `${fontSize}px ${fontStyle}`;
     ctx.fillText(`${i}`, pt.x, pt.y);
   });

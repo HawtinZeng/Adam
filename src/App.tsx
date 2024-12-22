@@ -1,5 +1,5 @@
 import { Button } from "@mui/material";
-import {
+import Flatten, {
   Box,
   Circle,
   Edge,
@@ -232,7 +232,7 @@ function App() {
           originalHandles: cloneDeep(u.handleOperator)!,
           originalBoundary: cloneDeep(ele.boundary[0]),
           originalBoundaryRelative: cloneDeep(
-            (ele as FreeDrawing).oriBoundary[0]
+            (ele as FreeDrawing).oriBoundary?.[0]
           ),
           originalOutlinePoints: cloneDeep((ele as FreeDrawing).outlinePoints),
         };
@@ -363,10 +363,10 @@ function App() {
           y: originalPos!.y + offset.y,
         };
 
-        ele.rotateOrigin = {
-          x: originalRotateOrigin!.x + offset.x,
-          y: originalRotateOrigin!.y + offset.y,
-        };
+        ele.rotateOrigin = new Flatten.Point(
+          originalRotateOrigin!.x + offset.x,
+          originalRotateOrigin!.y + offset.y
+        );
       } else {
         // transform
         if (!currentHandle.current) return;
@@ -381,6 +381,7 @@ function App() {
         ];
         let [diffX, diffY] = [x - startX, y - startY];
         const [el, dir] = currentHandle.current!;
+        console.log(el.boundary);
         if (el && dir) {
           const updatedScale = { x: oriScale.x, y: oriScale.y };
           const updatedPt = { x: el.position.x, y: el.position.y };
@@ -428,12 +429,14 @@ function App() {
                 el.rotateOrigin.x,
                 el.rotateOrigin.y
               );
+              console.log(el.boundary);
               const originalLine = new Line(
                 new PointZ(startX, startY),
                 rotationCenter
               );
               const currentLine = new Line(new PointZ(x, y), rotationCenter);
 
+              console.log(el.boundary);
               const deltaRotation = originalLine.norm.angleTo(currentLine.norm); // in radian between 0 to 2 * PI
 
               const caclRotation = deltaRotation + originalRotation;
@@ -441,6 +444,8 @@ function App() {
                 caclRotation > 2 * Math.PI
                   ? caclRotation - 2 * Math.PI
                   : caclRotation;
+
+              console.log(el.boundary);
 
               el.boundary[0] = getBoundryPoly(el)!;
             }
@@ -852,7 +857,7 @@ function App() {
     window.ipcRenderer?.on("forward", () => moveHead("forward"));
 
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
-    window.ipcRenderer?.on("mouseWheel", globalScrollEles);
+    window.ipcRenderer?.on("mouseWheel", globalScrollEle);
     window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
       window.ipcRenderer?.on("Alt`", AltToggleHandler);
@@ -867,12 +872,12 @@ function App() {
       window.ipcRenderer?.off("AltC", altCHandler);
       window.ipcRenderer?.off("AltQ", altQHandler);
       window.ipcRenderer?.off("changeWindow", changeWorkspace);
-      window.ipcRenderer?.off("mouseWheel", globalScrollEles);
+      window.ipcRenderer?.off("mouseWheel", globalScrollEle);
       window.ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 
-  async function globalScrollEles(e: any, wheelData: any) {
+  async function globalScrollEle(e: any, wheelData: any) {
     if (selectedKey !== -1) return;
     const els = sceneData.elements;
 
@@ -1354,6 +1359,16 @@ function App() {
           return yCandi;
         }, boundaryVer[0]);
 
+        const bottomRight = boundaryVer
+          .reduce((pre, pt) => {
+            const xCandi = pt.x >= pre.x ? pt : pre;
+            const yCandi = xCandi.y > pre.y ? xCandi : pre;
+
+            return yCandi;
+          }, boundaryVer[0])
+          .rotate(el.rotation, el.rotateOrigin)
+          .translate(new Vector(el.position.x, el.position.y));
+
         const dir = new Vector(
           bottomLeft
             .rotate(el.rotation, el.rotateOrigin)
@@ -1373,18 +1388,15 @@ function App() {
         const scaleFactor =
           (delta + bottomLeft.y - topLeft.y) / (bottomLeft.y - topLeft.y);
 
+        // el.scale.y = scaleFactor * el.scale;
+        el.scaleOrigin = bottomRight;
+
         const scaledPoly = transPoly
           .scale(1, scaleFactor)
-          .translate(new Vector(topLeft.x, bottomLeft.y));
-
-        el.outlinePoints = scaledPoly.vertices.map((v) => {
-          return {
-            x: v.x,
-            y: v.y,
-          };
-        });
+          .translate(new Vector(bottomLeft.x, bottomLeft.y));
 
         el.oriBoundary[0] = scaledPoly;
+
         break;
       }
 

@@ -307,12 +307,37 @@ export function getBoundryPoly(ele: DrawingElement) {
     const free = ele as FreeDrawing;
     const pos = free.position;
 
-    return free.oriBoundary[0]
-      .translate(new Vector(pos.x, pos.y))
-      .rotate(
-        ele.rotation,
-        new Point(free.rotateOrigin.x, free.rotateOrigin.y)
-      );
+    if (ele.scaleOrigin) {
+      // drawPolygonPointIndex(
+      //   undefined,
+      //   free.oriBoundary[0]
+      //     .translate(new Vector(-ele.scaleOrigin.x, -ele.scaleOrigin.y))
+      //     .scale(ele.scale.x, ele.scale.y)
+      //     .translate(new Vector(ele.scaleOrigin.x, ele.scaleOrigin.y))
+      //     .rotate(
+      //       ele.rotation,
+      //       new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+      //     )
+      //     .translate(new Vector(pos.x, pos.y)),
+      //   "green"
+      // );
+      return free.oriBoundary[0]
+        .translate(new Vector(-ele.scaleOrigin.x, -ele.scaleOrigin.y))
+        .scale(ele.scale.x, ele.scale.y)
+        .translate(new Vector(ele.scaleOrigin.x, ele.scaleOrigin.y))
+        .rotate(
+          ele.rotation,
+          new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+        )
+        .translate(new Vector(pos.x, pos.y));
+    } else {
+      return free.oriBoundary[0]
+        .rotate(
+          ele.rotation,
+          new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+        )
+        .translate(new Vector(pos.x, pos.y));
+    }
   }
 }
 
