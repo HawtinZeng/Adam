@@ -510,6 +510,9 @@ function App() {
         el.rotateOrigin = realNewOri;
         el.boundary[0] = getBoundryPoly(el)!;
       } else if (u.ele.type === DrawingType.freeDraw) {
+        const free = u.ele as FreeDrawing;
+        free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
+        free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
       }
       // resize & move
       // setSceneData({ ...sceneData });
@@ -1068,11 +1071,9 @@ function App() {
 
     switch (el.type) {
       case DrawingType.freeDraw: {
-        obx = new Polygon(
-          (el as FreeDrawing).oriBoundary[0].box.translate(
-            new Vector(el.position.x, el.position.y)
-          )
-        ).rotate(el.rotation, el.rotateOrigin);
+        obx = getBoundryPoly(el)!;
+        drawPolygonPointIndex(undefined, obx, "blue");
+        console.log(oriScale.y);
         pts = obx.vertices;
         break;
       }
@@ -1312,34 +1313,15 @@ function App() {
       const free = el as FreeDrawing;
 
       const stableBBX = free.oriBoundary[0].box;
-      updatedScale.y = (pts[2].y - pts[0].y) / stableBBX.height;
-      updatedScale.x = (pts[1].x - pts[0].x) / stableBBX.width;
 
-      const rotateOrigin = new PointZ(free.rotateOrigin.x, free.rotateOrigin.y);
-      const finalPos = pts[0].rotate(-free.rotation, rotateOrigin);
-      updatedPt.x = finalPos.x;
-      updatedPt.y = finalPos.y;
+      updatedScale.y = pts[1].distanceTo(pts[2])[0] / stableBBX.height;
+      updatedScale.x = pts[1].distanceTo(pts[0])[0] / stableBBX.width;
 
-      drawPolygonPointIndex(undefined, free.boundary[0]);
-      free.position = {
-        x: free.position.x,
-        y:
-          dragInfo.current!.originalPos!.y +
-          ((1 - updatedScale.y) / 2) * stableBBX.height,
-      };
-
-      free.handleOperator.offsetN(diffY);
-
+      console.log(updatedScale.y);
       free.scale = updatedScale;
-      // free.handleOperator = new Polygon(pts).translate(
-      //   new Vector(
-      //     0,
-      //     -(
-      //       dragInfo.current!.originalPos!.y +
-      //       ((1 - updatedScale.y) / 2) * stableBBX.height
-      //     )
-      //   )
-      // );
+      free.scaleOriginCorrection = new Vector(0, stableBBX.height / 2);
+      // drawPolygonPointIndex(undefined, new Polygon(pts), "red");
+      // drawPolygonPointIndex(undefined, free.oriBoundary[0], "yellow");
     }
   }
 }

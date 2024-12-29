@@ -1,4 +1,4 @@
-import Flatten, { Polygon } from "@zenghawtin/graph2d";
+import Flatten, { Polygon, Vector } from "@zenghawtin/graph2d";
 import {
   AStrokeOptions,
   DrawingElement,
@@ -18,6 +18,8 @@ export interface FreeDrawing extends DrawingElement {
   outlinePoints: PointSim[]; // 相对坐标
 
   handleOperator: Transform2DOperator; // 世界坐标
+
+  scaleOriginCorrection: Vector; // 缩放中心相对于旋转中心的偏移向量
 }
 
 export enum DrawingType {

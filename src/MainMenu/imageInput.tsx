@@ -335,23 +335,28 @@ export function getBoundryPoly(ele: DrawingElement) {
         )
         .translate(new Vector(pos.x, pos.y));
     } else {
-      drawPolygonPointIndex(
-        undefined,
-        free.oriBoundary[0]
-          .translate(new Vector(pos.x, pos.y))
-          .rotate(
-            ele.rotation,
-            new Point(free.rotateOrigin.x, free.rotateOrigin.y)
-          ),
-        "red"
-      );
-
-      return free.oriBoundary[0]
+      const worldBoundary = free.oriBoundary[0]
         .translate(new Vector(pos.x, pos.y))
+        .translate(
+          new Vector(
+            -free.rotateOrigin.x - free.scaleOriginCorrection.x,
+            -free.rotateOrigin.y - free.scaleOriginCorrection.y
+          )
+        )
+        .scale(free.scale.x, free.scale.y)
+        .translate(
+          new Vector(
+            free.rotateOrigin.x + free.scaleOriginCorrection.x,
+            free.rotateOrigin.y + free.scaleOriginCorrection.y
+          )
+        )
         .rotate(
           ele.rotation,
           new Point(free.rotateOrigin.x, free.rotateOrigin.y)
         );
+      drawPolygonPointIndex(undefined, worldBoundary, "red");
+
+      return worldBoundary;
     }
   }
 }

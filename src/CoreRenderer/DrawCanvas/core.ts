@@ -177,30 +177,31 @@ export function renderDrawCanvas(
         handleOperator.draw.bind(handleOperator)
       );
     } else {
-      if (!(u.ele as FreeDrawing).handleOperator) {
-        const freeDrawBox = (u.ele as FreeDrawing).oriBoundary[0].box.translate(
-          new Vector(u.ele.position.x, u.ele.position.y)
-        );
-        const freeDrawPol = new Polygon(freeDrawBox);
+      const free = u.ele as FreeDrawing;
+      const freeDrawBox = new Polygon(free.oriBoundary[0].box)
+        .translate(new Vector(u.ele.position.x, u.ele.position.y))
+        .translate(
+          new Vector(
+            -free.rotateOrigin.x - free.scaleOriginCorrection.x,
+            -free.rotateOrigin.y - free.scaleOriginCorrection.y
+          )
+        )
+        .scale(free.scale.x, free.scale.y)
+        .translate(
+          new Vector(
+            free.rotateOrigin.x + free.scaleOriginCorrection.x,
+            free.rotateOrigin.y + free.scaleOriginCorrection.y
+          )
+        )
+        .rotate(free.rotation, free.rotateOrigin);
 
-        (u.ele as FreeDrawing).handleOperator =
-          u.handleOperator =
-          handleOperator =
-            new Transform2DOperator(
-              freeDrawPol.rotate(
-                u.ele.rotation,
-                new PointZ(u.ele.rotateOrigin.x, u.ele.rotateOrigin.y)
-              ),
-              img.rotation,
-              appCtx,
-              Math.sign(u.ele.scale.y) === -1,
-              undefined
-            );
-      } else {
-        handleOperator = u.handleOperator = (
-          u.ele as FreeDrawing
-        ).handleOperator;
-      }
+      u.handleOperator = handleOperator = new Transform2DOperator(
+        freeDrawBox,
+        img.rotation,
+        appCtx,
+        Math.sign(u.ele.scale.y) === -1,
+        undefined
+      );
       redrawAllEles(
         appCtx,
         appCanvas,
@@ -315,18 +316,24 @@ export function redrawAllEles(
           cachedCvs!.height
         );
       } else if (el.type === DrawingType.freeDraw) {
+        const free = el as FreeDrawing;
         const rotateOrigin = el.rotateOrigin;
 
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
+
+        globalAppCtx!.translate(
+          free.scaleOriginCorrection?.x ?? 0,
+          free.scaleOriginCorrection?.y ?? 0
+        );
+        globalAppCtx!.scale(el.scale.x, el.scale.y);
+        globalAppCtx!.translate(
+          -free.scaleOriginCorrection?.x ?? 0,
+          -free.scaleOriginCorrection?.y ?? 0
+        );
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
         globalAppCtx!.translate(el.position.x, el.position.y);
-
-        // ATTENSION: we must scale after rotation
-        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
-        globalAppCtx!.scale(el.scale.x, el.scale.y);
-        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
@@ -953,7 +960,8 @@ export function drawLine(
 export function drawPolygonPointIndex(
   ctx: CanvasRenderingContext2D | undefined,
   polygon: Polygon,
-  color?: string
+  color?: string,
+  thinkness?: number
 ) {
   if (!polygon) return;
   if (!ctx) ctx = globalAppCtx!;
@@ -963,6 +971,9 @@ export function drawPolygonPointIndex(
   ctx.moveTo(polygon.vertices[0].x, polygon.vertices[0].y);
   polygon.vertices.forEach((pt, i) => {
     ctx.strokeStyle = color ?? "red";
+    if (thinkness) {
+      ctx.lineWidth = thinkness;
+    }
 
     ctx.lineTo(pt.x, pt.y);
     const fontSize = 20;

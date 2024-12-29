@@ -1,4 +1,4 @@
-import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
+import { Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { cloneDeep, merge } from "lodash";
 import mw from "magic-wand-tool";
@@ -294,6 +294,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.boundary = allPols[0];
           drawingEle.oriBoundary = cloneDeep(allPols[0]);
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
+
+          drawingEle.scaleOriginCorrection = new Vector(0, 0);
         }
 
         if (allPols[1]) {
