@@ -15,4 +15,10 @@ export class Rect {
   get center() {
     return this.polygon.box.center;
   }
+
+  getSimplifyPolygon() {
+    const vs = this.polygon.vertices;
+
+    return new Polygon([vs[0], vs[2], vs[4], vs[6], vs[0]]);
+  }
 }

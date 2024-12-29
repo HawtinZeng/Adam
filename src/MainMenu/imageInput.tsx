@@ -10,11 +10,7 @@ import React, {
 } from "react";
 import { ReactSVG } from "react-svg";
 import { debugArrow } from "src/App";
-import {
-  drawCircle,
-  drawPolygonPointIndex,
-  getTriangle,
-} from "src/CoreRenderer/DrawCanvas/core";
+import { drawCircle, getTriangle } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import {
   ArrowShapeElement,
@@ -311,53 +307,28 @@ export function getBoundryPoly(ele: DrawingElement) {
     const free = ele as FreeDrawing;
     const pos = free.position;
 
-    if (ele.scaleOrigin) {
-      // drawPolygonPointIndex(
-      //   undefined,
-      //   free.oriBoundary[0]
-      //     .translate(new Vector(-ele.scaleOrigin.x, -ele.scaleOrigin.y))
-      //     .scale(ele.scale.x, ele.scale.y)
-      //     .translate(new Vector(ele.scaleOrigin.x, ele.scaleOrigin.y))
-      //     .rotate(
-      //       ele.rotation,
-      //       new Point(free.rotateOrigin.x, free.rotateOrigin.y)
-      //     )
-      //     .translate(new Vector(pos.x, pos.y)),
-      //   "green"
-      // );
-      return free.oriBoundary[0]
-        .translate(new Vector(-ele.scaleOrigin.x, -ele.scaleOrigin.y))
-        .scale(ele.scale.x, ele.scale.y)
-        .translate(new Vector(ele.scaleOrigin.x, ele.scaleOrigin.y))
-        .rotate(
-          ele.rotation,
-          new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+    const worldBoundary = free.oriBoundary[0]
+      .translate(new Vector(pos.x, pos.y))
+      .translate(
+        new Vector(
+          -free.rotateOrigin.x - free.scaleOriginCorrection.x,
+          -free.rotateOrigin.y - free.scaleOriginCorrection.y
         )
-        .translate(new Vector(pos.x, pos.y));
-    } else {
-      const worldBoundary = free.oriBoundary[0]
-        .translate(new Vector(pos.x, pos.y))
-        .translate(
-          new Vector(
-            -free.rotateOrigin.x - free.scaleOriginCorrection.x,
-            -free.rotateOrigin.y - free.scaleOriginCorrection.y
-          )
+      )
+      .scale(free.scale.x, free.scale.y)
+      .translate(
+        new Vector(
+          free.rotateOrigin.x + free.scaleOriginCorrection.x,
+          free.rotateOrigin.y + free.scaleOriginCorrection.y
         )
-        .scale(free.scale.x, free.scale.y)
-        .translate(
-          new Vector(
-            free.rotateOrigin.x + free.scaleOriginCorrection.x,
-            free.rotateOrigin.y + free.scaleOriginCorrection.y
-          )
-        )
-        .rotate(
-          ele.rotation,
-          new Point(free.rotateOrigin.x, free.rotateOrigin.y)
-        );
-      drawPolygonPointIndex(undefined, worldBoundary, "red");
+      )
+      .rotate(
+        ele.rotation,
+        new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+      );
+    // drawPolygonPointIndex(undefined, worldBoundary, "red");
 
-      return worldBoundary;
-    }
+    return worldBoundary;
   }
 }
 

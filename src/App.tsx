@@ -1071,9 +1071,7 @@ function App() {
 
     switch (el.type) {
       case DrawingType.freeDraw: {
-        obx = getBoundryPoly(el)!;
-        drawPolygonPointIndex(undefined, obx, "blue");
-        console.log(oriScale.y);
+        obx = oriHandles.rect.getSimplifyPolygon();
         pts = obx.vertices;
         break;
       }
@@ -1314,10 +1312,13 @@ function App() {
 
       const stableBBX = free.oriBoundary[0].box;
 
+      drawPolygonPointIndex(undefined, obx, "blue");
+      drawPolygonPointIndex(undefined, new Polygon(stableBBX), "red");
+      // console.log(updatedScale.y);
+
       updatedScale.y = pts[1].distanceTo(pts[2])[0] / stableBBX.height;
       updatedScale.x = pts[1].distanceTo(pts[0])[0] / stableBBX.width;
 
-      console.log(updatedScale.y);
       free.scale = updatedScale;
       free.scaleOriginCorrection = new Vector(0, stableBBX.height / 2);
       // drawPolygonPointIndex(undefined, new Polygon(pts), "red");
