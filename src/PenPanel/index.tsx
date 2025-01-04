@@ -295,7 +295,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.oriBoundary = cloneDeep(allPols[0]);
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
 
-          drawingEle.scaleOriginCorrection = new Vector(0, 0);
+          drawingEle.scaleOrigin = drawingEle.boundary[0].box.center;
         }
 
         if (allPols[1]) {

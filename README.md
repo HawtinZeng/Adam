@@ -5,3 +5,8 @@ Hi, I am hawtin.
 ＊Welcome to download, try, and report bugs from www.hawtin.com/adam/canary.
 
 - Inspired by Antfu, Jamboard, Excalidraw, Flatten.js, thanks for your sharing.
+
+### For development
+
+- Install
+  use `npm install xxx -f` to avoid conflicts.

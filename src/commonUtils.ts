@@ -4,6 +4,11 @@ export const setTransparentOption = {
   enabled: true,
 };
 
+const ori = console.log;
+console.log = (msg) => {
+  ori(JSON.stringify(msg));
+};
+
 export const setTransparent = () => {
   ipcRenderer &&
     setTransparentOption.enabled &&

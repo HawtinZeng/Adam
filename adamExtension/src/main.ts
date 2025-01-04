@@ -1,7 +1,6 @@
 import "./style.css";
 import typescriptLogo from "./typescript.svg";
 import viteLogo from "/vite.svg";
-
 // const socket = io("http://localhost:3000");
 // // client-side
 // socket.on("connect", () => {

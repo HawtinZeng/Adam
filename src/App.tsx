@@ -40,7 +40,6 @@ import {
 import MainMenu, { colorConfigs } from "src/MainMenu";
 import {
   getBoundryPoly,
-  getCenter,
   getExcludeBoundaryPoly,
 } from "src/MainMenu/imageInput";
 import { Point } from "src/Utils/Data/geometry";
@@ -59,7 +58,7 @@ import {
   multipleSynchronizer,
   sceneAtom,
 } from "src/state/sceneState";
-import { Synchronizer, globalSynchronizer } from "src/state/synchronizer";
+import { globalSynchronizer, Synchronizer } from "src/state/synchronizer";
 import {
   bgCanvasAtom,
   brushRadius,
@@ -374,9 +373,6 @@ function App() {
         ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
 
         ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
-
-        setSceneData({ ...sceneData });
-        return;
       } else {
         // transform
         if (!currentHandle.current) return;
@@ -509,51 +505,22 @@ function App() {
       } else if (u.ele.type === DrawingType.freeDraw) {
         const free = u.ele as FreeDrawing;
 
-        const center = getCenter(free);
         const pos = free.position;
-
         const finalPos = new PointZ(pos.x, pos.y).transform(
           new Matrix()
-            .translate(
-              new Vector(
-                -free.rotateOrigin.x - free.scaleOriginCorrection.x,
-                -free.rotateOrigin.y - free.scaleOriginCorrection.y
-              )
-            )
+            .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
             .scale(free.scale.x, free.scale.y)
-            .translate(
-              new Vector(
-                free.rotateOrigin.x + free.scaleOriginCorrection.x,
-                free.rotateOrigin.y + free.scaleOriginCorrection.y
-              )
-            )
+            .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
             .rotate(free.rotation, free.rotateOrigin.x, free.rotateOrigin.y)
         );
 
-        const newM = new Matrix();
-        const inv = newM.invert();
-        console.log(newM);
-        // .translate(new Vector(-center.x, -center.y))
-        // .scale(free.scale.x, free.scale.y)
-        // .translate(new Vector(center.x, center.y))
-        // .rotate(free.rotation, center.x, center.y);
-
-        // const newPos = finalPos.transform(newM.invert());
-
-        free.rotateOrigin = center;
         free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
         free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
 
         drawPolygonPointIndex(undefined, free.boundary[0], "green");
         drawCircle(
           null,
-          new Circle(
-            new PointZ(
-              free.rotateOrigin.x + free.scaleOriginCorrection.x,
-              free.rotateOrigin.y + free.scaleOriginCorrection.y
-            ),
-            5
-          ),
+          new Circle(new PointZ(free.scaleOrigin.x, free.scaleOrigin.y), 5),
           "blue"
         );
       }
@@ -813,6 +780,7 @@ function App() {
      * 清理场景
      */
     const altCHandler = () => {
+      console.log("altCHandler");
       sceneData.domElements.length = 0;
       sceneData.elements.length = 0;
       sceneData.frames.length = 0;
@@ -1112,6 +1080,7 @@ function App() {
 
     switch (el.type) {
       case DrawingType.freeDraw: {
+        const free = el as FreeDrawing;
         obx = oriHandles.rect.getSimplifyPolygon();
         pts = obx.vertices;
         break;
@@ -1354,27 +1323,20 @@ function App() {
       const stableBBX = free.oriBoundary[0].box;
 
       // drawPolygonPointIndex(undefined, obx, "blue");
-      // drawPolygonPointIndex(undefined, new Polygon(stableBBX), "red");
+      drawPolygonPointIndex(undefined, new Polygon(pts), "red");
 
       updatedScale.y = pts[1].distanceTo(pts[2])[0] / stableBBX.height;
       updatedScale.x = pts[1].distanceTo(pts[0])[0] / stableBBX.width;
 
       free.scale = updatedScale;
-      free.scaleOriginCorrection = new Vector(0, stableBBX.height / 2);
-      // drawPolygonPointIndex(undefined, new Polygon(pts), "red");
-      // drawPolygonPointIndex(undefined, free.oriBoundary[0], "yellow");
 
-      drawCircle(
-        null,
-        new Circle(
-          new PointZ(
-            free.rotateOrigin.x + free.scaleOriginCorrection.x,
-            free.rotateOrigin.y + free.scaleOriginCorrection.y
-          ),
-          5
-        ),
-        "blue"
+      const relativeBox = new Polygon(
+        stableBBX.translate(free.position.x, free.position.y)
       );
+      free.scaleOrigin = relativeBox.vertices[3];
+
+      drawCircle(null, new Circle(free.scaleOrigin, 5), "blue");
+      drawCircle(null, new Circle(free.rotateOrigin, 5), "yellow");
     }
   }
 }

@@ -14,7 +14,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let win;
 let globalMousePress = "unPressing";
-console.error = () => {};
 
 const createWindow = () => {
   const { width, height } = screen.getPrimaryDisplay().size;

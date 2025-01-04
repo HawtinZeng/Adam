@@ -180,19 +180,11 @@ export function renderDrawCanvas(
       const free = u.ele as FreeDrawing;
       const freeDrawBox = new Polygon(free.oriBoundary[0].box)
         .translate(new Vector(u.ele.position.x, u.ele.position.y))
-        .translate(
-          new Vector(
-            -free.rotateOrigin.x - free.scaleOriginCorrection.x,
-            -free.rotateOrigin.y - free.scaleOriginCorrection.y
-          )
-        )
+
+        .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
         .scale(free.scale.x, free.scale.y)
-        .translate(
-          new Vector(
-            free.rotateOrigin.x + free.scaleOriginCorrection.x,
-            free.rotateOrigin.y + free.scaleOriginCorrection.y
-          )
-        )
+        .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
+
         .rotate(free.rotation, free.rotateOrigin);
 
       u.handleOperator = handleOperator = new Transform2DOperator(
@@ -202,6 +194,7 @@ export function renderDrawCanvas(
         Math.sign(u.ele.scale.y) === -1,
         undefined
       );
+
       redrawAllEles(
         appCtx,
         appCanvas,
@@ -321,18 +314,18 @@ export function redrawAllEles(
 
         globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
         globalAppCtx!.rotate(el.rotation);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
         globalAppCtx!.translate(
-          free.scaleOriginCorrection?.x ?? 0,
-          free.scaleOriginCorrection?.y ?? 0
+          free.scaleOrigin?.x ?? 0,
+          free.scaleOrigin?.y ?? 0
         );
         globalAppCtx!.scale(el.scale.x, el.scale.y);
         globalAppCtx!.translate(
-          -free.scaleOriginCorrection?.x ?? 0,
-          -free.scaleOriginCorrection?.y ?? 0
+          -free.scaleOrigin?.x ?? 0,
+          -free.scaleOrigin?.y ?? 0
         );
 
-        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
         globalAppCtx!.translate(el.position.x, el.position.y);
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
