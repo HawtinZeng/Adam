@@ -260,7 +260,6 @@ export function getBoundryPoly(ele: DrawingElement) {
       x: arrow.points[1].x + arrow.position.x,
       y: arrow.points[1].y + arrow.position.y,
     };
-    console.log(arrow.rotation);
 
     const [endPos, startPos] = [
       {
@@ -308,10 +307,10 @@ export function getBoundryPoly(ele: DrawingElement) {
     const pos = free.position;
 
     const worldBoundary = free.oriBoundary[0]
-      .translate(new Vector(pos.x, pos.y))
       .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
       .scale(free.scale.x, free.scale.y)
       .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
+      .translate(new Vector(pos.x, pos.y))
       .rotate(
         ele.rotation,
         new Point(free.rotateOrigin.x, free.rotateOrigin.y)
@@ -325,10 +324,10 @@ export function getCenter(free: FreeDrawing) {
   const pos = free.position;
 
   const centerWorld = free.oriBoundary[0].box.center
-    .translate(new Vector(pos.x, pos.y))
     .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
     .scale(free.scale.x, free.scale.y)
     .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
+    .translate(new Vector(pos.x, pos.y))
     .rotate(free.rotation, new Point(free.rotateOrigin.x, free.rotateOrigin.y));
 
   return centerWorld;

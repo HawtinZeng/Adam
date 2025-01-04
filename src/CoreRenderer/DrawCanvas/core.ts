@@ -179,11 +179,10 @@ export function renderDrawCanvas(
     } else {
       const free = u.ele as FreeDrawing;
       const freeDrawBox = new Polygon(free.oriBoundary[0].box)
-        .translate(new Vector(u.ele.position.x, u.ele.position.y))
-
         .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
         .scale(free.scale.x, free.scale.y)
         .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
+        .translate(new Vector(u.ele.position.x, u.ele.position.y))
 
         .rotate(free.rotation, free.rotateOrigin);
 
@@ -316,6 +315,8 @@ export function redrawAllEles(
         globalAppCtx!.rotate(el.rotation);
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
 
+        globalAppCtx!.translate(el.position.x, el.position.y);
+
         globalAppCtx!.translate(
           free.scaleOrigin?.x ?? 0,
           free.scaleOrigin?.y ?? 0
@@ -326,7 +327,6 @@ export function redrawAllEles(
           -free.scaleOrigin?.y ?? 0
         );
 
-        globalAppCtx!.translate(el.position.x, el.position.y);
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
       globalAppCtx!.restore();
