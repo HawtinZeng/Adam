@@ -331,10 +331,9 @@ export function redrawAllEles(
           -free.scaleOriginCorrection?.x ?? 0,
           -free.scaleOriginCorrection?.y ?? 0
         );
+
         globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
-
         globalAppCtx!.translate(el.position.x, el.position.y);
-
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }
       globalAppCtx!.restore();

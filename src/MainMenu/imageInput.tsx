@@ -326,10 +326,32 @@ export function getBoundryPoly(ele: DrawingElement) {
         ele.rotation,
         new Point(free.rotateOrigin.x, free.rotateOrigin.y)
       );
-    // drawPolygonPointIndex(undefined, worldBoundary, "red");
 
     return worldBoundary;
   }
+}
+
+export function getCenter(free: FreeDrawing) {
+  const pos = free.position;
+
+  const centerWorld = free.oriBoundary[0].box.center
+    .translate(new Vector(pos.x, pos.y))
+    .translate(
+      new Vector(
+        -free.rotateOrigin.x - free.scaleOriginCorrection.x,
+        -free.rotateOrigin.y - free.scaleOriginCorrection.y
+      )
+    )
+    .scale(free.scale.x, free.scale.y)
+    .translate(
+      new Vector(
+        free.rotateOrigin.x + free.scaleOriginCorrection.x,
+        free.rotateOrigin.y + free.scaleOriginCorrection.y
+      )
+    )
+    .rotate(free.rotation, new Point(free.rotateOrigin.x, free.rotateOrigin.y));
+
+  return centerWorld;
 }
 
 export function getExcludeBoundaryPoly(ele: DrawingElement) {

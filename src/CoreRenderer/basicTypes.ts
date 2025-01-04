@@ -51,7 +51,6 @@ export interface DrawingElement {
   locator?: HTMLCanvasElement;
 
   rotateOrigin: Flatten.Point; // 旋转中心
-  scaleOrigin: Flatten.Point; // 缩放中心
 
   includingPart?: Box;
 

@@ -4,6 +4,7 @@ import Flatten, {
   Circle,
   Edge,
   Line,
+  Matrix,
   Point as PointZ,
   Polygon,
   Vector,
@@ -39,6 +40,7 @@ import {
 import MainMenu, { colorConfigs } from "src/MainMenu";
 import {
   getBoundryPoly,
+  getCenter,
   getExcludeBoundaryPoly,
 } from "src/MainMenu/imageInput";
 import { Point } from "src/Utils/Data/geometry";
@@ -446,11 +448,6 @@ function App() {
         }
       }
 
-      // sceneData.updatingElements.forEach(({ ele }) => {
-      //   ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
-      //   ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
-      // });
-
       setSceneData({ ...sceneData });
     },
     [sceneData, setSceneData, currentKeyboard]
@@ -511,11 +508,55 @@ function App() {
         el.boundary[0] = getBoundryPoly(el)!;
       } else if (u.ele.type === DrawingType.freeDraw) {
         const free = u.ele as FreeDrawing;
+
+        const center = getCenter(free);
+        const pos = free.position;
+
+        const finalPos = new PointZ(pos.x, pos.y).transform(
+          new Matrix()
+            .translate(
+              new Vector(
+                -free.rotateOrigin.x - free.scaleOriginCorrection.x,
+                -free.rotateOrigin.y - free.scaleOriginCorrection.y
+              )
+            )
+            .scale(free.scale.x, free.scale.y)
+            .translate(
+              new Vector(
+                free.rotateOrigin.x + free.scaleOriginCorrection.x,
+                free.rotateOrigin.y + free.scaleOriginCorrection.y
+              )
+            )
+            .rotate(free.rotation, free.rotateOrigin.x, free.rotateOrigin.y)
+        );
+
+        const newM = new Matrix();
+        const inv = newM.invert();
+        console.log(newM);
+        // .translate(new Vector(-center.x, -center.y))
+        // .scale(free.scale.x, free.scale.y)
+        // .translate(new Vector(center.x, center.y))
+        // .rotate(free.rotation, center.x, center.y);
+
+        // const newPos = finalPos.transform(newM.invert());
+
+        free.rotateOrigin = center;
         free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
         free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
+
+        drawPolygonPointIndex(undefined, free.boundary[0], "green");
+        drawCircle(
+          null,
+          new Circle(
+            new PointZ(
+              free.rotateOrigin.x + free.scaleOriginCorrection.x,
+              free.rotateOrigin.y + free.scaleOriginCorrection.y
+            ),
+            5
+          ),
+          "blue"
+        );
       }
-      // resize & move
-      // setSceneData({ ...sceneData });
       dragInfo.current = null;
     }
   }, [sceneData, setSceneData]);
@@ -1312,9 +1353,8 @@ function App() {
 
       const stableBBX = free.oriBoundary[0].box;
 
-      drawPolygonPointIndex(undefined, obx, "blue");
-      drawPolygonPointIndex(undefined, new Polygon(stableBBX), "red");
-      // console.log(updatedScale.y);
+      // drawPolygonPointIndex(undefined, obx, "blue");
+      // drawPolygonPointIndex(undefined, new Polygon(stableBBX), "red");
 
       updatedScale.y = pts[1].distanceTo(pts[2])[0] / stableBBX.height;
       updatedScale.x = pts[1].distanceTo(pts[0])[0] / stableBBX.width;
@@ -1323,6 +1363,18 @@ function App() {
       free.scaleOriginCorrection = new Vector(0, stableBBX.height / 2);
       // drawPolygonPointIndex(undefined, new Polygon(pts), "red");
       // drawPolygonPointIndex(undefined, free.oriBoundary[0], "yellow");
+
+      drawCircle(
+        null,
+        new Circle(
+          new PointZ(
+            free.rotateOrigin.x + free.scaleOriginCorrection.x,
+            free.rotateOrigin.y + free.scaleOriginCorrection.y
+          ),
+          5
+        ),
+        "blue"
+      );
     }
   }
 }

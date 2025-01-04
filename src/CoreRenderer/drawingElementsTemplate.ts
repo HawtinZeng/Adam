@@ -1,4 +1,4 @@
-import Flatten, { Polygon, Vector } from "@zenghawtin/graph2d";
+import Flatten, { Point, Polygon, Vector } from "@zenghawtin/graph2d";
 import {
   AStrokeOptions,
   DrawingElement,
@@ -19,7 +19,7 @@ export interface FreeDrawing extends DrawingElement {
 
   handleOperator: Transform2DOperator; // 世界坐标
 
-  scaleOriginCorrection: Vector; // 缩放中心相对于旋转中心的偏移向量
+  scaleOriginCorrection: Vector; // 缩放中心相对于旋转中心的偏移向量, depends on rotateOrigin
 }
 
 export enum DrawingType {
@@ -61,7 +61,7 @@ export const newFreeDrawingElement: FreeDrawing = {
     x: 1,
     y: 1,
   },
-  rotateOrigin: { x: 0, y: 0 },
+  rotateOrigin: new Point(0, 0),
   needCacheCanvas: true,
   oriBoundary: [],
   oriexcludeArea: [],
