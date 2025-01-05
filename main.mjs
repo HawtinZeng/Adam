@@ -67,6 +67,10 @@ ipcMain.on("blurAdamWindow", (_) => {
   win.blur();
 });
 
+ipcMain.on("focusAdamWindow", (_) => {
+  win.focus();
+});
+
 ipcMain.on("checkWindow", (e) => {
   changeWindowHandler();
 });
@@ -126,7 +130,7 @@ app.whenReady().then(async () => {
   });
 
   // adam won't be focused at start up
-  win.blur();
+  // win.blur();
   const winInfo = await activeWindow();
   win.webContents.send("SET_INITIAL_WINDOWID", winInfo.id);
 

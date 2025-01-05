@@ -1,5 +1,4 @@
-import { Point, Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
-
+import { Point as PointZ, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import { groupBy } from "lodash";
 import {
@@ -19,7 +18,7 @@ import {
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
-import { DrawingElement } from "src/CoreRenderer/basicTypes";
+import { DrawingElement, Point } from "src/CoreRenderer/basicTypes";
 import {
   ArrowShapeElement,
   CircleShapeElement,
@@ -102,7 +101,6 @@ export function renderDrawCanvas(
     (up) => up.type
   ) as Partial<Record<ActionType, UpdatingElement[]>>;
 
-  // console.log("groupedElements", JSON.stringify(groupedElements));
   if ((groupedElements.addPoints?.length ?? 0) > 0) {
     redrawAllEles(appCtx, appCanvas, sceneData.elements);
   }
@@ -152,16 +150,17 @@ export function renderDrawCanvas(
   }
   // render transform handler
   groupedElements.transform?.forEach((u) => {
-    const img = u.ele as ImageElement;
-    if (!img.boundary[0]) return;
+    if (!u.ele.boundary[0]) return;
     if (
       u.ele.type === DrawingType.img ||
       u.ele.type === DrawingType.circle ||
       u.ele.type === DrawingType.rectangle
     ) {
+      let bbx = u.ele.boundary[0];
+
       const handleOperator = new Transform2DOperator(
-        img.boundary[0],
-        img.rotation,
+        bbx,
+        u.ele.rotation,
         appCtx,
         Math.sign(u.ele.scale.y) === -1
       );
@@ -179,13 +178,13 @@ export function renderDrawCanvas(
         .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
         .scale(free.scale.x, free.scale.y)
         .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
-        .translate(new Vector(u.ele.position.x, u.ele.position.y))
+        .translate(new Vector(free.position.x, free.position.y))
 
         .rotate(free.rotation, free.rotateOrigin);
 
       const handleOperator = new Transform2DOperator(
         freeDrawBox,
-        img.rotation,
+        free.rotation,
         appCtx,
         Math.sign(u.ele.scale.y) === -1,
         undefined
@@ -284,6 +283,7 @@ export function redrawAllEles(
   uE?: DrawingElement,
   drawCurrentUpdatingHandle?: () => void
 ) {
+  console.log(elements);
   if (!globalAppCtx || !globalCvs) {
     console.error("globalAppCtx or globalCvs is not initialized");
     return;
@@ -320,7 +320,7 @@ export function redrawAllEles(
           globalAppCtx!.restore();
         }
       } else if (el.type === DrawingType.text) {
-        const text = el as Text;
+        const text = el as unknown as Text;
         globalAppCtx!.drawImage(
           cachedCvs!,
           text.position.x,
@@ -458,7 +458,11 @@ function drawNeedntCacheEle(el: DrawingElement) {
     }
   } else if (el.type === DrawingType.polyline) {
     const polylineShape = el as PolylineShapeElement;
-    const pts = polylineShape.points;
+    const pts = polylineShape.points.map((p) => {
+      return new PointZ(p.x, p.y).translate(
+        new Vector(el.position.x, el.position.y)
+      );
+    });
     if (pts.length < 2) return;
 
     globalAppCtx!.save();
@@ -474,8 +478,11 @@ function drawNeedntCacheEle(el: DrawingElement) {
     globalAppCtx!.lineWidth = polylineShape.strokeWidth;
     globalAppCtx!.stroke();
     globalAppCtx!.restore();
+
+    // drawPolygonPointIndex(undefined, polylineShape.boundary[0], "yellow");
   } else if (el.type === DrawingType.circle) {
     const circle = el as CircleShapeElement;
+    console.log(circle.scale.y);
     if (circle.radius - circle.strokeWidth / 2 <= 0) return;
     let circleCenter = circle.points[0];
 
@@ -555,9 +562,8 @@ function drawNeedntCacheEle(el: DrawingElement) {
 }
 
 function drawNeedCacheEle(el: DrawingElement) {
-  // 先只考虑text
   if (el.type !== DrawingType.text) return;
-  const text = el as Text;
+  const text = el as unknown as Text;
   globalAppCtx!.drawImage(
     drawingCanvasCache.ele2DrawingCanvas.get(text)!,
     text.position.x,
@@ -787,7 +793,7 @@ export function createDrawingCvs(
 
 export function drawText(
   ctx: CanvasRenderingContext2D | null,
-  pos: Point,
+  pos: PointZ | Point,
   text: string,
   color: string = "red"
 ) {
@@ -917,7 +923,6 @@ export function drawRectFill(
   ctx.lineTo(vs[1].x, vs[1].y);
   ctx.lineTo(vs[2].x, vs[2].y);
   ctx.lineTo(vs[3].x, vs[3].y);
-  ctx.lineTo(vs[0].x, vs[0].y);
   ctx.closePath();
 
   ctx.fill();
@@ -944,7 +949,6 @@ export function drawRectBorder(
   ctx.lineTo(vs[1].x, vs[1].y);
   ctx.lineTo(vs[2].x, vs[2].y);
   ctx.lineTo(vs[3].x, vs[3].y);
-  ctx.lineTo(vs[0].x, vs[0].y);
 
   ctx.closePath();
   ctx.stroke();
@@ -953,7 +957,7 @@ export function drawRectBorder(
 
 export function drawLine(
   ctx: CanvasRenderingContext2D | null,
-  pts: Point[],
+  pts: Point[] | PointZ[],
   color: string,
   thickness: number = 5
 ) {
@@ -969,7 +973,6 @@ export function drawLine(
     ctx.lineTo(p.x, p.y);
   });
 
-  ctx.closePath();
   ctx.stroke();
   ctx.restore();
 }

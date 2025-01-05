@@ -19,6 +19,7 @@ import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
 import {
   Transform2DOperator,
+  Transform2DOperatorLine,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
@@ -29,6 +30,12 @@ import {
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
 import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
+  getBoundryPoly,
+  getCenter,
+  getCircleBoundary,
+  getExcludeBoundaryPoly,
+} from "src/CoreRenderer/boundary";
+import {
   CircleShapeElement,
   DrawingType,
   FreeDrawing,
@@ -36,11 +43,6 @@ import {
   RectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTemplate";
 import MainMenu, { colorConfigs } from "src/MainMenu";
-import {
-  getBoundryPoly,
-  getCenter,
-  getExcludeBoundaryPoly,
-} from "src/MainMenu/imageInput";
 import { Point } from "src/Utils/Data/geometry";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
@@ -165,7 +167,7 @@ function App() {
     type: "move" | "resize" | "rotate";
     startPos: Point;
     originalScale?: Point;
-    originalHandles?: Transform2DOperator;
+    originalHandles?: Transform2DOperator | Transform2DOperatorLine;
     originalPos?: Point;
     originalRotation?: number;
     originalRotateOrigin?: Point;
@@ -180,7 +182,6 @@ function App() {
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const { startText, terminateText } = useTextFunction();
-
   const screenShotter = useRef<ScreenShotter>();
 
   const change2DefaultCursor = useCallback(() => {
@@ -256,10 +257,14 @@ function App() {
       if (selectedKey !== 2) return;
       if (currentHandle.current !== null) return;
       for (let i = sceneData.elements.length - 1; i >= 0; i--) {
-        // console.time("isHit");
         const ele = sceneData.elements[i];
+        let boundary = ele.boundary;
+        if (ele.type === DrawingType.circle) {
+          boundary = [getCircleBoundary(ele as any)];
+        }
+
         const isHit = ptIsContained(
-          ele.boundary,
+          boundary,
           ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
@@ -387,6 +392,9 @@ function App() {
             originalRotateOrigin!.x + offset.x,
             originalRotateOrigin!.y + offset.y
           );
+
+          ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+          ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
         } else {
           // transform
           if (!currentHandle.current) return;
@@ -487,7 +495,11 @@ function App() {
         sceneData.updatingElements.length = 0;
         redrawAllEles(undefined, undefined, sceneData.elements);
       } else if (e.key === "Escape") {
-        setSeletedKey(-1);
+        if (selectedKey === 6) {
+          terminateText();
+          redrawAllEles(undefined, undefined, sceneData.elements);
+          setSeletedKey(2);
+        }
       }
     },
     [sceneData.elements, sceneData.updatingElements, setSeletedKey]
@@ -507,7 +519,8 @@ function App() {
           | ImageElement
           | RectangleShapeElement
           | CircleShapeElement;
-        const oldOrigin = dragInfo.current.originalHandles!.rect.center;
+        const oldOrigin = (dragInfo.current
+          .originalHandles as Transform2DOperator)!.rect.center;
         const pos = el.position;
         const bbx = new Box(
           pos.x,
@@ -537,8 +550,6 @@ function App() {
         free.rotateOrigin = newOrigin;
         const newPos = leftTop.rotate(-free.rotation, free.rotateOrigin);
         free.position = newPos;
-
-        // drawCircle(null, new Circle(free.rotateOrigin, 5), "blue");
 
         free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
         free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
@@ -648,7 +659,7 @@ function App() {
 
       const exist = multipleScenes.get(currentFocusedWindow.id);
       if (!exist) {
-        const createdScene = new Scene([], [], []);
+        const createdScene = new Scene([], [], [] as any);
         createdScene.windowId = currentFocusedWindow.id;
 
         setSceneData(createdScene);
@@ -1086,7 +1097,7 @@ function App() {
   function scaleOnMove(
     el: DrawingElement,
     dir: TransformHandle,
-    oriHandles: Transform2DOperator,
+    oriHandles: Transform2DOperator | Transform2DOperatorLine,
     updatedScale: { x: number; y: number },
     oriScale: Point,
     diffY: number,
@@ -1101,9 +1112,7 @@ function App() {
 
     switch (el.type) {
       case DrawingType.freeDraw: {
-        const free = el as FreeDrawing;
-        obx = oriHandles.rect.getSimplifyPolygon();
-
+        obx = (oriHandles as Transform2DOperator).rect.getSimplifyPolygon();
         pts = obx.vertices;
         break;
       }
@@ -1306,7 +1315,11 @@ function App() {
       }
     }
 
-    if (el.type === DrawingType.img) {
+    if (
+      el.type === DrawingType.img ||
+      el.type === DrawingType.circle ||
+      el.type === DrawingType.rectangle
+    ) {
       img.boundary[0] = new Polygon(pts);
 
       const rightEdge = [...img.boundary[0].edges][1] as Edge;

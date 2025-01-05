@@ -52,12 +52,13 @@ export const useTextFunction = (): {
       s.elements.push(currentText.current);
       ss({ ...s });
       terminateTextFunnction();
-
       startTextFunction(colorValRef.current);
     }
   };
 
   const startTextFunction = (colorVal: number) => {
+    window.ipcRenderer.send("focusAdamWindow");
+
     currentText.current = new Text(
       "",
       "黑体",

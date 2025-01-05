@@ -3,11 +3,11 @@ import * as d3c from "d3-color";
 import { debounce } from "lodash";
 import { drawRectBorder, drawText } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
+import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import {
   DrawingType,
   FreeDrawing,
 } from "src/CoreRenderer/drawingElementsTemplate";
-import { getBoundryPoly } from "src/MainMenu/imageInput";
 declare global {
   interface Window {
     synchronizer: Synchronizer;

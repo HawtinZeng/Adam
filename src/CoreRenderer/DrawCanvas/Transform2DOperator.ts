@@ -253,7 +253,9 @@ export class Transform2DOperatorLine {
 
     this.polyline.forEach((pt) => {
       this.smallDots.push(
-        new RectDraw(new Polygon(new Circle(pt, this.pointW / 2).box))
+        new RectDraw(new Polygon(new Circle(pt, this.pointW / 2).box), {
+          thickness: this.border,
+        })
       );
     });
   }

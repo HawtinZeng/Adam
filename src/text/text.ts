@@ -1,4 +1,4 @@
-import { Polygon } from "@zenghawtin/graph2d";
+import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
 import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
 import { onlyRedrawOneElement } from "src/CoreRenderer/DrawCanvas/core";
@@ -26,7 +26,7 @@ export class Text implements DrawingElement {
   boundary: Polygon[] = [];
   excludeArea: Polygon[] = [];
   needCacheCanvas: boolean = true;
-  rotateOrigin: Point = { x: 0, y: 0 };
+  rotateOrigin: PointZ = new PointZ(0, 0);
 
   content: string;
 
@@ -148,9 +148,9 @@ export class Text implements DrawingElement {
     ctx!.save();
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(
-      this.textMetricsOfIdx(this.cursorIdx).width,
+      this.textMetricsOfIdx(this.cursorIdx).width + 2,
       this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
-      3,
+      2,
       30
     );
     ctx!.restore();
@@ -159,9 +159,9 @@ export class Text implements DrawingElement {
   clearCursor() {
     const ctx = this.canvas!.getContext("2d");
     ctx!.clearRect(
-      this.textMetricsOfIdx(this.lastCursorIdx).width,
+      this.textMetricsOfIdx(this.lastCursorIdx).width + 2,
       this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
-      3,
+      2,
       30
     );
   }

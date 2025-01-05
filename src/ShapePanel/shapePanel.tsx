@@ -5,6 +5,7 @@ import {
   onlyRedrawOneElement,
   restoreOriginalmage,
 } from "src/CoreRenderer/DrawCanvas/core";
+import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import {
   CircleShapeElement,
   DrawingType,
@@ -17,7 +18,6 @@ import {
 } from "src/CoreRenderer/drawingElementsTemplate";
 import { colorConfigs } from "src/MainMenu";
 import { BtnConfigs } from "src/MainMenu/Menu";
-import { getBoundryPoly } from "src/MainMenu/imageInput";
 import { cloneDeepGenId } from "src/common/utils";
 import { Btn } from "src/components/Btn";
 import { UpdatingElement } from "src/drawingElements/data/scene";
@@ -104,6 +104,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           createUpdatingElement(circle);
         } else {
           const a = s.updatingElements[0].ele;
+          // @ts-ignore
           a.rotateOrigin = a.points[0];
           a.points.length = 0;
 
@@ -190,7 +191,6 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
       onlyRedrawOneElement(a, u.oriImageData!);
 
       s.updatingElements.length = 0;
-      setSelectedKey(-1);
     }
     clearLastKey();
   }, [clearLastKey, lastKey, s, setSelectedKey]);

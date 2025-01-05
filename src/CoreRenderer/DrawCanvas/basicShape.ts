@@ -7,7 +7,7 @@ export class RectDraw {
   poly: Polygon;
   fillColor: d3c.Color = d3c.rgb("#ffffff");
   borderColor: d3c.Color = d3c.rgb("#14C0E0");
-  thickness: number = 5;
+  thickness: number = 1;
 
   constructor(p: Polygon, settings?: ShapeSettings) {
     this.poly = p;
