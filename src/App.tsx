@@ -13,7 +13,7 @@ import * as d3c from "d3-color";
 import { IpcRenderer, IpcRendererEvent } from "electron";
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { cloneDeep, remove, throttle } from "lodash";
+import { cloneDeep, remove } from "lodash";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
@@ -156,7 +156,9 @@ function App() {
 
   const [screenLog, sscreenLog] = useAtom(screenLogAtom);
 
-  const currentHandle = useRef<[DrawingElement, TransformHandle] | null>(null);
+  const currentHandle = useRef<[DrawingElement, TransformHandle | any] | null>(
+    null
+  );
   const isShowShiftTip = useRef<boolean>(false);
   const [currentKeyboard] = useKeyboard();
   const dragInfo = useRef<{
@@ -209,18 +211,6 @@ function App() {
       if (selectedKey !== 2) return;
       const u = sceneData.updatingElements[0];
 
-      // drag  itself
-      if (currentHandle.current === null && ele) {
-        dragInfo.current = {
-          type: "move",
-          startPos: { x: e.clientX, y: e.clientY },
-          originalPos: { x: ele.position.x, y: ele.position.y },
-          originalRotateOrigin: ele.rotateOrigin,
-        };
-        setCursorSvg("move");
-        return;
-      }
-
       // drag handler
       if (!dragInfo.current && u?.handleOperator && currentHandle.current) {
         const ele = u.ele;
@@ -238,6 +228,18 @@ function App() {
           originalOutlinePoints: cloneDeep((ele as FreeDrawing).outlinePoints),
           originalPos: cloneDeep(ele.position),
         };
+        return;
+      }
+
+      // drag  itself
+      if (currentHandle.current === null && ele) {
+        dragInfo.current = {
+          type: "move",
+          startPos: { x: e.clientX, y: e.clientY },
+          originalPos: { x: ele.position.x, y: ele.position.y },
+          originalRotateOrigin: ele.rotateOrigin,
+        };
+        setCursorSvg("move");
         return;
       }
       change2DefaultCursor();
@@ -287,13 +289,13 @@ function App() {
   );
 
   const detectHandles = useCallback(
-    throttle((e: MouseEvent) => {
+    (e: MouseEvent) => {
       if (selectedKey !== 2) return;
       if (dragInfo.current) return;
       for (let i = 0; i < sceneData.updatingElements.length; i++) {
         const u = sceneData.updatingElements[i];
         const operator = u.handleOperator;
-        if (operator) {
+        if (operator?.type === "box") {
           let handleOperator: TransformHandle[];
           if (!operator.ableTransform) {
             handleOperator = [TransformHandle.ro];
@@ -318,7 +320,23 @@ function App() {
               setCursorSvg(operator.cursorStyle[handleOperator[handleIdx]]);
 
               isShowShiftTip.current = isBevelHandle(handleOperator[handleIdx]);
+              setTimeout(() => {
+                updateMouseTipPosition(e);
+              }, 100);
               currentHandle.current = [u.ele, handleOperator[handleIdx]];
+              return;
+            }
+          }
+        } else if (operator?.type === "line") {
+          for (let idx = 0; idx < operator.smallDots.length; idx++) {
+            const rect = operator.smallDots[idx];
+            const isHit = ptIsContained(
+              [rect.poly],
+              [],
+              new PointZ(e.clientX, e.clientY)
+            );
+            if (isHit) {
+              currentHandle.current = [u.ele, idx];
               return;
             }
           }
@@ -332,14 +350,13 @@ function App() {
           u.ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
-        // logger.log(isHit);
         if (isHit) {
           setCursorSvg("move");
         } else {
           change2DefaultCursor();
         }
       }
-    }, 50),
+    },
     [
       sceneData.updatingElements,
       selectedKey,
@@ -347,105 +364,111 @@ function App() {
       change2DefaultCursor,
     ]
   );
+  let lastMousePos: React.MutableRefObject<PointZ | null> = useRef(null);
   const dragMove = useCallback(
     (e: MouseEvent) => {
-      if (!dragInfo.current) return;
-      // move
-      const { type, startPos, originalPos, originalRotateOrigin } =
-        dragInfo.current;
-      if (type === "move") {
-        const u = sceneData.updatingElements[0];
-        const ele = u!.ele;
-        const offset = {
-          x: e.clientX - startPos.x,
-          y: e.clientY - startPos.y,
-        };
-        ele.position = {
-          x: originalPos!.x + offset.x,
-          y: originalPos!.y + offset.y,
-        };
+      if (dragInfo.current) {
+        // move
+        const { type, startPos, originalPos, originalRotateOrigin } =
+          dragInfo.current;
+        if (type === "move") {
+          const u = sceneData.updatingElements[0];
+          const ele = u!.ele;
+          const offset = {
+            x: e.clientX - startPos.x,
+            y: e.clientY - startPos.y,
+          };
+          ele.position = {
+            x: originalPos!.x + offset.x,
+            y: originalPos!.y + offset.y,
+          };
 
-        ele.rotateOrigin = new Flatten.Point(
-          originalRotateOrigin!.x + offset.x,
-          originalRotateOrigin!.y + offset.y
-        );
+          ele.rotateOrigin = new Flatten.Point(
+            originalRotateOrigin!.x + offset.x,
+            originalRotateOrigin!.y + offset.y
+          );
+        } else {
+          // transform
+          if (!currentHandle.current) return;
 
-        ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+          const [x, y] = [e.clientX, e.clientY];
+          const [startX, startY, oriScale, oriHandles, originalRotation] = [
+            dragInfo.current.startPos.x,
+            dragInfo.current.startPos.y,
+            dragInfo.current.originalScale!,
+            dragInfo.current.originalHandles!,
+            dragInfo.current.originalRotation!,
+          ];
+          let [diffX, diffY] = [x - startX, y - startY];
+          const [el, dirOrPtIdx] = currentHandle.current!;
+          if (el && typeof dirOrPtIdx === "string") {
+            const updatedScale = { x: oriScale.x, y: oriScale.y };
+            const updatedPt = { x: el.position.x, y: el.position.y };
+            const lockScale =
+              isShowShiftTip.current && currentKeyboard === "Shift";
 
-        ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
-      } else {
-        // transform
-        if (!currentHandle.current) return;
-
-        const [x, y] = [e.clientX, e.clientY];
-        const [startX, startY, oriScale, oriHandles, originalRotation] = [
-          dragInfo.current.startPos.x,
-          dragInfo.current.startPos.y,
-          dragInfo.current.originalScale!,
-          dragInfo.current.originalHandles!,
-          dragInfo.current.originalRotation!,
-        ];
-        let [diffX, diffY] = [x - startX, y - startY];
-        const [el, dir] = currentHandle.current!;
-        if (el && dir) {
-          const updatedScale = { x: oriScale.x, y: oriScale.y };
-          const updatedPt = { x: el.position.x, y: el.position.y };
-          const lockScale =
-            isShowShiftTip.current && currentKeyboard === "Shift";
-
-          if (dir !== TransformHandle.ro) {
-            if (
-              el.type === DrawingType.img ||
-              el.type === DrawingType.rectangle ||
-              el.type === DrawingType.circle ||
-              el.type === DrawingType.freeDraw
-            ) {
-              scaleOnMove(
-                el,
-                dir,
-                oriHandles,
-                updatedScale,
-                oriScale,
-                diffY,
-                updatedPt,
-                diffX,
-                lockScale
-              );
+            if (dirOrPtIdx !== TransformHandle.ro) {
+              if (
+                el.type === DrawingType.img ||
+                el.type === DrawingType.rectangle ||
+                el.type === DrawingType.circle ||
+                el.type === DrawingType.freeDraw
+              ) {
+                scaleOnMove(
+                  el,
+                  dirOrPtIdx as any,
+                  oriHandles,
+                  updatedScale,
+                  oriScale,
+                  diffY,
+                  updatedPt,
+                  diffX,
+                  lockScale
+                );
+              } else {
+              }
             } else {
+              // rotation
+              if (
+                el.type === DrawingType.img ||
+                el.type === DrawingType.rectangle ||
+                el.type === DrawingType.circle ||
+                el.type === DrawingType.freeDraw
+              ) {
+                const rotationCenter = new PointZ(
+                  el.rotateOrigin.x,
+                  el.rotateOrigin.y
+                );
+                const originalLine = new Line(
+                  new PointZ(startX, startY),
+                  rotationCenter
+                );
+                const currentLine = new Line(new PointZ(x, y), rotationCenter);
+
+                const deltaRotation = originalLine.norm.angleTo(
+                  currentLine.norm
+                ); // in radian between 0 to 2 * PI
+
+                const caclRotation = deltaRotation + originalRotation;
+                el.rotation =
+                  caclRotation > 2 * Math.PI
+                    ? caclRotation - 2 * Math.PI
+                    : caclRotation;
+
+                el.boundary[0] = getBoundryPoly(el)!;
+              }
             }
-          } else {
-            // rotation
-            if (
-              el.type === DrawingType.img ||
-              el.type === DrawingType.rectangle ||
-              el.type === DrawingType.circle ||
-              el.type === DrawingType.freeDraw
-            ) {
-              const rotationCenter = new PointZ(
-                el.rotateOrigin.x,
-                el.rotateOrigin.y
-              );
-              const originalLine = new Line(
-                new PointZ(startX, startY),
-                rotationCenter
-              );
-              const currentLine = new Line(new PointZ(x, y), rotationCenter);
-
-              const deltaRotation = originalLine.norm.angleTo(currentLine.norm); // in radian between 0 to 2 * PI
-
-              const caclRotation = deltaRotation + originalRotation;
-              el.rotation =
-                caclRotation > 2 * Math.PI
-                  ? caclRotation - 2 * Math.PI
-                  : caclRotation;
-
-              el.boundary[0] = getBoundryPoly(el)!;
+          } else if (el && typeof dirOrPtIdx === "number") {
+            if (lastMousePos.current) {
+              el.points[dirOrPtIdx].x += e.clientX - lastMousePos.current.x;
+              el.points[dirOrPtIdx].y += e.clientY - lastMousePos.current.y;
             }
           }
         }
-      }
 
-      setSceneData({ ...sceneData });
+        setSceneData({ ...sceneData });
+      }
+      lastMousePos.current = new PointZ(e.clientX, e.clientY);
     },
     [sceneData, setSceneData, currentKeyboard]
   );
@@ -503,7 +526,7 @@ function App() {
         el.position = newPos;
         el.rotateOrigin = realNewOri;
         el.boundary[0] = getBoundryPoly(el)!;
-      } else if (u.ele.type === DrawingType.freeDraw) {
+      } else if (u && u.ele.type === DrawingType.freeDraw) {
         const free = u.ele as FreeDrawing;
         const newOrigin = getCenter(free);
 
@@ -516,6 +539,15 @@ function App() {
         free.position = newPos;
 
         // drawCircle(null, new Circle(free.rotateOrigin, 5), "blue");
+
+        free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
+        free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
+      } else if (
+        u &&
+        (u.ele.type === DrawingType.arrow ||
+          u.ele.type === DrawingType.polyline)
+      ) {
+        u.ele.boundary = getBoundryPoly(u.ele) ? [getBoundryPoly(u.ele)!] : [];
       }
       dragInfo.current = null;
     }
@@ -770,12 +802,11 @@ function App() {
     };
 
     /**
-     * 清理场景
+     * 清理画布
      */
     const altCHandler = () => {
-      sceneData.domElements.length = 0;
+      // sceneData.domElements.length = 0;
       sceneData.elements.length = 0;
-      sceneData.frames.length = 0;
       clearMainCanvas();
       globalSynchronizer.value?.clearAllEles();
     };
@@ -1040,23 +1071,21 @@ function App() {
           <div>{screenLog} </div>
         </div>
       )}
-      {isShowShiftTip.current && (
-        <DraggableTransparent
-          horizontal={true}
-          needBorder={true}
-          needPadding={true}
-          customCls="shiftTip"
-        >
-          按住Shift键锁定比例
-        </DraggableTransparent>
-      )}
+      <DraggableTransparent
+        horizontal={true}
+        needBorder={true}
+        needPadding={true}
+        customCls="shiftTip"
+        style={isShowShiftTip.current ? {} : { display: "none" }}
+      >
+        按住Shift键锁定比例
+      </DraggableTransparent>
     </>
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   function scaleOnMove(
     el: DrawingElement,
-    dir: string,
+    dir: TransformHandle,
     oriHandles: Transform2DOperator,
     updatedScale: { x: number; y: number },
     oriScale: Point,
@@ -1089,9 +1118,6 @@ function App() {
       case TransformHandle.n: {
         const thirdEdge = [...obx.edges][3] as Edge;
         const dir = new Vector(thirdEdge.start, thirdEdge.end).normalize();
-
-        // drawCircle(null, new Circle(thirdEdge.start, 10), "red");
-        // drawCircle(null, new Circle(thirdEdge.end, 10), "green");
 
         const delta = offset.dot(dir);
         deltaVec = dir.scale(delta, delta);
@@ -1334,12 +1360,20 @@ function App() {
         stableBBX.width;
 
       free.scale = updatedScale;
-
       const relativeBox = new Polygon(stableBBX);
-      free.scaleOrigin = relativeBox.vertices[3];
 
-      free.boundary = getBoundryPoly(free) ? [getBoundryPoly(free)!] : [];
-      free.excludeArea = getExcludeBoundaryPoly(free) ?? [];
+      // change the position
+      const rotateOrigin = new PointZ(free.rotateOrigin.x, free.rotateOrigin.y);
+      const finalPos = pts[0]
+        .rotate(-free.rotation, rotateOrigin)
+        .translate(
+          new Vector(-relativeBox.vertices[0].x, -relativeBox.vertices[0].y)
+        );
+      updatedPt.x = finalPos.x;
+      updatedPt.y = finalPos.y;
+
+      free.position = { x: updatedPt!.x, y: updatedPt!.y };
+      // drawPolygonPointIndex(undefined, new Polygon(pts), "yellow", 10);
     }
   }
 }

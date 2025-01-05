@@ -15,6 +15,7 @@ import {
 } from "src/App";
 import {
   Transform2DOperator,
+  Transform2DOperatorLine,
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
@@ -102,23 +103,16 @@ export function renderDrawCanvas(
   ) as Partial<Record<ActionType, UpdatingElement[]>>;
 
   // console.log("groupedElements", JSON.stringify(groupedElements));
+  if ((groupedElements.addPoints?.length ?? 0) > 0) {
+    redrawAllEles(appCtx, appCanvas, sceneData.elements);
+  }
   groupedElements.addPoints?.forEach((checkUpdating) => {
     const { ele } = checkUpdating;
-    if (ele.needCacheCanvas) {
-      let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(
-        checkUpdating.ele
-      );
-      cachedCvs = createDrawingCvs(ele, appCanvas);
-
+    if (ele.type === DrawingType.img) {
       appCtx.putImageData(checkUpdating.oriImageData!, 0, 0);
-      drawingCanvasCache.ele2DrawingCanvas.set(ele, cachedCvs!);
-
-      // 绘制checkUpdating到画布上
-      if (cachedCvs) appCtx.drawImage(cachedCvs!, 0, 0);
-    } else {
-      appCtx.putImageData(checkUpdating.oriImageData!, 0, 0);
-      drawNeedntCacheEle(ele);
-    }
+    } else if (ele.type === DrawingType.freeDraw) {
+      createDrawingCvs(ele, appCanvas, true);
+    } else drawNeedntCacheEle(ele);
   });
 
   const { elements } = sceneData;
@@ -160,9 +154,12 @@ export function renderDrawCanvas(
   groupedElements.transform?.forEach((u) => {
     const img = u.ele as ImageElement;
     if (!img.boundary[0]) return;
-    let handleOperator: Transform2DOperator;
-    if (u.ele.type !== DrawingType.freeDraw) {
-      handleOperator = new Transform2DOperator(
+    if (
+      u.ele.type === DrawingType.img ||
+      u.ele.type === DrawingType.circle ||
+      u.ele.type === DrawingType.rectangle
+    ) {
+      const handleOperator = new Transform2DOperator(
         img.boundary[0],
         img.rotation,
         appCtx,
@@ -176,7 +173,7 @@ export function renderDrawCanvas(
         u.ele,
         handleOperator.draw.bind(handleOperator)
       );
-    } else {
+    } else if (u.ele.type === DrawingType.freeDraw) {
       const free = u.ele as FreeDrawing;
       const freeDrawBox = new Polygon(free.oriBoundary[0].box)
         .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
@@ -186,13 +183,14 @@ export function renderDrawCanvas(
 
         .rotate(free.rotation, free.rotateOrigin);
 
-      u.handleOperator = handleOperator = new Transform2DOperator(
+      const handleOperator = new Transform2DOperator(
         freeDrawBox,
         img.rotation,
         appCtx,
         Math.sign(u.ele.scale.y) === -1,
         undefined
       );
+      u.handleOperator = handleOperator;
 
       redrawAllEles(
         appCtx,
@@ -200,6 +198,27 @@ export function renderDrawCanvas(
         elements,
         u.ele,
         handleOperator.draw.bind(handleOperator)
+      );
+    } else if (
+      u.ele.type === DrawingType.arrow ||
+      u.ele.type === DrawingType.polyline
+    ) {
+      const handleOperator = new Transform2DOperatorLine(
+        u.ele.points.map((pt) => {
+          return new PointZ(pt.x, pt.y).translate(
+            new Vector(u.ele.position.x, u.ele.position.y)
+          );
+        }) as PointZ[]
+      );
+
+      u.handleOperator = handleOperator;
+
+      redrawAllEles(
+        appCtx,
+        appCanvas,
+        elements,
+        u.ele,
+        handleOperator.draw.bind(handleOperator, globalAppCtx!)
       );
     }
   });
@@ -277,10 +296,12 @@ export function redrawAllEles(
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
 
-      if (!cachedCvs)
-        throw new Error(`cannot find the canvas cache of ${el.id}`);
-
-      drawingCanvasCache.ele2DrawingCanvas.set(el, cachedCvs);
+      if (!cachedCvs) {
+        // We push updating freedrawing eles to sceneData.elements,
+        // but we won't create cache for it, we must push updating for laser brush,
+        console.log(`cannot find the canvas cache of ${el.id}`);
+        return;
+      }
 
       globalAppCtx!.save();
       // For image element.
@@ -623,14 +644,19 @@ function drawTriangleWithHeight(
 
 export function createDrawingCvs(
   ele: DrawingElement,
-  targetCvs: HTMLCanvasElement
+  targetCvs: HTMLCanvasElement,
+  dontCreate: boolean = false
 ) {
   if (ele.points.length === 0) return;
-  // stylelint-vite-plugin
-  const canvas = document.createElement("canvas") as HTMLCanvasElement;
-  canvas.width = targetCvs.width;
-  canvas.height = targetCvs.height;
-  const ctx = canvas.getContext("2d")!;
+  let ctx, canvas;
+  if (dontCreate) {
+    ctx = targetCvs.getContext("2d")!;
+  } else {
+    canvas = document.createElement("canvas") as HTMLCanvasElement;
+    canvas.width = targetCvs.width;
+    canvas.height = targetCvs.height;
+    ctx = canvas.getContext("2d")!;
+  }
 
   switch (ele.type) {
     case DrawingType.freeDraw:
@@ -876,7 +902,7 @@ export function drawHandles(
   });
 }
 
-function drawRectFill(
+export function drawRectFill(
   ctx: CanvasRenderingContext2D,
   rect: Polygon,
   color: d3c.Color
@@ -942,7 +968,6 @@ export function drawLine(
   pts.forEach((p) => {
     ctx.lineTo(p.x, p.y);
   });
-  ctx.lineTo(pts[0].x, pts[0].y);
 
   ctx.closePath();
   ctx.stroke();

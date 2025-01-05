@@ -6,6 +6,7 @@ import Flatten, {
   Point as PointZ,
   Polygon,
 } from "@zenghawtin/graph2d";
+import * as d3c from "d3-color";
 import { partition } from "lodash";
 import { StrokeOptions } from "perfect-freehand";
 import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
@@ -141,4 +142,9 @@ export type TransformTRS = {
   translate: Point;
   rotate: Degree;
   scale: Point;
+};
+export type ShapeSettings = {
+  fillColor?: d3c.Color;
+  borderColor?: d3c.Color;
+  thickness?: number;
 };

@@ -1,7 +1,9 @@
-import { Box, Edge, Point, Polygon, Vector } from "@zenghawtin/graph2d";
+import { Box, Circle, Edge, Point, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
+import { RectDraw } from "src/CoreRenderer/DrawCanvas/basicShape";
 import {
   drawHandles,
+  drawLine,
   drawRectBorder,
   rotate,
 } from "src/CoreRenderer/DrawCanvas/core";
@@ -51,6 +53,9 @@ export class Transform2DOperator {
   handleOperator: TransformHandles = {};
   ableTransform: boolean = true;
   ctx: CanvasRenderingContext2D;
+
+  type: "box" = "box";
+
   cursorStyle: { [T in TransformHandle]: string } = {
     [TransformHandle.n]: "n-resize",
     [TransformHandle.s]: "s-resize",
@@ -232,5 +237,29 @@ export class Transform2DOperator {
 
     drawRectBorder(this.ctx, cornerPolygon, this.borderColor, this.border);
     drawHandles(this, this.ctx);
+  }
+}
+export class Transform2DOperatorLine {
+  pointW: number = 10;
+  border: number = 2;
+  borderColor: d3c.Color = d3c.rgb("#14C0E0");
+
+  type: "line" = "line";
+
+  polyline: Point[];
+  smallDots: RectDraw[] = [];
+  constructor(pts: Point[]) {
+    this.polyline = pts;
+
+    this.polyline.forEach((pt) => {
+      this.smallDots.push(
+        new RectDraw(new Polygon(new Circle(pt, this.pointW / 2).box))
+      );
+    });
+  }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    drawLine(ctx, this.polyline, this.borderColor, this.border);
+    this.smallDots.forEach((dot) => dot.draw(ctx));
   }
 }

@@ -1,9 +1,11 @@
 import { merge } from "lodash";
-import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
+import {
+  Transform2DOperator,
+  Transform2DOperatorLine,
+} from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
   DomElement,
   DrawingElement,
-  FrameData,
   SceneOptions,
 } from "src/CoreRenderer/basicTypes";
 export type ActionType =
@@ -17,11 +19,10 @@ export type UpdatingElement = {
   type: ActionType;
   ele: DrawingElement;
   oriImageData?: ImageData; // addPoints 操作启动之前的整个画布绘图数据
-  handleOperator?: Transform2DOperator;
+  handleOperator?: Transform2DOperator | Transform2DOperatorLine;
 };
 export class Scene {
   elements: DrawingElement[] = [];
-  frames: FrameData[] = [];
   options: SceneOptions = { scale: 1 };
   updatingElements: UpdatingElement[] = [];
   domElements: DomElement[];
@@ -32,12 +33,10 @@ export class Scene {
   constructor(
     elements: DrawingElement[],
     domElements: DomElement[],
-    frames: FrameData[],
     options?: SceneOptions,
     windowId: number = 0
   ) {
     this.elements = elements;
-    this.frames = frames;
     this.domElements = domElements;
     if (options !== undefined) {
       merge(this.options, options);

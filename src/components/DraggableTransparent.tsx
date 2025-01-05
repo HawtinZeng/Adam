@@ -39,6 +39,7 @@ export const DraggableTransparent = forwardRef(
       needBorder?: boolean;
       needPadding?: boolean;
       customCls?: string;
+      style?: Object;
     },
     ref: Ref<HTMLElement>
   ) => {
@@ -52,50 +53,46 @@ export const DraggableTransparent = forwardRef(
     const [hasIni, setHasIni] = useState(false);
     useEffect(() => {
       if (!hasIni) setTimeout(() => setHasIni(true), 10);
-
-      // const rootElements = document.getElementsByClassName("draggable");
-      // if (rootElements)
-      // [...rootElements].forEach((e) => {
-      //   e.addEventListener("click", (event) => {
-      //     event.preventDefault();
-      //   });
-      // });
     }, [hasIni]);
     return (
-      <Draggable
-        cancel="#btn"
-        onDrag={() => {
-          isDragging = true;
-          onDrag?.();
-        }}
-        onStop={() => {
-          if (isDragging) {
-            isDragging = false;
-          }
-        }}
-        defaultClassName={props.customCls ?? "draggable"}
-        defaultPosition={defaultPosition}
-      >
-        <div
-          {...stylex.props(
-            menuContainer.flexContent,
-            isHorizontal && {
-              ...draggableTrans.horizontalPanel,
-              ...draggableTrans.corner,
-            },
-            needBorder && {
-              ...menuContainer.areaBorder,
-            },
-            needPadding && {
-              ...menuContainer.menuPadding,
+      <div style={props.style}>
+        <Draggable
+          cancel="#btn"
+          onDrag={() => {
+            isDragging = true;
+            onDrag?.();
+          }}
+          onStop={() => {
+            if (isDragging) {
+              isDragging = false;
             }
-          )}
-          ref={ref as Ref<HTMLDivElement>}
-          style={hasIni ? { visibility: "visible" } : { visibility: "hidden" }}
+          }}
+          defaultClassName={props.customCls ?? "draggable"}
+          defaultPosition={defaultPosition}
         >
-          {props.children}
-        </div>
-      </Draggable>
+          <div
+            {...stylex.props(
+              menuContainer.flexContent,
+              isHorizontal && {
+                ...draggableTrans.horizontalPanel,
+                ...draggableTrans.corner,
+              },
+              needBorder && {
+                ...menuContainer.areaBorder,
+              },
+              needPadding && {
+                ...menuContainer.menuPadding,
+              }
+            )}
+            ref={ref as Ref<HTMLDivElement>}
+            style={
+              hasIni ? { visibility: "visible" } : { visibility: "hidden" }
+            }
+          >
+            {props.children}
+          </div>
+        </Draggable>
+      </div>
     );
   }
 );

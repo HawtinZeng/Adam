@@ -81,6 +81,8 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           s.updatingElements[0].ele.points.length === 2 // 结束arrow的绘制
         ) {
           const a = s.updatingElements[0].ele;
+          a.boundary[0] = getBoundryPoly(a)!;
+
           s.elements.push(a);
           s.updatingElements.length = 0;
 
@@ -180,10 +182,11 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
       const a = s.updatingElements[0].ele;
       const u = s.updatingElements[0];
 
-      a.points.splice(-1, 1);
+      if (a.type === DrawingType.polyline) a.points.splice(-1, 1);
       if (a.points.length >= 2) {
         s.elements.push(a);
       }
+      a.boundary[0] = getBoundryPoly(a)!;
       onlyRedrawOneElement(a, u.oriImageData!);
 
       s.updatingElements.length = 0;

@@ -302,6 +302,7 @@ export function getBoundryPoly(ele: DrawingElement) {
         drawCircle(null, new Circle(v, 10));
       });
     return pol;
+  } else if (ele.type === DrawingType.polyline) {
   } else if (ele.type === DrawingType.freeDraw) {
     const free = ele as FreeDrawing;
     const pos = free.position;

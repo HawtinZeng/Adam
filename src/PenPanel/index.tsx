@@ -261,20 +261,18 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
   };
 
   const stopCurrentDrawing = () => {
-    setSceneAtom({ ...sceneState });
     setTimeout(() => {
       const drawingEle = sceneState.updatingElements[
         sceneState.updatingElements.length - 1
       ]?.ele as FreeDrawing;
       if (!drawingEle) return;
 
-      let cvs = drawingCanvasCache.ele2DrawingCanvas.get(drawingEle)!;
-
-      if (!cvs) {
-        cvs = createDrawingCvs(drawingEle, cvsEle!)!;
-      }
+      sceneState.elements.push(drawingEle);
+      const cvs = createDrawingCvs(drawingEle, cvsEle!)!;
+      drawingCanvasCache.ele2DrawingCanvas.set(drawingEle, cvs);
 
       if (!cvs) return; // for laser brush
+
       const ctx = cvs.getContext("2d", { willReadFrequently: true })!;
       const imgd = ctx.getImageData(0, 0, cvs.width, cvs.height);
       const theFirstPt = drawingEle.points[0];
@@ -294,7 +292,10 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
           drawingEle.boundary = allPols[0];
           drawingEle.oriBoundary = cloneDeep(allPols[0]);
           drawingEle.rotateOrigin = drawingEle.boundary[0].box.center;
-          drawingEle.scaleOrigin = drawingEle.boundary[0].box.center;
+          drawingEle.scaleOrigin = new PointZ(
+            drawingEle.boundary[0].box.xmin,
+            drawingEle.boundary[0].box.ymin
+          );
         }
 
         if (allPols[1]) {
@@ -308,6 +309,8 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         )
       )
         sceneState.updatingElements.length = 0;
+      // setSceneAtom({ ...sceneState });
+      redrawAllEles(undefined, undefined, sceneState.elements);
     });
   };
 
