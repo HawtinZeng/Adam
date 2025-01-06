@@ -24,11 +24,11 @@ import { UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { sceneAtom } from "src/state/sceneState";
 import {
-  brushRadius,
   canvasAtom,
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
+  sizeAtom,
   subMenuIdx,
 } from "src/state/uiState";
 
@@ -41,7 +41,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
 
-  const strokeWidth = useAtomValue(brushRadius) / 5;
+  const strokeWidth = useAtomValue(sizeAtom) / 5;
 
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
   const [_, lastKey, clearLastKey] = useKeyboard();

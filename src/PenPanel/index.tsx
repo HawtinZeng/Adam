@@ -21,13 +21,13 @@ import { nextFrame } from "src/animations/requestAniThrottle";
 import { UpdatingElement } from "src/drawingElements/data/scene";
 import { sceneAtom } from "src/state/sceneState";
 import {
-  brushRadius,
   canvasAtom,
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
   screenLogAtom,
   selectedKeyAtom,
+  sizeAtom,
   subMenuIdx,
 } from "src/state/uiState";
 import { Btn } from "../components/Btn";
@@ -46,7 +46,7 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
 
-  const size = useAtomValue(brushRadius);
+  const size = useAtomValue(sizeAtom);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);

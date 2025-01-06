@@ -9,6 +9,7 @@ import {
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
+  fontSizeAtom,
 } from "src/state/uiState";
 import { Text } from "src/text/text";
 export const useTextFunction = (): {
@@ -16,36 +17,32 @@ export const useTextFunction = (): {
   terminateText: () => void;
 } => {
   const currentText = useRef<Text | null>(null);
-  const colorIdx = useAtomValue(colorAtom);
+  const [colorIdx] = useAtom(colorAtom);
+
   const color = useAtomValue(customColor);
   const canvasWrapper = useAtomValue(canvasEventTriggerAtom);
 
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
 
-  const colorValRef = useRef<number>(colorIdx);
+  const [size] = useAtom(fontSizeAtom);
+  useEffect(() => {
+    if (currentText.current) {
+      currentText.current.clearCursor();
+      currentText.current!.refreshScene({ size });
+      console.log(currentText.current!.boundingLineAboveBaseLine);
+      // const patchColor = currentText.current.color;
+      // terminateTextFunnction();
+      // startTextFunction();
+      // currentText.current.color = patchColor;
+    }
+  }, [size]);
   const mouseMoveHandler = (e: MouseEvent) => {
     if (!currentText.current) return;
-
     const newPos = { x: e.clientX, y: e.clientY };
     currentText.current.refreshScene({ position: newPos });
   };
 
-  /**
-   * @param e     
-   * mouseEvent map:
-   * case 0:
-      log.textContent = "Left button clicked.";
-      break;
-    case 1:
-      log.textContent = "Middle button clicked.";
-      break;
-    case 2:
-      log.textContent = "Right button clicked.";
-      break;
-    default:
-      log.textContent = `Unknown button code: ${e.button}`;
-   */
   const mouseLeftDownHandler = (e: MouseEvent) => {
     if (e.button !== 0) return;
 
@@ -56,40 +53,53 @@ export const useTextFunction = (): {
         currentText.current.boundary[0].box.center;
 
       ss({ ...s });
+      const patchColor = currentText.current.color;
+      const patchSize = currentText.current.fontSize;
       terminateTextFunnction();
-      startTextFunction(colorValRef.current);
+      startTextFunction();
+
+      currentText.current.color = patchColor;
+
+      currentText.current.refreshScene({
+        size: Number(patchSize.slice(0, -2)),
+      });
     }
   };
 
-  const startTextFunction = (colorVal: number) => {
+  const startTextFunction = () => {
     window.ipcRenderer.send("focusAdamWindow");
+    try {
+      currentText.current = new Text(
+        "",
+        "黑体",
+        colorIdx !== -1 ? colorConfigs[colorIdx].key : color,
+        size
+      );
+    } catch (e) {
+      // console.log(e);
+    }
 
-    currentText.current = new Text(
-      "",
-      "黑体",
-      colorVal !== -1 ? colorConfigs[colorVal].key : color
-    );
-    colorValRef.current = colorVal;
-
-    currentText.current.oriImageData = cvsEle!
-      .getContext("2d", { willReadFrequently: true })!
-      .getImageData(0, 0, cvsEle!.width, cvsEle!.height);
-
-    currentText.current.createTextCanvas(cvsEle!);
-    onlyRedrawOneElement(
-      currentText.current,
-      currentText.current.oriImageData!
-    );
-    canvasWrapper!.addEventListener("mousedown", (e) =>
-      mouseLeftDownHandler(e)
-    );
-    canvasWrapper!.addEventListener("mousemove", mouseMoveHandler);
+    if (!!cvsEle) {
+      currentText.current!.oriImageData = cvsEle
+        .getContext("2d", { willReadFrequently: true })!
+        .getImageData(0, 0, cvsEle!.width, cvsEle!.height);
+      currentText.current!.createTextCanvas(cvsEle!);
+      onlyRedrawOneElement(
+        currentText.current!,
+        currentText.current!.oriImageData!
+      );
+      canvasWrapper!.addEventListener("mousedown", (e) =>
+        mouseLeftDownHandler(e)
+      );
+      canvasWrapper!.addEventListener("mousemove", mouseMoveHandler);
+    }
   };
 
   useEffect(() => {
     if (!currentText.current) return;
     currentText.current.color =
       colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
+    console.log(currentText.current.color);
   }, [colorIdx, color]);
 
   const terminateTextFunnction = () => {

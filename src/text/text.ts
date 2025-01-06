@@ -51,7 +51,12 @@ export class Text implements DrawingElement {
   inputElement?: HTMLInputElement;
   mainCanvas?: HTMLCanvasElement;
 
-  constructor(content: string, fontFamily: string, color: string) {
+  constructor(
+    content: string,
+    fontFamily: string,
+    color: string,
+    fontSize: number
+  ) {
     this.content = content;
     this.cursorIdx = content.length - 1;
     this.lastCursorIdx = this.cursorIdx;
@@ -61,6 +66,8 @@ export class Text implements DrawingElement {
     this.fontFamily = fontFamily;
     this.color = color;
     this.id = nanoid();
+
+    this.fontSize = fontSize + "px";
 
     this.cursorAnimation = new AnimationScheduler(
       this.animateCursor.bind(this),
@@ -74,8 +81,14 @@ export class Text implements DrawingElement {
     return ctx.measureText(this.content);
   }
 
-  refreshScene(textProperties: { position?: Point; content?: string }) {
+  refreshScene(textProperties: {
+    position?: Point;
+    content?: string;
+    size?: number;
+  }) {
     const { position, content } = textProperties;
+    if (textProperties.size !== undefined)
+      this.fontSize = textProperties.size + "px";
     if (position) {
       this.position = position;
       this.inputElement!.style.left = this.position.x + "px";
@@ -83,13 +96,16 @@ export class Text implements DrawingElement {
     }
 
     // content可能为空的字符串，在if判断中为false
-    if (content !== undefined) {
+    if (content !== undefined && this.mainCanvas) {
       const contentDelta = content.length - this.content.length;
       this.cursorIdx += contentDelta;
 
       this.content = content;
       this.createTextCanvas(this.mainCanvas!);
+    } else if (textProperties.size !== undefined) {
+      this.createTextCanvas(this.mainCanvas!);
     }
+
     onlyRedrawOneElement(this, this.oriImageData!);
 
     this.inputElement!.focus();
@@ -147,25 +163,26 @@ export class Text implements DrawingElement {
 
   drawCursor() {
     const ctx = this.canvas!.getContext("2d");
-
+    console.log(this.textMetrics.fontBoundingBoxAscent);
     ctx!.save();
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(
       this.textMetricsOfIdx(this.cursorIdx).width + 2,
       this.size - this.boundingLineAboveBaseLine!,
       2,
-      30
+      this.size
     );
     ctx!.restore();
   }
 
   clearCursor() {
+    if (!this.canvas) return;
     const ctx = this.canvas!.getContext("2d");
     ctx!.clearRect(
       this.textMetricsOfIdx(this.lastCursorIdx).width + 2,
       this.size - this.boundingLineAboveBaseLine!,
       2,
-      30
+      this.size
     );
   }
 

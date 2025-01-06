@@ -9,7 +9,9 @@ export const canvasAtom = atom<HTMLCanvasElement | null>(null);
 export const bgCanvasAtom = atom<HTMLCanvasElement | null>(null);
 export const canvasEventTriggerAtom = atom<HTMLDivElement | null>(null);
 
-export const brushRadius = atom<number>(20);
+export const sizeAtom = atom<number>(20);
+export const fontSizeAtom = atom<number>(20);
+
 export const eraserRadius = atom<number>(10);
 
 export const colorAtom = atom<number>(1);

@@ -5,7 +5,7 @@ import { ColorsSubPanel } from "src/PenPanel/color";
 import { ColorPicker } from "src/PenPanel/colorPicker";
 import { ShapePanel } from "src/ShapePanel/shapePanel";
 import { SizeSlider } from "src/SizeSlider";
-import { brushRadius, colorAtom } from "src/state/uiState";
+import { colorAtom, sizeAtom } from "src/state/uiState";
 export function ShapePanelCompose() {
   return (
     <div {...stylex.props(mainMenu.multilineLayout)}>
@@ -17,7 +17,7 @@ export function ShapePanelCompose() {
         <ColorPicker />
 
         <div {...stylex.props(mainMenu.brushRadiusSlider)}>
-          <SizeSlider controledAtom={brushRadius} />
+          <SizeSlider controledAtom={sizeAtom} />
         </div>
       </div>
     </div>

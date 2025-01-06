@@ -25,7 +25,6 @@ import {
 import {
   clearMainCanvas,
   drawCircle,
-  drawPolygonPointIndex,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -62,7 +61,6 @@ import {
 import { globalSynchronizer, Synchronizer } from "src/state/synchronizer";
 import {
   bgCanvasAtom,
-  brushRadius,
   canvasEventTriggerAtom,
   colorAtom,
   cursorSvgAtom,
@@ -70,6 +68,7 @@ import {
   eraserRadius,
   screenLogAtom,
   selectedKeyAtom,
+  sizeAtom,
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
 
@@ -177,7 +176,7 @@ function App() {
   } | null>(null);
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
-  const size = useAtomValue(brushRadius) / 4;
+  const size = useAtomValue(sizeAtom) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const { startText, terminateText } = useTextFunction();
@@ -269,8 +268,6 @@ function App() {
         );
 
         if (isHit) {
-          drawPolygonPointIndex(undefined, boundary[0], "yellow");
-
           dragStart(e, ele);
           if (sceneData.updatingElements.find((u) => u.ele === ele)) {
             return;

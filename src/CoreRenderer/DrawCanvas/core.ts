@@ -1020,6 +1020,7 @@ export function onlyRedrawOneElement(
   ele: DrawingElement,
   originalImg: ImageData
 ) {
+  if (!globalAppCtx) return;
   globalAppCtx!.putImageData(originalImg, 0, 0);
   drawNeedntCacheEle(ele);
   drawNeedCacheEle(ele);
