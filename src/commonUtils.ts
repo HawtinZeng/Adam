@@ -6,7 +6,11 @@ export const setTransparentOption = {
 
 const ori = console.log;
 console.log = (msg) => {
-  ori(JSON.stringify(msg));
+  try {
+    ori(JSON.stringify(msg));
+  } catch (e) {
+    console.log(e);
+  }
 };
 
 export const setTransparent = () => {

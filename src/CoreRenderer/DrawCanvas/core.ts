@@ -154,7 +154,8 @@ export function renderDrawCanvas(
     if (
       u.ele.type === DrawingType.img ||
       u.ele.type === DrawingType.circle ||
-      u.ele.type === DrawingType.rectangle
+      u.ele.type === DrawingType.rectangle ||
+      u.ele.type === DrawingType.text
     ) {
       let bbx = u.ele.boundary[0];
 
@@ -283,7 +284,6 @@ export function redrawAllEles(
   uE?: DrawingElement,
   drawCurrentUpdatingHandle?: () => void
 ) {
-  console.log(elements);
   if (!globalAppCtx || !globalCvs) {
     console.error("globalAppCtx or globalCvs is not initialized");
     return;
@@ -321,13 +321,17 @@ export function redrawAllEles(
         }
       } else if (el.type === DrawingType.text) {
         const text = el as unknown as Text;
-        globalAppCtx!.drawImage(
-          cachedCvs!,
-          text.position.x,
-          text.position.y,
-          cachedCvs!.width,
-          cachedCvs!.height
-        );
+        const rotateOrigin = text.rotateOrigin;
+
+        globalAppCtx!.translate(rotateOrigin.x, rotateOrigin.y);
+        globalAppCtx!.rotate(text.rotation);
+        globalAppCtx!.translate(-rotateOrigin.x, -rotateOrigin.y);
+
+        globalAppCtx!.translate(text.position.x, text.position.y);
+
+        globalAppCtx!.scale(text.scale.x, text.scale.y);
+
+        globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       } else if (el.type === DrawingType.freeDraw) {
         const free = el as FreeDrawing;
         const rotateOrigin = el.rotateOrigin;
@@ -482,7 +486,6 @@ function drawNeedntCacheEle(el: DrawingElement) {
     // drawPolygonPointIndex(undefined, polylineShape.boundary[0], "yellow");
   } else if (el.type === DrawingType.circle) {
     const circle = el as CircleShapeElement;
-    console.log(circle.scale.y);
     if (circle.radius - circle.strokeWidth / 2 <= 0) return;
     let circleCenter = circle.points[0];
 

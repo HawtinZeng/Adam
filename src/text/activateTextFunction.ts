@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
+import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import { onlyRedrawOneElement } from "src/CoreRenderer/DrawCanvas/core";
 import { colorConfigs } from "src/MainMenu";
 import { sceneAtom } from "src/state/sceneState";
@@ -50,6 +51,10 @@ export const useTextFunction = (): {
 
     if (currentText.current && currentText.current.content !== "") {
       s.elements.push(currentText.current);
+      currentText.current!.boundary = [getBoundryPoly(currentText.current)!];
+      currentText.current.rotateOrigin =
+        currentText.current.boundary[0].box.center;
+
       ss({ ...s });
       terminateTextFunnction();
       startTextFunction(colorValRef.current);

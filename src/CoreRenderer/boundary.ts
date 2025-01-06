@@ -19,7 +19,17 @@ import {
   RectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTemplate";
 import { thickLineToPolygon } from "src/common/utils";
-import { circle2Polygon } from "src/commonUtils";
+import { Text } from "src/text/text";
+
+export function circle2Polygon(c: Circle) {
+  const pts: Point[] = [];
+  for (let a = 0; a <= 2 * Math.PI; a += 0.1) {
+    const x = c.center.x + c.r * Math.cos(a);
+    const y = c.center.y + c.r * Math.sin(a);
+    pts.push(new Point(x, y));
+  }
+  return new Polygon(pts);
+}
 
 export function getCircleBoundary(cir: CircleShapeElement) {
   const circleGeo = circle2Polygon(new Circle(new Point(0, 0), cir.radius))
@@ -31,101 +41,112 @@ export function getCircleBoundary(cir: CircleShapeElement) {
 
 export function getBoundryPoly(ele: DrawingElement) {
   let bbx: Box = new Box();
-  if (ele.type === DrawingType.img || ele.type === DrawingType.rectangle) {
-    const ensureTypeEle = ele as ImageElement | RectangleShapeElement;
-    const pos = ensureTypeEle.position;
+  try {
+    if (ele.type === DrawingType.img || ele.type === DrawingType.rectangle) {
+      const ensureTypeEle = ele as ImageElement | RectangleShapeElement;
+      const pos = ensureTypeEle.position;
 
-    bbx = new Box(
-      pos.x,
-      pos.y,
-      pos.x + ensureTypeEle.width * ensureTypeEle.scale.x,
-      pos.y + ensureTypeEle.height * ensureTypeEle.scale.y
-    );
-    return new Polygon(bbx).rotate(ele.rotation, bbx.center);
-  } else if (ele.type === DrawingType.circle) {
-    const circle = ele as CircleShapeElement;
-    const pos = circle.position;
+      bbx = new Box(
+        pos.x,
+        pos.y,
+        pos.x + ensureTypeEle.width * ensureTypeEle.scale.x,
+        pos.y + ensureTypeEle.height * ensureTypeEle.scale.y
+      );
+      return new Polygon(bbx).rotate(ele.rotation, bbx.center);
+    } else if (ele.type === DrawingType.circle) {
+      const circle = ele as CircleShapeElement;
+      const pos = circle.position;
 
-    bbx = new Box(
-      pos.x,
-      pos.y,
-      pos.x + circle.radius * 2 * circle.scale.x,
-      pos.y + circle.radius * 2 * circle.scale.y
-    );
-    return new Polygon(bbx).rotate(ele.rotation, bbx.center);
-  } else if (ele.type === DrawingType.arrow) {
-    const arrow = ele as ArrowShapeElement;
-    const endPt = {
-      x: arrow.points[1].x + arrow.position.x,
-      y: arrow.points[1].y + arrow.position.y,
-    };
-
-    const [endPos, startPos] = [
-      {
+      bbx = new Box(
+        pos.x,
+        pos.y,
+        pos.x + circle.radius * 2 * circle.scale.x,
+        pos.y + circle.radius * 2 * circle.scale.y
+      );
+      return new Polygon(bbx).rotate(ele.rotation, bbx.center);
+    } else if (ele.type === DrawingType.arrow) {
+      const arrow = ele as ArrowShapeElement;
+      const endPt = {
         x: arrow.points[1].x + arrow.position.x,
         y: arrow.points[1].y + arrow.position.y,
-      },
-      {
-        x: arrow.points[0].x + arrow.position.x,
-        y: arrow.points[0].y + arrow.position.y,
-      },
-    ];
+      };
 
-    const lineVec = new Vector(endPos.x - startPos.x, endPos.y - startPos.y);
-    const verticalToBottom = new Vector(0, 1);
-    const rotation = lineVec.invert().angleTo(verticalToBottom);
-    const [v1x, v1y, v2x, v2y, v3x, v3y] = getTriangle(
-      endPt.x,
-      endPt.y,
-      arrow.strokeWidth * 4,
-      -rotation
-    );
+      const [endPos, startPos] = [
+        {
+          x: arrow.points[1].x + arrow.position.x,
+          y: arrow.points[1].y + arrow.position.y,
+        },
+        {
+          x: arrow.points[0].x + arrow.position.x,
+          y: arrow.points[0].y + arrow.position.y,
+        },
+      ];
 
-    const halfThickness = arrow.strokeWidth / 2;
-    const downVec = lineVec.normalize().rotate90CCW();
-    const upVec = lineVec.normalize().rotate90CW();
-    const realDVec = downVec.scale(halfThickness, halfThickness);
-    const realUVec = upVec.scale(halfThickness, halfThickness);
-
-    const pol = new Polygon([
-      new Point(v3x, v3y),
-      new Point(v1x, v1y),
-      new Point(endPos.x + realUVec.x, endPos.y + realUVec.y),
-      new Point(startPos.x + realUVec.x, startPos.y + realUVec.y),
-      new Point(startPos.x + realDVec.x, startPos.y + realDVec.y),
-      new Point(endPos.x + realDVec.x, endPos.y + realDVec.y),
-      new Point(v2x, v2y),
-    ]);
-    if (debugArrow)
-      [...pol.vertices].forEach((v) => {
-        drawCircle(null, new Circle(v, 10));
-      });
-    return pol;
-  } else if (ele.type === DrawingType.polyline) {
-    const polyline = ele as PolylineShapeElement;
-    const offset = new Vector(ele.position.x, ele.position.y);
-    const poly = thickLineToPolygon(
-      polyline.points.map((p) => {
-        return point(p.x, p.y).translate(offset);
-      }),
-      polyline.strokeWidth
-    );
-
-    return poly;
-  } else if (ele.type === DrawingType.freeDraw) {
-    const free = ele as FreeDrawing;
-    const pos = free.position;
-    const worldBoundary = free.oriBoundary[0]
-      .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
-      .scale(free.scale.x, free.scale.y)
-      .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
-      .translate(new Vector(pos.x, pos.y))
-      .rotate(
-        ele.rotation,
-        new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+      const lineVec = new Vector(endPos.x - startPos.x, endPos.y - startPos.y);
+      const verticalToBottom = new Vector(0, 1);
+      const rotation = lineVec.invert().angleTo(verticalToBottom);
+      const [v1x, v1y, v2x, v2y, v3x, v3y] = getTriangle(
+        endPt.x,
+        endPt.y,
+        arrow.strokeWidth * 4,
+        -rotation
       );
 
-    return worldBoundary;
+      const halfThickness = arrow.strokeWidth / 2;
+      const downVec = lineVec.normalize().rotate90CCW();
+      const upVec = lineVec.normalize().rotate90CW();
+      const realDVec = downVec.scale(halfThickness, halfThickness);
+      const realUVec = upVec.scale(halfThickness, halfThickness);
+
+      const pol = new Polygon([
+        new Point(v3x, v3y),
+        new Point(v1x, v1y),
+        new Point(endPos.x + realUVec.x, endPos.y + realUVec.y),
+        new Point(startPos.x + realUVec.x, startPos.y + realUVec.y),
+        new Point(startPos.x + realDVec.x, startPos.y + realDVec.y),
+        new Point(endPos.x + realDVec.x, endPos.y + realDVec.y),
+        new Point(v2x, v2y),
+      ]);
+      if (debugArrow)
+        [...pol.vertices].forEach((v) => {
+          drawCircle(null, new Circle(v, 10));
+        });
+      return pol;
+    } else if (ele.type === DrawingType.polyline) {
+      const polyline = ele as PolylineShapeElement;
+      const offset = new Vector(ele.position.x, ele.position.y);
+      const poly = thickLineToPolygon(
+        polyline.points.map((p) => {
+          return point(p.x, p.y).translate(offset);
+        }),
+        polyline.strokeWidth
+      );
+
+      return poly;
+    } else if (ele.type === DrawingType.freeDraw) {
+      const free = ele as FreeDrawing;
+      const pos = free.position;
+      const worldBoundary = free.oriBoundary[0]
+        .translate(new Vector(-free.scaleOrigin.x, -free.scaleOrigin.y))
+        .scale(free.scale.x, free.scale.y)
+        .translate(new Vector(free.scaleOrigin.x, free.scaleOrigin.y))
+        .translate(new Vector(pos.x, pos.y))
+        .rotate(
+          ele.rotation,
+          new Point(free.rotateOrigin.x, free.rotateOrigin.y)
+        );
+
+      return worldBoundary;
+    } else if (ele.type === DrawingType.text) {
+      const t = ele as Text;
+
+      return new Polygon(new Box(0, 0, t.textWidth!, t.size))
+        .scale(t.scale.x, t.scale.y)
+        .translate(new Vector(t.position.x, t.position.y))
+        .rotate(t.rotation, t.rotateOrigin);
+    }
+  } catch (e) {
+    console.log(e);
   }
 }
 

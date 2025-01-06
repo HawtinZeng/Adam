@@ -25,6 +25,7 @@ import {
 import {
   clearMainCanvas,
   drawCircle,
+  drawPolygonPointIndex,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
@@ -49,7 +50,6 @@ import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { Scene, UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
-import { useDrawingOperator } from "src/hooks/useDrawingOperator";
 import pointer from "src/images/svgs/mouse/pointer.svg";
 import { ScreenShotter } from "src/screenShot/screenShotter";
 import { logger } from "src/setup";
@@ -177,7 +177,6 @@ function App() {
   } | null>(null);
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
   const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
-  useDrawingOperator();
   const size = useAtomValue(brushRadius) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
@@ -268,7 +267,10 @@ function App() {
           ele.excludeArea,
           new PointZ(e.clientX, e.clientY)
         );
+
         if (isHit) {
+          drawPolygonPointIndex(undefined, boundary[0], "yellow");
+
           dragStart(e, ele);
           if (sceneData.updatingElements.find((u) => u.ele === ele)) {
             return;
@@ -420,7 +422,8 @@ function App() {
                 el.type === DrawingType.img ||
                 el.type === DrawingType.rectangle ||
                 el.type === DrawingType.circle ||
-                el.type === DrawingType.freeDraw
+                el.type === DrawingType.freeDraw ||
+                el.type === DrawingType.text
               ) {
                 scaleOnMove(
                   el,
@@ -441,7 +444,8 @@ function App() {
                 el.type === DrawingType.img ||
                 el.type === DrawingType.rectangle ||
                 el.type === DrawingType.circle ||
-                el.type === DrawingType.freeDraw
+                el.type === DrawingType.freeDraw ||
+                el.type === DrawingType.text
               ) {
                 const rotationCenter = new PointZ(
                   el.rotateOrigin.x,
@@ -981,7 +985,7 @@ function App() {
     } else {
       setTransparent();
     }
-  }, [selectedKey, colorIdx]); // 不能依赖于start...terminate...
+  }, [selectedKey, colorIdx]);
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
     return () => window.removeEventListener("keydown", globalKeydown);
@@ -1318,7 +1322,8 @@ function App() {
     if (
       el.type === DrawingType.img ||
       el.type === DrawingType.circle ||
-      el.type === DrawingType.rectangle
+      el.type === DrawingType.rectangle ||
+      el.type === DrawingType.text
     ) {
       img.boundary[0] = new Polygon(pts);
 
@@ -1331,6 +1336,7 @@ function App() {
               rightEdge.start.rotate(-img.rotation).y
           )) /
         img.height;
+
       updatedScale.x =
         (bottomEdge.length *
           Math.sign(

@@ -1,6 +1,6 @@
 {
   "name": "adam",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "main": "main.mjs",
   "author": "ZengHawtin",
@@ -121,6 +121,7 @@
     "@stylexjs/webpack-plugin": "^0.5.1",
     "@types/lodash": "^4.17.0",
     "@webgpu/types": "^0.1.40",
+    "conventional-recommended-bump": "^10.0.0",
     "cross-env": "^7.0.3",
     "electron": "^31.1.0",
     "electron-devtools-installer": "^3.2.0",

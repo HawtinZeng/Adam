@@ -35,6 +35,9 @@ export class Text implements DrawingElement {
   color: string = "#ff0000";
   fontFamily: string = "黑体";
   fontSize: string = "30px";
+  get size() {
+    return Number(this.fontSize.slice(0, -2));
+  }
 
   boundingLineAboveBaseLine?: number;
   canvas?: HTMLCanvasElement;
@@ -48,17 +51,12 @@ export class Text implements DrawingElement {
   inputElement?: HTMLInputElement;
   mainCanvas?: HTMLCanvasElement;
 
-  /** 后缀G表示为getter属性 */
-  get fontSizeNumberG() {
-    return Number(this.fontSize.replace("px", ""));
-  }
-
   constructor(content: string, fontFamily: string, color: string) {
     this.content = content;
     this.cursorIdx = content.length - 1;
     this.lastCursorIdx = this.cursorIdx;
 
-    this.position = { x: 0, y: this.fontSizeNumberG };
+    this.position = { x: 0, y: this.size };
 
     this.fontFamily = fontFamily;
     this.color = color;
@@ -119,11 +117,16 @@ export class Text implements DrawingElement {
     ctx.save();
     ctx.font = this.fontSize + " " + this.fontFamily; // 注意不要复原canvas的font属性，不然后续求文字宽度将会不准确
     ctx.fillStyle = this.color;
-    ctx.fillText(this.content, 3, this.fontSizeNumberG);
+    ctx.fillText(
+      this.content,
+      3,
+      this.size - (this.size - this.boundingLineAboveBaseLine!)
+    );
 
     this.canvas = canvas;
     this.boundingLineAboveBaseLine = this.textMetrics.fontBoundingBoxAscent;
     this.textWidth = this.textMetrics.width;
+
     drawingCanvasCache.ele2DrawingCanvas.set(this, canvas);
 
     this.cursorAnimation.start();
@@ -149,7 +152,7 @@ export class Text implements DrawingElement {
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(
       this.textMetricsOfIdx(this.cursorIdx).width + 2,
-      this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
+      this.size - this.boundingLineAboveBaseLine!,
       2,
       30
     );
@@ -160,7 +163,7 @@ export class Text implements DrawingElement {
     const ctx = this.canvas!.getContext("2d");
     ctx!.clearRect(
       this.textMetricsOfIdx(this.lastCursorIdx).width + 2,
-      this.fontSizeNumberG - this.boundingLineAboveBaseLine!,
+      this.size - this.boundingLineAboveBaseLine!,
       2,
       30
     );
@@ -203,5 +206,12 @@ export class Text implements DrawingElement {
 
     this.clearCursor();
     onlyRedrawOneElement(this, this.oriImageData!);
+  }
+  get height() {
+    return this.size;
+  }
+
+  get width() {
+    return this.textWidth;
   }
 }
