@@ -18,6 +18,7 @@ export const useTextFunction = (): {
 } => {
   const currentText = useRef<Text | null>(null);
   const [colorIdx] = useAtom(colorAtom);
+  const [size] = useAtom(fontSizeAtom);
 
   const color = useAtomValue(customColor);
   const canvasWrapper = useAtomValue(canvasEventTriggerAtom);
@@ -25,18 +26,13 @@ export const useTextFunction = (): {
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
 
-  const [size] = useAtom(fontSizeAtom);
   useEffect(() => {
     if (currentText.current) {
       currentText.current.clearCursor();
       currentText.current!.refreshScene({ size });
-      console.log(currentText.current!.boundingLineAboveBaseLine);
-      // const patchColor = currentText.current.color;
-      // terminateTextFunnction();
-      // startTextFunction();
-      // currentText.current.color = patchColor;
     }
   }, [size]);
+
   const mouseMoveHandler = (e: MouseEvent) => {
     if (!currentText.current) return;
     const newPos = { x: e.clientX, y: e.clientY };
@@ -57,6 +53,7 @@ export const useTextFunction = (): {
       const patchSize = currentText.current.fontSize;
       terminateTextFunnction();
       startTextFunction();
+      // after restart Text function, cannot get the newest atom value...
 
       currentText.current.color = patchColor;
 
@@ -99,7 +96,6 @@ export const useTextFunction = (): {
     if (!currentText.current) return;
     currentText.current.color =
       colorIdx !== -1 ? colorConfigs[colorIdx].key : color;
-    console.log(currentText.current.color);
   }, [colorIdx, color]);
 
   const terminateTextFunnction = () => {
