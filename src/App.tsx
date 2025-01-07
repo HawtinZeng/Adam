@@ -27,7 +27,6 @@ import {
   drawCircle,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
-import { BackgroundCanvas } from "src/CoreRenderer/backgroundCanvas";
 import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   getBoundryPoly,
@@ -50,7 +49,6 @@ import { Scene, UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import pointer from "src/images/svgs/mouse/pointer.svg";
-import { ScreenShotter } from "src/screenShot/screenShotter";
 import { logger } from "src/setup";
 import { Action, History } from "src/state/history";
 import {
@@ -60,7 +58,6 @@ import {
 } from "src/state/sceneState";
 import { globalSynchronizer, Synchronizer } from "src/state/synchronizer";
 import {
-  bgCanvasAtom,
   canvasEventTriggerAtom,
   colorAtom,
   cursorSvgAtom,
@@ -147,7 +144,6 @@ function App() {
   const colorIdx = useAtomValue(colorAtom);
   const color = useAtomValue(customColor);
 
-  const bg = useAtomValue(bgCanvasAtom)!;
   const [cursorSvg, setCursorSvg] = useAtom(cursorSvgAtom);
   const [selectedKey, setSeletedKey] = useAtom(selectedKeyAtom);
 
@@ -160,6 +156,7 @@ function App() {
   const currentHandle = useRef<[DrawingElement, TransformHandle | any] | null>(
     null
   );
+
   const isShowShiftTip = useRef<boolean>(false);
   const [currentKeyboard] = useKeyboard();
   const dragInfo = useRef<{
@@ -180,7 +177,6 @@ function App() {
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
   const { startText, terminateText } = useTextFunction();
-  const screenShotter = useRef<ScreenShotter>();
 
   const change2DefaultCursor = useCallback(() => {
     if (selectedKey === 0 || selectedKey === 1) {
@@ -513,7 +509,8 @@ function App() {
         u &&
         (u.ele.type === DrawingType.img ||
           u.ele.type === DrawingType.rectangle ||
-          u.ele.type === DrawingType.circle) &&
+          u.ele.type === DrawingType.circle ||
+          u.ele.type === DrawingType.text) &&
         dragInfo.current.type === "resize"
       ) {
         const el = u.ele as
@@ -727,10 +724,6 @@ function App() {
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
     }
   }
-
-  useEffect(() => {
-    if (bg) screenShotter.current = new ScreenShotter(bg);
-  }, [bg]);
 
   useEffect(() => {
     const alt2Handler = () => {
@@ -963,8 +956,6 @@ function App() {
   // Do some functions start and terminate
   useEffect(() => {
     terminateText();
-    if (screenShotter.current?.status !== "ending")
-      screenShotter.current?.terminateScreenShot();
 
     if (selectedKey !== -1) {
       window.ipcRenderer.send("blurAdamWindow");
@@ -973,8 +964,6 @@ function App() {
 
     if (selectedKey === 6) {
       startText(colorIdx);
-    } else if (selectedKey === 7) {
-      screenShotter.current?.startScreenShot();
     }
 
     if (selectedKey !== -1) {
@@ -1029,7 +1018,6 @@ function App() {
           cursor: cursorSvg ?? "default",
         }}
       >
-        <BackgroundCanvas />
         <DrawCanvas />
         {domElements}
       </div>
@@ -1059,7 +1047,6 @@ function App() {
           <div>{`elements: ${sceneData.elements.length}`}</div>
           <div>{`mouse position: ${mousePos.x}, ${mousePos.y}`}</div>
           <div>{`handleOperator: ${currentHandle.current?.[1]}`}</div>
-          <div>{`height: ${bg?.height}`}</div>
           <Button
             variant="contained"
             style={{ zIndex: "999", marginRight: "10px" }}

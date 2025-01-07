@@ -6,7 +6,6 @@ export const preSelectedKey = atom(-1);
 export const subMenuIdx = atom(0);
 
 export const canvasAtom = atom<HTMLCanvasElement | null>(null);
-export const bgCanvasAtom = atom<HTMLCanvasElement | null>(null);
 export const canvasEventTriggerAtom = atom<HTMLDivElement | null>(null);
 
 export const sizeAtom = atom<number>(20);

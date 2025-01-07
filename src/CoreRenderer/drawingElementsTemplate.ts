@@ -70,7 +70,7 @@ export const newFreeDrawingElement: FreeDrawing = {
   oriexcludeArea: [],
 };
 export type ImageElement = DrawingElement & {
-  image: HTMLImageElement | undefined;
+  image: HTMLImageElement | ImageBitmap | undefined;
   height: number;
   width: number;
 };

@@ -11,6 +11,8 @@ const staticCvsSte = stylex.create({
     height: "100%",
     position: "fixed",
     top: "0",
+    // backgroundColor: "red",
+    // opacity: 0.1,
   },
 });
 
@@ -18,7 +20,6 @@ export function DrawCanvas() {
   const innerCvsRef = useRef<HTMLCanvasElement>(null);
   const setCvsAtom = useSetAtom(canvasAtom);
   const [sceneData] = useAtom(sceneAtom);
-
   useEffect(() => {
     innerCvsRef.current!.height = innerCvsRef.current!.offsetHeight;
     innerCvsRef.current!.width = innerCvsRef.current!.offsetWidth;
