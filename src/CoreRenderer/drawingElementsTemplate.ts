@@ -31,6 +31,7 @@ export enum DrawingType {
   circle = "circle",
   rectangle = "rectangle",
   text = "text",
+  shot = "shot",
 }
 
 export const newFreeDrawingElement: FreeDrawing = {

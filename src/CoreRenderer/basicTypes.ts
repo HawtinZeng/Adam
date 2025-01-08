@@ -24,7 +24,7 @@ export type Degree = number; // 0 - 359
 /**
  * Core interface.
  */
-export interface DrawingElement {
+export type DrawingElement = {
   type: DrawingType;
   points: Point[];
   id: string;
@@ -56,7 +56,7 @@ export interface DrawingElement {
   includingPart?: Box;
 
   handleOperator?: Transform2DOperator;
-}
+};
 
 export type DomElement = {
   type: "note";

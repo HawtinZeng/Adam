@@ -316,6 +316,7 @@ export function redrawAllEles(
           globalAppCtx!.translate(el.position.x, el.position.y);
           globalAppCtx!.scale(el.scale.x, el.scale.y);
           globalAppCtx!.drawImage(cachedCvs, 0, 0);
+          globalAppCtx!.drawImage(cachedCvs, 0, 0);
 
           globalAppCtx!.restore();
         }

@@ -19,6 +19,7 @@ import {
   RectangleShapeElement,
 } from "src/CoreRenderer/drawingElementsTemplate";
 import { thickLineToPolygon } from "src/common/utils";
+import { Shot } from "src/screenShot/Shot";
 import { Text } from "src/text/text";
 
 export function circle2Polygon(c: Circle) {
@@ -42,8 +43,12 @@ export function getCircleBoundary(cir: CircleShapeElement) {
 export function getBoundryPoly(ele: DrawingElement) {
   let bbx: Box = new Box();
   try {
-    if (ele.type === DrawingType.img || ele.type === DrawingType.rectangle) {
-      const ensureTypeEle = ele as ImageElement | RectangleShapeElement;
+    if (
+      ele.type === DrawingType.img ||
+      ele.type === DrawingType.rectangle ||
+      ele.type === DrawingType.shot
+    ) {
+      const ensureTypeEle = ele as ImageElement | RectangleShapeElement | Shot;
       const pos = ensureTypeEle.position;
 
       bbx = new Box(
