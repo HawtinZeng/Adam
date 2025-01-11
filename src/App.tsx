@@ -299,6 +299,19 @@ function App() {
     [dragStart, sceneData, selectedKey, setSceneData]
   );
 
+  function terminateShot() {
+    const shot = sceneData.updatingElements[0]?.ele as any as Shot;
+
+    if (shot && shot.height === -1) {
+      const i = sceneData.elements.findIndex((e) => (e as any) === shot);
+      sceneData.elements.splice(i, 1);
+      sceneData.updatingElements.length = 0;
+
+      setSceneData({ ...sceneData });
+      redrawAllEles(undefined, undefined, sceneData.elements);
+    }
+  }
+
   const detectHandles = useCallback(
     (e: MouseEvent) => {
       if (selectedKey !== 2) return;
@@ -399,7 +412,7 @@ function App() {
             originalRotateOrigin!.y + offset.y
           );
 
-          ele.boundary = getBoundryPoly(ele) ? [getBoundryPoly(ele)!] : [];
+          ele.boundary = [getBoundryPoly(ele)!];
           ele.excludeArea = getExcludeBoundaryPoly(ele) ?? [];
         } else {
           // transform
@@ -550,7 +563,8 @@ function App() {
 
         el.position = newPos;
         el.rotateOrigin = realNewOri;
-        el.boundary[0] = getBoundryPoly(el)!;
+
+        el.boundary[0] = [getBoundryPoly(el)!];
       } else if (u && u.ele.type === DrawingType.freeDraw) {
         const free = u.ele as FreeDrawing;
         const newOrigin = getCenter(free);
@@ -934,8 +948,7 @@ function App() {
           e.position.y += delta * 50;
           e.rotateOrigin.y += delta * 50;
 
-          e.boundary = getBoundryPoly(e) ? [getBoundryPoly(e)!] : [];
-
+          e.boundary = [getBoundryPoly(e)!];
           e.excludeArea = getExcludeBoundaryPoly(e) ?? [];
         });
       }
@@ -945,16 +958,20 @@ function App() {
 
     if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
   }
-  useEffect(() => {
-    if (selectedKey !== 7 && selectedKey !== 2) {
-      const idx = sceneData.elements.findIndex(
-        (i) => i === sceneData.updatingElements[0]?.ele
-      );
 
-      if (idx !== -1) {
-        sceneData.elements.splice(idx, 1);
+  useEffect(() => {
+    // clear Shot
+    sceneData.updatingElements.forEach((u) => {
+      if (u.ele.type === DrawingType.shot) {
+        const shot = u.ele as unknown as Shot;
+        if (!shot.pined && !(selectedKey === 2 && shot.width !== -1)) {
+          const i = sceneData.elements.findIndex((e) => (e as any) === shot);
+          sceneData.elements.splice(i, 1);
+          redrawAllEles(undefined, undefined, sceneData.elements);
+        }
       }
-    }
+    });
+
     sceneData.updatingElements = [];
     setSceneData({ ...sceneData });
     if (selectedKey !== 2) {
@@ -983,6 +1000,7 @@ function App() {
       el.style.top = pt.y + "px";
     }
   }
+
   // Do some functions start and terminate
   useEffect(() => {
     terminateText();
@@ -1040,6 +1058,16 @@ function App() {
   ]);
   const domElements = useMemo(() => <DomElements />, []);
 
+  function pinShot() {
+    const shot = sceneData.updatingElements[0].ele as any as Shot;
+    shot.pin();
+
+    sceneData.updatingElements.length = 0;
+
+    redrawAllEles(undefined, undefined, sceneData.elements);
+    setSceneData({ ...sceneData });
+  }
+
   function deleteTransfroming() {
     sceneData.updatingElements.forEach((u) => {
       const el = u.ele;
@@ -1056,7 +1084,8 @@ function App() {
     if (transforming) {
       if (
         transforming.ele.type === DrawingType.shot &&
-        (transforming.ele as any as Shot).width !== -1
+        (transforming.ele as any as Shot).width !== -1 &&
+        !(transforming.ele as any as Shot).pined
       ) {
         const shot = transforming.ele as any as Shot;
         const pos = new PointZ(
@@ -1149,7 +1178,7 @@ function App() {
         >
           <div style={{ display: "flex" }}>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)}>
+              <div {...stylex.props(btn.center)} id="btn">
                 <ReactSVG
                   src={Cancel}
                   useRequestCache={true}
@@ -1159,16 +1188,17 @@ function App() {
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)}>
+              <div {...stylex.props(btn.center)} id="btn">
                 <ReactSVG
                   src={Pin}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
+                  onMouseDown={pinShot}
                 />
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)}>
+              <div {...stylex.props(btn.center)} id="btn">
                 <ReactSVG
                   src={Save}
                   useRequestCache={true}
@@ -1177,7 +1207,7 @@ function App() {
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)}>
+              <div {...stylex.props(btn.center)} id="btn">
                 <ReactSVG
                   src={Copy}
                   useRequestCache={true}

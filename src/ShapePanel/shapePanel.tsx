@@ -107,12 +107,10 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           // @ts-ignore
           a.rotateOrigin = a.points[0];
           a.points.length = 0;
-
-          a.boundary[0] = getBoundryPoly(a)!;
           s.elements.push(a);
           s.updatingElements.length = 0;
 
-          a.boundary = [getCircleBoundary(a as CircleShapeElement)];
+          a.boundary = [getBoundryPoly(a)!];
           ss({ ...s });
         }
       } else if (currentShape === DrawingType.rectangle) {

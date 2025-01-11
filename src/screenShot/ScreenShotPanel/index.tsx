@@ -12,6 +12,23 @@ export function ScreenShotPanel() {
   const screenShotter = useRef<ScreenShotter>(new ScreenShotter(s));
   const drawCanvas = useAtomValue(canvasAtom)!;
 
+  /**
+  useEffect(() => {
+    const ele = sceneData.updatingElements[0]?.ele;
+    if (ele && ele.type === DrawingType.shot) {
+      const shot = ele as any as Shot;
+      if (!shot.pined) {
+        const idx = sceneData.elements.findIndex(
+          (i) => i === sceneData.updatingElements[0]?.ele
+        );
+
+        if (idx !== -1) {
+          sceneData.elements.splice(idx, 1);
+        }
+      }
+    }
+  }, [sceneData]);
+   */
   const execut2 = useRef<number>(1);
   useEffect(() => {
     if (execut2.current === 2) {
@@ -32,7 +49,8 @@ export function ScreenShotPanel() {
     }
 
     return () => {
-      if (execut2.current === 2) screenShotter.current.terminate();
+      if (execut2.current === 2) {
+      }
       execut2.current++;
     };
   }, []);
