@@ -45,6 +45,7 @@ import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   getBoundryPoly,
   getCenter,
+  getCircleBoundary,
   getExcludeBoundaryPoly,
 } from "src/CoreRenderer/boundary";
 import {
@@ -270,7 +271,12 @@ function App() {
 
       for (let i = sceneData.elements.length - 1; i >= 0; i--) {
         const ele = sceneData.elements[i];
-        const boundary = ele.boundary;
+        let boundary;
+        if (ele.type === DrawingType.circle) {
+          boundary = [getCircleBoundary(ele as CircleShapeElement)];
+        } else {
+          boundary = ele.boundary;
+        }
 
         const isHit = ptIsContained(
           boundary,
@@ -369,6 +375,7 @@ function App() {
         isShowShiftTip.current = false;
 
         // change the cursor style when moving the cursor out of the element.
+        console.log(u.ele.boundary[0].box);
         const isHit = ptIsContained(
           u.ele.boundary.map((p) => p.rotate(u.ele.rotation, p.box.center)),
           u.ele.excludeArea,
@@ -564,7 +571,7 @@ function App() {
         el.position = newPos;
         el.rotateOrigin = realNewOri;
 
-        el.boundary[0] = [getBoundryPoly(el)!];
+        el.boundary[0] = getBoundryPoly(el)!;
       } else if (u && u.ele.type === DrawingType.freeDraw) {
         const free = u.ele as FreeDrawing;
         const newOrigin = getCenter(free);

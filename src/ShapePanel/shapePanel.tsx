@@ -5,7 +5,7 @@ import {
   onlyRedrawOneElement,
   restoreOriginalmage,
 } from "src/CoreRenderer/DrawCanvas/core";
-import { getBoundryPoly, getCircleBoundary } from "src/CoreRenderer/boundary";
+import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import {
   CircleShapeElement,
   DrawingType,
