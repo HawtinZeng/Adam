@@ -60,7 +60,9 @@ export const btn = stylex.create({
 });
 
 export function Btn(
-  setSelectedKey: React.Dispatch<React.SetStateAction<number | boolean[]>>,
+  setSelectedKey:
+    | React.Dispatch<React.SetStateAction<number>>
+    | React.Dispatch<React.SetStateAction<boolean[]>>,
   selectedKey: number | boolean[],
   btnConfigs: BtnConfigs,
   setBtnsRef?: (node: HTMLDivElement[]) => void,

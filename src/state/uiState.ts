@@ -31,4 +31,7 @@ export const cursorSvgAtom = atom<string | null>(null);
 export const screenLogAtom = atom<string>("default screenLog");
 
 // Settings
-export const settings = atom([true, true]);
+const cachedSettings = localStorage.getItem("settings")
+  ? JSON.parse(localStorage.getItem("settings")!)
+  : null;
+export const settings = atom(cachedSettings ?? [true, false]);
