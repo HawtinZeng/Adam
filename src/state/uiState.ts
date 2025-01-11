@@ -29,3 +29,6 @@ export const disableDrawingAtom = atom<boolean>(false);
 export const cursorSvgAtom = atom<string | null>(null);
 
 export const screenLogAtom = atom<string>("default screenLog");
+
+// Settings
+export const settings = atom([true, true]);

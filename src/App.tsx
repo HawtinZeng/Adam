@@ -305,19 +305,6 @@ function App() {
     [dragStart, sceneData, selectedKey, setSceneData]
   );
 
-  function terminateShot() {
-    const shot = sceneData.updatingElements[0]?.ele as any as Shot;
-
-    if (shot && shot.height === -1) {
-      const i = sceneData.elements.findIndex((e) => (e as any) === shot);
-      sceneData.elements.splice(i, 1);
-      sceneData.updatingElements.length = 0;
-
-      setSceneData({ ...sceneData });
-      redrawAllEles(undefined, undefined, sceneData.elements);
-    }
-  }
-
   const detectHandles = useCallback(
     (e: MouseEvent) => {
       if (selectedKey !== 2) return;
@@ -981,9 +968,9 @@ function App() {
 
     sceneData.updatingElements = [];
     setSceneData({ ...sceneData });
-    if (selectedKey !== 2) {
-      redrawAllEles(undefined, undefined, sceneData.elements);
-    }
+
+    redrawAllEles(undefined, undefined, sceneData.elements);
+
     change2DefaultCursor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCursorSvg, selectedKey, size, eraserSize, colorIdx, color]);

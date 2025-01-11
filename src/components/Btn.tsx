@@ -60,8 +60,8 @@ export const btn = stylex.create({
 });
 
 export function Btn(
-  setSelectedKey: React.Dispatch<React.SetStateAction<number>>,
-  selectedKey: number,
+  setSelectedKey: React.Dispatch<React.SetStateAction<number | boolean[]>>,
+  selectedKey: number | boolean[],
   btnConfigs: BtnConfigs,
   setBtnsRef?: (node: HTMLDivElement[]) => void,
   setHoveredKey?: React.Dispatch<React.SetStateAction<number>>,
@@ -73,25 +73,39 @@ export function Btn(
   const nodes: HTMLDivElement[] = [];
   const [selectedSueMenuState] = useAtom(subMenuIdx);
 
+  function stateStyle(i: number) {
+    if (Array.isArray(selectedKey)) {
+      return selectedKey[i] ? btn.selectedBtnArea : null;
+    } else {
+      return selectedKey === i
+        ? isSubMenu
+          ? btn.selectedBtnAreaGrey
+          : btn.selectedBtnArea
+        : null;
+    }
+  }
+
   for (let i = 0; i < btnConfigs.length; i++) {
     btnsMark.push(
       <div
         {...stylex.props(
           btn.btnArea,
-          selectedKey === i
-            ? isSubMenu
-              ? btn.selectedBtnAreaGrey
-              : btn.selectedBtnArea
-            : null,
+          stateStyle(i),
           direction === "vertical" ? btn.verticalGap : btn.horizontalGap
         )}
         key={i}
         id="btn"
         onMouseDown={(e: MouseEvent) => {
-          if (selectedKey === i) {
-            setSelectedKey(-1);
+          if (Array.isArray(selectedKey)) {
+            const arr = selectedKey as boolean[];
+            arr[i] = !arr[i];
+            setSelectedKey([...arr]);
           } else {
-            setSelectedKey(i);
+            if (selectedKey === i) {
+              setSelectedKey(-1);
+            } else {
+              setSelectedKey(i);
+            }
           }
           e.preventDefault();
         }} // onMouseDown 比 onClick要更加灵敏，我们点击的时候会出现mouseDown上，然后迅速移走，再mouseUp
@@ -114,7 +128,7 @@ export function Btn(
               }
               useRequestCache={true}
               beforeInjection={(svg) => {
-                if (selectedKey === i && !isSubMenu) {
+                if ((selectedKey === i || selectedKey[i]) && !isSubMenu) {
                   let path = svg.getElementsByTagName("path")[0];
                   if (path === undefined) {
                     path = svg.getElementsByTagName("rect")[0];

@@ -5,7 +5,10 @@ import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ptIsContained } from "src/CoreRenderer/basicTypes";
-import { DrawingType } from "src/CoreRenderer/drawingElementsTemplate";
+import {
+  DrawingType,
+  SettingTypes,
+} from "src/CoreRenderer/drawingElementsTemplate";
 import { BtnConfigs, Menu } from "src/MainMenu/Menu";
 import { Eraser } from "src/MainMenu/eraser";
 import { ImageInput } from "src/MainMenu/imageInput";
@@ -15,6 +18,7 @@ import { SettingsPanel } from "src/SettingsPanel";
 import { ShapePanelCompose } from "src/ShapePanel/shapePanelCompose";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
+import OneTime from "src/images/svgs/oneTimeDrawing.svg";
 import { ScreenShotPanel } from "src/screenShot/ScreenShotPanel/index";
 import { sceneAtom } from "src/state/sceneState";
 import { canvasEventTriggerAtom, selectedKeyAtom } from "src/state/uiState";
@@ -161,6 +165,19 @@ export const penConfigs: BtnConfigs = [
   },
 ];
 
+const setttingsConfig: BtnConfigs = [
+  {
+    label: "单次绘制",
+    key: SettingTypes.oneTime,
+    svg: OneTime,
+  },
+  {
+    label: "单次绘制2",
+    key: "SettingTypes.oneTime",
+    svg: OneTime,
+  },
+];
+
 export const shapeConfigs: BtnConfigs = [
   {
     label: "箭头",
@@ -220,8 +237,8 @@ export const menuConfigs: BtnConfigs = [
     label: "形状",
     svg: arrowShape,
     key: "shape",
-    subMenu: <ShapePanelCompose />,
     btnConfigs: shapeConfigs,
+    subMenu: <ShapePanelCompose />,
   },
   {
     label: "文字",
@@ -239,7 +256,7 @@ export const menuConfigs: BtnConfigs = [
     label: "设置",
     svg: settings,
     key: "settings",
-    subMenu: <SettingsPanel />,
+    subMenu: <SettingsPanel btnConfigs={setttingsConfig} />,
   },
 ];
 

@@ -34,6 +34,10 @@ export enum DrawingType {
   shot = "shot",
 }
 
+export enum SettingTypes {
+  oneTime = "oneTime",
+}
+
 export const newFreeDrawingElement: FreeDrawing = {
   type: DrawingType.freeDraw,
   points: [],
