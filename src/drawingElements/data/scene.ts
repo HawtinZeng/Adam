@@ -8,6 +8,7 @@ import {
   DrawingElement,
   SceneOptions,
 } from "src/CoreRenderer/basicTypes";
+import { Shot } from "src/screenShot/Shot";
 export type ActionType =
   | "addPoints"
   | "erase"

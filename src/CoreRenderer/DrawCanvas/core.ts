@@ -35,6 +35,7 @@ import {
   Scene,
   UpdatingElement,
 } from "src/drawingElements/data/scene";
+import { Shot } from "src/screenShot/Shot";
 import { coreThreadPool, logger } from "src/setup";
 import { globalSynchronizer } from "src/state/synchronizer";
 import { Text } from "src/text/text";
@@ -155,7 +156,8 @@ export function renderDrawCanvas(
       u.ele.type === DrawingType.img ||
       u.ele.type === DrawingType.circle ||
       u.ele.type === DrawingType.rectangle ||
-      u.ele.type === DrawingType.text
+      u.ele.type === DrawingType.text ||
+      u.ele.type === DrawingType.shot
     ) {
       let bbx = u.ele.boundary[0];
 
@@ -163,7 +165,8 @@ export function renderDrawCanvas(
         bbx,
         u.ele.rotation,
         appCtx,
-        Math.sign(u.ele.scale.y) === -1
+        Math.sign(u.ele.scale.y) === -1,
+        u.ele.type !== DrawingType.shot
       );
       u.handleOperator = handleOperator;
       redrawAllEles(
@@ -562,6 +565,8 @@ function drawNeedntCacheEle(el: DrawingElement) {
     );
 
     globalAppCtx!.restore();
+  } else if (el.type === DrawingType.shot) {
+    (el as any as Shot).draw(globalAppCtx);
   }
 }
 

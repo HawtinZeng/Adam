@@ -1,4 +1,5 @@
 import { Box, Point, Polygon } from "@zenghawtin/graph2d";
+import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import { Transform2DOperator } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import { Scene } from "src/drawingElements/data/scene";
 import { Rect } from "src/geometries/Rect";
@@ -33,9 +34,14 @@ export class ScreenShotter {
       const newPol = new Polygon(
         new Box(this.firstPt.x, this.firstPt.y, e.clientX, e.clientY)
       );
-      this.shotRectangle = new Transform2DOperator(newPol, 0, bgCtx, false);
+      this.shotRectangle = new Transform2DOperator(
+        newPol,
+        0,
+        bgCtx,
+        false,
+        false
+      );
       this.shotRectangle.draw();
-    } else if (this.firstPt && this.secondPt) {
     }
   }
 
@@ -63,12 +69,13 @@ export class ScreenShotter {
       });
       const i = new ImageCapture(stream.getVideoTracks()[0]);
       const screenImg = await i.grabFrame();
-      this.shot = new Shot(screenImg.width, screenImg.height, screenImg);
+      this.shot = new Shot(screenImg);
+
       this.overlay = new Rect(new Box(0, 0, screenImg.width, screenImg.height));
     }
   }
 
-  addPoint(e: MouseEvent) {
+  addPoint(e: MouseEvent, s: Scene, ss: Function, setSelected: Function) {
     if (!this.firstPt) {
       this.firstPt = new Point(e.clientX, e.clientY);
       return;
@@ -76,12 +83,25 @@ export class ScreenShotter {
 
     if (!this.secondPt) {
       this.secondPt = new Point(e.clientX, e.clientY);
-      this.created();
-      return;
+
+      this.shot!.position = this.firstPt;
+      this.shot!.width = Math.abs(this.secondPt.x - this.firstPt.x);
+      this.shot!.height = Math.abs(this.secondPt.y - this.firstPt.y);
+
+      if (this.secondPt.x - this.firstPt.x < 0) {
+        this.shot!.scale.x = -1;
+      }
+
+      if (this.secondPt.y - this.firstPt.y < 0) {
+        this.shot!.scale.y = -1;
+      }
+
+      this.shot!.boundary[0] = getBoundryPoly(this.shot as any)!;
+      this.shot!.rotateOrigin = this.shot!.boundary[0].box.center;
+
+      setSelected(2);
     }
   }
 
-  terminate() {
-    // this.scene.elements.push();
-  }
+  terminate() {}
 }

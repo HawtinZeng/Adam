@@ -1,4 +1,11 @@
+import stylex from "@stylexjs/stylex";
+
 import { Button } from "@mui/material";
+import Cancel from "src/images/svgs/bottomPanel/cancel.svg";
+import Copy from "src/images/svgs/bottomPanel/copy.svg";
+import Pin from "src/images/svgs/bottomPanel/pin.svg";
+import Save from "src/images/svgs/bottomPanel/save.svg";
+
 import Flatten, {
   Box,
   Circle,
@@ -14,7 +21,14 @@ import { IpcRenderer, IpcRendererEvent } from "electron";
 import { BaseResult } from "get-windows";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { cloneDeep, remove } from "lodash";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { ReactSVG } from "react-svg";
 import { DomElements } from "src/CoreRenderer/DomElements";
 import { DrawCanvas } from "src/CoreRenderer/DrawCanvas";
 import {
@@ -31,7 +45,6 @@ import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
 import {
   getBoundryPoly,
   getCenter,
-  getCircleBoundary,
   getExcludeBoundaryPoly,
 } from "src/CoreRenderer/boundary";
 import {
@@ -44,11 +57,13 @@ import {
 import MainMenu, { colorConfigs } from "src/MainMenu";
 import { Point } from "src/Utils/Data/geometry";
 import { setTransparent, unsetTransparent } from "src/commonUtils";
+import { btn } from "src/components/Btn";
 import { DraggableTransparent } from "src/components/DraggableTransparent";
 import { Scene, UpdatingElement } from "src/drawingElements/data/scene";
 import { useKeyboard } from "src/hooks/keyboardHooks";
 import { useMousePosition } from "src/hooks/mouseHooks";
 import pointer from "src/images/svgs/mouse/pointer.svg";
+import { Shot } from "src/screenShot/Shot";
 import { logger } from "src/setup";
 import { Action, History } from "src/state/history";
 import {
@@ -157,6 +172,8 @@ function App() {
     null
   );
 
+  const [showShotPanel, setShowShotPanel] = useState(false);
+
   const isShowShiftTip = useRef<boolean>(false);
   const [currentKeyboard] = useKeyboard();
   const dragInfo = useRef<{
@@ -250,12 +267,10 @@ function App() {
     (e: MouseEvent) => {
       if (selectedKey !== 2) return;
       if (currentHandle.current !== null) return;
+
       for (let i = sceneData.elements.length - 1; i >= 0; i--) {
         const ele = sceneData.elements[i];
-        let boundary = ele.boundary;
-        if (ele.type === DrawingType.circle) {
-          boundary = [getCircleBoundary(ele as any)];
-        }
+        const boundary = ele.boundary;
 
         const isHit = ptIsContained(
           boundary,
@@ -274,14 +289,10 @@ function App() {
           };
           sceneData.updatingElements[0] = updating;
           setSceneData({ ...sceneData });
-          // @ts-ignore
-          window.clickedEle = ele;
           return;
-        } else {
-          // @ts-ignore
-          window.clickedEle = null;
         }
       }
+
       sceneData.updatingElements = [];
       redrawAllEles(undefined, undefined, sceneData.elements);
     },
@@ -416,7 +427,8 @@ function App() {
                 el.type === DrawingType.rectangle ||
                 el.type === DrawingType.circle ||
                 el.type === DrawingType.freeDraw ||
-                el.type === DrawingType.text
+                el.type === DrawingType.text ||
+                el.type === DrawingType.shot
               ) {
                 scaleOnMove(
                   el,
@@ -438,7 +450,8 @@ function App() {
                 el.type === DrawingType.rectangle ||
                 el.type === DrawingType.circle ||
                 el.type === DrawingType.freeDraw ||
-                el.type === DrawingType.text
+                el.type === DrawingType.text ||
+                el.type === DrawingType.shot
               ) {
                 const rotationCenter = new PointZ(
                   el.rotateOrigin.x,
@@ -510,7 +523,8 @@ function App() {
         (u.ele.type === DrawingType.img ||
           u.ele.type === DrawingType.rectangle ||
           u.ele.type === DrawingType.circle ||
-          u.ele.type === DrawingType.text) &&
+          u.ele.type === DrawingType.text ||
+          u.ele.type === DrawingType.shot) &&
         dragInfo.current.type === "resize"
       ) {
         const el = u.ele as
@@ -932,6 +946,15 @@ function App() {
     if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
   }
   useEffect(() => {
+    if (selectedKey !== 7 && selectedKey !== 2) {
+      const idx = sceneData.elements.findIndex(
+        (i) => i === sceneData.updatingElements[0]?.ele
+      );
+
+      if (idx !== -1) {
+        sceneData.elements.splice(idx, 1);
+      }
+    }
     sceneData.updatingElements = [];
     setSceneData({ ...sceneData });
     if (selectedKey !== 2) {
@@ -953,6 +976,13 @@ function App() {
     }
   }
 
+  function updateBottomPos(pt: PointZ) {
+    const el = document.getElementsByClassName("bottomPanel")[0] as HTMLElement;
+    if (el) {
+      el.style.left = pt.x + "px";
+      el.style.top = pt.y + "px";
+    }
+  }
   // Do some functions start and terminate
   useEffect(() => {
     terminateText();
@@ -1009,6 +1039,37 @@ function App() {
     globalKeydown,
   ]);
   const domElements = useMemo(() => <DomElements />, []);
+
+  function deleteTransfroming() {
+    sceneData.updatingElements.forEach((u) => {
+      const el = u.ele;
+      const i = sceneData.elements.findIndex((e) => e === el);
+      sceneData.elements.splice(i, 1);
+    });
+    sceneData.updatingElements.length = 0;
+    redrawAllEles(undefined, undefined, sceneData.elements);
+    setSceneData({ ...sceneData });
+  }
+
+  useEffect(() => {
+    const transforming = sceneData.updatingElements[0];
+    if (transforming) {
+      if (
+        transforming.ele.type === DrawingType.shot &&
+        (transforming.ele as any as Shot).width !== -1
+      ) {
+        const shot = transforming.ele as any as Shot;
+        const pos = new PointZ(
+          shot.position.x,
+          shot.position.y + shot.realHeight + 20
+        );
+        setShowShotPanel(true);
+        updateBottomPos(pos);
+      }
+    } else {
+      setShowShotPanel(false);
+    }
+  }, [sceneData]);
 
   return (
     <>
@@ -1079,6 +1140,54 @@ function App() {
       >
         按住Shift键锁定比例
       </DraggableTransparent>
+      {showShotPanel && (
+        <DraggableTransparent
+          horizontal={false}
+          needBorder={true}
+          needPadding={true}
+          customCls="bottomPanel"
+        >
+          <div style={{ display: "flex" }}>
+            <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
+              <div {...stylex.props(btn.center)}>
+                <ReactSVG
+                  src={Cancel}
+                  useRequestCache={true}
+                  beforeInjection={(svg) => {}}
+                  onMouseDown={deleteTransfroming}
+                />
+              </div>
+            </div>
+            <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
+              <div {...stylex.props(btn.center)}>
+                <ReactSVG
+                  src={Pin}
+                  useRequestCache={true}
+                  beforeInjection={(svg) => {}}
+                />
+              </div>
+            </div>
+            <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
+              <div {...stylex.props(btn.center)}>
+                <ReactSVG
+                  src={Save}
+                  useRequestCache={true}
+                  beforeInjection={(svg) => {}}
+                />
+              </div>
+            </div>
+            <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
+              <div {...stylex.props(btn.center)}>
+                <ReactSVG
+                  src={Copy}
+                  useRequestCache={true}
+                  beforeInjection={(svg) => {}}
+                />
+              </div>
+            </div>
+          </div>
+        </DraggableTransparent>
+      )}
     </>
   );
 
@@ -1307,7 +1416,8 @@ function App() {
       el.type === DrawingType.img ||
       el.type === DrawingType.circle ||
       el.type === DrawingType.rectangle ||
-      el.type === DrawingType.text
+      el.type === DrawingType.text ||
+      el.type === DrawingType.shot
     ) {
       img.boundary[0] = new Polygon(pts);
 

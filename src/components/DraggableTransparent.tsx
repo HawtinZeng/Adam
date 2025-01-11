@@ -40,6 +40,7 @@ export const DraggableTransparent = forwardRef(
       needPadding?: boolean;
       customCls?: string;
       style?: Object;
+      position?: Point;
     },
     ref: Ref<HTMLElement>
   ) => {
@@ -47,13 +48,20 @@ export const DraggableTransparent = forwardRef(
     const isHorizontal = props.horizontal;
     const needBorder = props.needBorder ?? true;
     const needPadding = props.needPadding ?? true;
-    const defaultPosition = props.defaultPosition ?? new Point(0, 0);
+    const [defaultPosition, setdefaultPosition] = useState(
+      props.defaultPosition ?? new Point(0, 0)
+    );
 
     const onDrag = props.onDrag;
     const [hasIni, setHasIni] = useState(false);
     useEffect(() => {
       if (!hasIni) setTimeout(() => setHasIni(true), 10);
     }, [hasIni]);
+
+    useEffect(() => {
+      if (props.position) setdefaultPosition(props.position);
+    }, [props.position]);
+
     return (
       <div style={props.style}>
         <Draggable

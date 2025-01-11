@@ -163,7 +163,6 @@ export class Text implements DrawingElement {
 
   drawCursor() {
     const ctx = this.canvas!.getContext("2d");
-    console.log(this.textMetrics.fontBoundingBoxAscent);
     ctx!.save();
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(

@@ -5,7 +5,7 @@ import {
   onlyRedrawOneElement,
   restoreOriginalmage,
 } from "src/CoreRenderer/DrawCanvas/core";
-import { getBoundryPoly } from "src/CoreRenderer/boundary";
+import { getBoundryPoly, getCircleBoundary } from "src/CoreRenderer/boundary";
 import {
   CircleShapeElement,
   DrawingType,
@@ -111,6 +111,8 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           a.boundary[0] = getBoundryPoly(a)!;
           s.elements.push(a);
           s.updatingElements.length = 0;
+
+          a.boundary = [getCircleBoundary(a as CircleShapeElement)];
           ss({ ...s });
         }
       } else if (currentShape === DrawingType.rectangle) {
