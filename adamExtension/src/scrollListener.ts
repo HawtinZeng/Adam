@@ -107,8 +107,8 @@ export class ScrollListener {
       areaData.offsetY =
         window.screenTop + (window.outerHeight - window.innerHeight);
 
-      areaData.scrollTop = (trigger as any)?.areaData.scrollTop;
-      areaData.scrollHeight = (trigger as any)?.areaData.scrollHeight;
+      areaData.scrollTop = (trigger as any)?.scrollTop;
+      areaData.scrollHeight = (trigger as any)?.scrollHeight;
     } else if (trigger instanceof HTMLElement) {
       const rect = trigger.getBoundingClientRect(); // have conflicts with https://leetcode.com/problems/maximum-score-from-grid-operations/solutions/5512718/clean-java-recursive-dp/ and https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
       areaData.width = rect.width;

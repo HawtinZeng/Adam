@@ -34,19 +34,22 @@ export class Synchronizer {
       this.elesMap.set(id, []);
     }
   }
+
+  partitionAllAreas(eles: DrawingElement[]) {
+    this.areasMap.forEach((area, areaId) => {
+      this.partition(eles, area, areaId);
+    });
+  }
+
   /*
     给没有分区的元素分区，然后记录这个分区
     给在大区域的元素转移到小区域
   */
-  partition(
-    { elements: eles }: { elements: DrawingElement[] },
-    area: Box,
-    areaId: string
-  ) {
+  partition(eles: DrawingElement[], area: Box, areaId: string) {
     try {
       // Re calc areaInfo of  all  ele
       eles.forEach((ele) => {
-        const boundingPoly = getBoundryPoly(ele)!;
+        const boundingPoly = ele.boundary[0];
         if (!boundingPoly) return;
 
         const allAreas = [...this.areasMap.values()];
@@ -77,14 +80,12 @@ export class Synchronizer {
   }
 
   scrollTop(areaId: string, scrollTop: number): boolean {
-    console.log(`scrolling ${areaId}`);
-
     this.scrollTopMap.set(areaId, scrollTop);
     const exist = this.scrollTopMap.get(areaId)!;
 
     const delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
 
-    console.log(elesNeedScroll);
+    const elesNeedScroll = this.elesMap.get(areaId);
 
     elesNeedScroll?.forEach((el) => {
       el.position.y += delta;

@@ -8,21 +8,8 @@ declare global {
 }
 
 const socket = io("http://localhost:5555", { transports: ["websocket"] });
-socket.on("connect", () => {
-  chrome.runtime.sendMessage(
-    { action: "getCurrentTab" },
-    (res: { tabId: string }) => {
-      if (res.tabId) {
-        socket.emit(
-          "initializeArea",
-          [...scrollerListener.scrollables].map((ele: any) =>
-            scrollerListener.getElementArea(ele as Element, res.tabId)
-          )
-        );
-      }
-    }
-  );
 
+socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
 });
 const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
@@ -41,7 +28,6 @@ function emitScroll(e: Event) {
 }
 
 function emitSizeChange(borderSize: ResizeObserverEntry["borderBoxSize"]) {
-  console.log(borderSize);
   socket.emit("onBoundsChanged", JSON.stringify(borderSize));
 }
 

@@ -272,12 +272,7 @@ server.on("connection", (socket) => {
   });
 
   socket.on("scrollElement", (areaInfo) => {
-    console.log("scrollElement");
     win.webContents.send("scrollElement", areaInfo);
-  });
-
-  socket.on("initializeArea", (areaInfo) => {
-    win.webContents.send("initializeArea", areaInfo);
   });
 
   socket.on("onBoundsChanged", (areaInfo) => {

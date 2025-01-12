@@ -602,18 +602,9 @@ function App() {
 
       if (!globalSynchronizer.value) return;
       if (!globalSynchronizer.value!.elesMap.get(areaId)) {
-        console.log(
-          `Cannot find the area of ${areaId}, please chceck the area initialization process.`
-        );
+        globalSynchronizer.value!.elesMap.set(areaId, []);
       }
 
-      const b = new Box(
-        areaInfo.offsetX,
-        areaInfo.offsetY,
-        areaInfo.offsetX + areaInfo.width,
-        areaInfo.offsetY + areaInfo.height
-      );
-      globalSynchronizer.value.addArea(b, areaId);
       const needUpdating = globalSynchronizer.value.scrollTop(
         areaId,
         areaInfo.scrollTop
@@ -631,35 +622,21 @@ function App() {
       if (debugExtensionScroll) {
         redrawAllEles(undefined, undefined, sceneData.elements);
       }
+
+      console.log(globalSynchronizer.value!.areasMap.size);
+
+      globalSynchronizer.value!.drawAllAreas();
     }
 
-    function initializeAreaHandler(e, areaInfosJSON: string) {
-      console.log("initializeAreaHandler");
-      console.log(areaInfosJSON);
-      const areaInfos = JSON.parse(areaInfosJSON) as ElementRect[];
-
-      if (!globalSynchronizer.value)
-        console.log(
-          "initializeAreaHandler error, globalSynchronizer.value is undefined"
-        );
-
-      areaInfos.forEach((info) => {
-        const b = new Box(
-          info.offsetX,
-          info.offsetY,
-          info.offsetX + info.width,
-          info.offsetY + info.height
-        );
-        globalSynchronizer.value!.addArea(b, info.id);
-      });
-    }
-
-    window.ipcRenderer?.on("initializeArea", initializeAreaHandler);
     window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
     return () => {
-      window.ipcRenderer?.off("initializeArea", initializeAreaHandler);
       window.ipcRenderer?.off("scrollElement", extensionScrollElementHandler);
     };
+  }, [sceneData]);
+
+  useEffect(() => {
+    if (globalSynchronizer.value)
+      globalSynchronizer.value!.partitionAllAreas(sceneData.elements);
   }, [sceneData]);
 
   const changeScene = useCallback(
@@ -692,15 +669,6 @@ function App() {
           ),
           currentFocusedWindow.title
         );
-        // initialize the window box, which will control all eles without area
-        const b = new Box(
-          currentFocusedWindow.bounds.x,
-          currentFocusedWindow.bounds.y,
-          currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
-          currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
-        );
-
-        globalSynchronizer.value.addArea(b, currentFocusedWindow.id.toString());
       } else {
         globalSynchronizer.value = existSynchronizer;
       }
