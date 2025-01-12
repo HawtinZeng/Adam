@@ -1,8 +1,10 @@
 import {
+  clipboard,
   desktopCapturer,
   dialog,
   globalShortcut,
   ipcMain,
+  nativeImage,
   screen,
 } from "electron";
 import isDev from "electron-is-dev";
@@ -100,6 +102,11 @@ ipcMain.on("saveImg", (_, img) => {
     .catch((err) => {
       console.log(err);
     });
+});
+
+ipcMain.on("copyShot", (_, img) => {
+  const image = nativeImage.createFromDataURL(img);
+  clipboard.writeImage(image);
 });
 
 ipcMain.on("focusAdamWindow", (_) => {

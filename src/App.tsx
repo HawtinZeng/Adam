@@ -1058,7 +1058,7 @@ function App() {
   ]);
   const domElements = useMemo(() => <DomElements />, []);
 
-  async function cropImage(image, x, y, width, height) {
+  function cropImage(image, x, y, width, height) {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
     canvas.width = width;
@@ -1078,9 +1078,24 @@ function App() {
   };
   window.ipcRenderer.on("saveImgFinish", handleSaveImgFinish);
 
-  async function saveShot() {
+  function copyShot() {
     const shot = sceneData.updatingElements[0].ele as any as Shot;
-    const img = await cropImage(
+    window.ipcRenderer.send(
+      "copyShot",
+      cropImage(
+        shot.screen,
+        shot.position.x,
+        shot.position.y,
+        shot.realWidth,
+        shot.realHeight
+      )
+    );
+    cancelShot();
+  }
+
+  function saveShot() {
+    const shot = sceneData.updatingElements[0].ele as any as Shot;
+    const img = cropImage(
       shot.screen,
       shot.position.x,
       shot.position.y,
@@ -1089,7 +1104,10 @@ function App() {
     );
 
     window.ipcRenderer.send("saveImg", img);
+    cancelShot();
+  }
 
+  function cancelShot() {
     sceneData.updatingElements.forEach((u) => {
       const shot = u.ele as unknown as Shot;
       const i = sceneData.elements.findIndex((e) => (e as any) === shot);
@@ -1257,6 +1275,7 @@ function App() {
                   src={Copy}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
+                  onMouseDown={copyShot}
                 />
               </div>
             </div>
