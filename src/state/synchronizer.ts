@@ -1,13 +1,8 @@
 import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
-import { debounce } from "lodash";
 import { drawRectBorder, drawText } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
 import { getBoundryPoly } from "src/CoreRenderer/boundary";
-import {
-  DrawingType,
-  FreeDrawing,
-} from "src/CoreRenderer/drawingElementsTemplate";
 declare global {
   interface Window {
     synchronizer: Synchronizer;
@@ -18,10 +13,10 @@ declare global {
 }
 
 export class Synchronizer {
-  areasMap: Map<string, Box> = new Map();
-  elesMap: Map<Box, DrawingElement[]> = new Map();
+  areasMap: Map<string, Box> = new Map(); // id => Box
+  elesMap: Map<string, DrawingElement[]> = new Map(); // id => DrawingElement
 
-  scrollTopMap: Map<Box, number> = new Map();
+  scrollTopMap: Map<string, number> = new Map();
 
   windowId: number;
   windowBox: Box;
@@ -33,72 +28,34 @@ export class Synchronizer {
     this.title = title;
   }
   // add or get
-  addArea(b: Box) {
-    const bk = `${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`;
-    if (!this.areasMap.has(bk)) {
-      this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
-      this.elesMap.set(b, []);
+  addArea(b: Box, id: string) {
+    if (!this.areasMap.has(id)) {
+      this.areasMap.set(id, b);
+      this.elesMap.set(id, []);
     }
-
-    return this.areasMap.get(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`)!;
-  }
-
-  get eleToBox() {
-    const eleToBox = new Map<DrawingElement, Box>();
-    this.elesMap.forEach((els, box) => {
-      els.forEach((el) => {
-        eleToBox.set(el, box);
-      });
-    });
-    return eleToBox;
   }
   /*
     给没有分区的元素分区，然后记录这个分区
     给在大区域的元素转移到小区域
   */
-  partition({ elements: eles }: { elements: DrawingElement[] }, area?: Box) {
-    if (area) {
-      this.addArea(area);
-    }
-
+  partition(
+    { elements: eles }: { elements: DrawingElement[] },
+    area: Box,
+    areaId: string
+  ) {
     try {
-      const withoutIncludingParts = eles.filter((e) => {
-        const replaceIncludingPart =
-          e.includingPart &&
-          area &&
-          e.includingPart.contains(area) &&
-          !e.includingPart.equal_to(area);
-
-        return !e.includingPart || replaceIncludingPart;
-      });
-
-      withoutIncludingParts.forEach((ele) => {
-        let boundingPoly: Polygon | undefined;
-        if (ele.type === DrawingType.freeDraw) {
-          boundingPoly = new Polygon(
-            (ele as FreeDrawing).oriBoundary[0]?.box.translate(
-              new Vector(ele.position.x, ele.position.y)
-            )
-          );
-        } else {
-          boundingPoly = getBoundryPoly(ele);
-        }
+      // Re calc areaInfo of  all  ele
+      eles.forEach((ele) => {
+        const boundingPoly = getBoundryPoly(ele)!;
+        if (!boundingPoly) return;
 
         const allAreas = [...this.areasMap.values()];
         allAreas.sort((a, b) =>
           new Polygon(a).area > new Polygon(b).area ? 1 : -1
         );
-        if (!boundingPoly) return;
         const containsArea = allAreas.find((a) => a.contains(boundingPoly));
-        if (
-          !containsArea ||
-          (ele.includingPart &&
-            new Polygon(containsArea).area >
-              new Polygon(ele.includingPart).area)
-        )
-          return;
 
-        // Avoid mistaking deleting the unchanged ele from box
+        // Delete original ele from elesMap. add it later.
         if (ele.includingPart) {
           const i = this.elesMap
             .get(ele.includingPart!)!
@@ -106,46 +63,42 @@ export class Synchronizer {
           this.elesMap.get(ele.includingPart!)?.splice(i, 1);
         }
 
-        ele.includingPart = containsArea;
+        let id = "";
+        this.areasMap.forEach((box, idC) => {
+          if (box === containsArea) id = idC;
+        });
 
-        const exists = this.elesMap.get(containsArea)!;
+        ele.includingPart = id;
+
+        const exists = this.elesMap.get(id)!;
         exists.push(ele);
       });
     } catch (e) {}
   }
 
-  scrollTop(scrollArea: Box, scrollTop: number): boolean {
-    const ks = [...this.areasMap.keys()];
-    let b: Box | undefined;
+  scrollTop(areaId: string, scrollTop: number): boolean {
+    console.log(`scrolling ${areaId}`);
 
-    for (let i = 0; i < ks.length; i++) {
-      b = this.areasMap.get(ks[i]);
-      if (b && this.approximatelySame(b, scrollArea)) {
-        break;
-      }
-    }
-    let delta = scrollTop;
-    if (b) {
-      const exist = this.scrollTopMap.get(b) ?? scrollTop;
-      this.scrollTopMap.set(b, scrollTop);
-      delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
-      const scrolledEles = this.elesMap.get(b);
+    this.scrollTopMap.set(areaId, scrollTop);
+    const exist = this.scrollTopMap.get(areaId)!;
 
-      scrolledEles?.forEach((el) => {
-        el.position.y += delta;
-        el.rotateOrigin.y += delta;
-        debounce(() => (el.boundary[0] = getBoundryPoly(el)!), 300)();
-      });
-      return !!scrolledEles?.length;
-    }
-    return false;
+    const delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
+
+    console.log(elesNeedScroll);
+
+    elesNeedScroll?.forEach((el) => {
+      el.position.y += delta;
+      el.rotateOrigin.y += delta;
+      el.boundary[0] = getBoundryPoly(el)!;
+    });
+    return !!elesNeedScroll?.length;
   }
 
   /**
    *
    * @param newArea 新的最大的Box，即为窗口的Box
    */
-  updateArea(changedWindowBox: Box) {
+  updateArea(changedWindowBox: Box, id: string) {
     const deltaXmin = changedWindowBox.xmin - this.windowBox.xmin;
     const deltaXmax = changedWindowBox.xmax - this.windowBox.xmax;
     const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
@@ -159,7 +112,7 @@ export class Synchronizer {
       b.xmax += deltaXmax;
       b.ymax += deltaYmax;
 
-      this.elesMap.get(b)?.forEach((e) => {
+      this.elesMap.get(id)?.forEach((e) => {
         e.position.x += deltaXmin;
         e.position.y += deltaYmin;
         e.boundary.forEach(
@@ -172,13 +125,6 @@ export class Synchronizer {
         e.rotateOrigin.x += changedVec.x;
         e.rotateOrigin.y += changedVec.y;
       });
-    });
-
-    // replace these keys.
-    const updatedBoxes = [...this.areasMap.values()];
-    this.areasMap.clear();
-    updatedBoxes.forEach((b) => {
-      this.areasMap.set(`${b.xmin}-${b.xmax}-${b.ymin}-${b.ymax}`, b);
     });
   }
   // for debug

@@ -115,7 +115,7 @@ export const showEleId = false;
 const debugBAndR = false;
 const showDebugPanel = false;
 const debugExtensionScroll = false;
-const debugDrawAllAreas = false;
+const debugDrawAllAreas = true;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
 
@@ -597,21 +597,25 @@ function App() {
   useEffect(() => {
     function extensionScrollElementHandler(e, areaInfos: string) {
       const areaInfo = JSON.parse(areaInfos) as ElementRect;
+
+      const areaId = areaInfo.id;
+
+      if (!globalSynchronizer.value) return;
+      if (!globalSynchronizer.value!.elesMap.get(areaId)) {
+        console.log(
+          `Cannot find the area of ${areaId}, please chceck the area initialization process.`
+        );
+      }
+
       const b = new Box(
         areaInfo.offsetX,
         areaInfo.offsetY,
         areaInfo.offsetX + areaInfo.width,
         areaInfo.offsetY + areaInfo.height
       );
-
-      try {
-        if (!globalSynchronizer.value) return;
-        globalSynchronizer.value.partition(sceneData, b);
-      } catch (e) {}
-
-      if (!globalSynchronizer.value) return;
+      globalSynchronizer.value.addArea(b, areaId);
       const needUpdating = globalSynchronizer.value.scrollTop(
-        b,
+        areaId,
         areaInfo.scrollTop
       );
       if (needUpdating) {
@@ -628,8 +632,32 @@ function App() {
         redrawAllEles(undefined, undefined, sceneData.elements);
       }
     }
+
+    function initializeAreaHandler(e, areaInfosJSON: string) {
+      console.log("initializeAreaHandler");
+      console.log(areaInfosJSON);
+      const areaInfos = JSON.parse(areaInfosJSON) as ElementRect[];
+
+      if (!globalSynchronizer.value)
+        console.log(
+          "initializeAreaHandler error, globalSynchronizer.value is undefined"
+        );
+
+      areaInfos.forEach((info) => {
+        const b = new Box(
+          info.offsetX,
+          info.offsetY,
+          info.offsetX + info.width,
+          info.offsetY + info.height
+        );
+        globalSynchronizer.value!.addArea(b, info.id);
+      });
+    }
+
+    window.ipcRenderer?.on("initializeArea", initializeAreaHandler);
     window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
     return () => {
+      window.ipcRenderer?.off("initializeArea", initializeAreaHandler);
       window.ipcRenderer?.off("scrollElement", extensionScrollElementHandler);
     };
   }, [sceneData]);
@@ -671,13 +699,8 @@ function App() {
           currentFocusedWindow.bounds.x + currentFocusedWindow.bounds.width,
           currentFocusedWindow.bounds.y + currentFocusedWindow.bounds.height
         );
-        globalSynchronizer.value.partition(
-          {
-            elements:
-              multipleScenes.get(currentFocusedWindow.id)?.elements || [],
-          },
-          b
-        );
+
+        globalSynchronizer.value.addArea(b, currentFocusedWindow.id.toString());
       } else {
         globalSynchronizer.value = existSynchronizer;
       }
@@ -722,8 +745,7 @@ function App() {
       return;
     if (
       globalSynchronizer.value &&
-      (currentFocusedWindow?.containedWin === windowInfo.id ||
-        !currentFocusedWindow?.title.includes("Chrome"))
+      !currentFocusedWindow?.title.includes("Chrome")
     ) {
       globalSynchronizer.value.updateArea(
         new Box(
@@ -731,9 +753,10 @@ function App() {
           windowInfo.bounds.y,
           windowInfo.bounds.x + windowInfo.bounds.width,
           windowInfo.bounds.y + windowInfo.bounds.height
-        )
+        ),
+        currentFocusedWindow!.id.toString()
       );
-      globalSynchronizer.value?.partition(sceneData);
+      // globalSynchronizer.value?.partition(sceneData);
 
       redrawAllEles(undefined, undefined, sceneData.elements);
       if (debugBAndR)
@@ -749,6 +772,11 @@ function App() {
           });
         });
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
+    } else if (
+      globalSynchronizer.value &&
+      currentFocusedWindow?.title.includes("Chrome")
+    ) {
+      // we use chrome extension boundsChnage event to update graph on chrome browser/DOM
     }
   }
 
@@ -1006,11 +1034,6 @@ function App() {
   useEffect(() => {
     terminateText();
 
-    if (selectedKey === -1) {
-      window.ipcRenderer.send("blurAdamWindow");
-      window.ipcRenderer.send("checkWindow");
-    }
-
     if (selectedKey === 6) {
       startText();
     }
@@ -1249,42 +1272,50 @@ function App() {
         >
           <div style={{ display: "flex" }}>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)} id="btn">
+              <div
+                {...stylex.props(btn.center)}
+                id="btn"
+                onMouseDown={deleteTransfroming}
+              >
                 <ReactSVG
                   src={Cancel}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
-                  onMouseDown={deleteTransfroming}
                 />
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)} id="btn">
+              <div {...stylex.props(btn.center)} id="btn" onMouseDown={pinShot}>
                 <ReactSVG
                   src={Pin}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
-                  onMouseDown={pinShot}
                 />
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)} id="btn">
+              <div
+                {...stylex.props(btn.center)}
+                id="btn"
+                onMouseDown={saveShot}
+              >
                 <ReactSVG
                   src={Save}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
-                  onMouseDown={saveShot}
                 />
               </div>
             </div>
             <div {...stylex.props(btn.btnArea, btn.horizontalGap)}>
-              <div {...stylex.props(btn.center)} id="btn">
+              <div
+                {...stylex.props(btn.center)}
+                id="btn"
+                onMouseDown={copyShot}
+              >
                 <ReactSVG
                   src={Copy}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
-                  onMouseDown={copyShot}
                 />
               </div>
             </div>

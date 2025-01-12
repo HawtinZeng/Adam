@@ -16,6 +16,7 @@ import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
+import { Window } from "win-control";
 
 import { createServer } from "http";
 
@@ -69,11 +70,11 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
   win.setIgnoreMouseEvents(ignore, options);
   if (ignore) {
     win.blur();
+    if (lastActiveWindow?.title)
+      Window.getByTitle(lastActiveWindow.title)?.setForeground();
+  } else {
+    win.focus();
   }
-});
-
-ipcMain.on("blurAdamWindow", (_) => {
-  win.blur();
 });
 
 ipcMain.on("saveImg", (_, img) => {
@@ -271,7 +272,17 @@ server.on("connection", (socket) => {
   });
 
   socket.on("scrollElement", (areaInfo) => {
+    console.log("scrollElement");
     win.webContents.send("scrollElement", areaInfo);
+  });
+
+  socket.on("initializeArea", (areaInfo) => {
+    win.webContents.send("initializeArea", areaInfo);
+  });
+
+  socket.on("onBoundsChanged", (areaInfo) => {
+    console.log("onBoundsChanged");
+    console.log(JSON.parse(areaInfo));
   });
 
   socket.on("activeBrowserTab", (tabId) => {

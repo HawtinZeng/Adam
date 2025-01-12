@@ -1,5 +1,4 @@
 import Flatten, {
-  Box,
   Circle,
   Face,
   ORIENTATION,
@@ -53,7 +52,7 @@ export type DrawingElement = {
 
   rotateOrigin: Flatten.Point; // 旋转中心
 
-  includingPart?: Box;
+  includingPart: string; // area id
 
   handleOperator?: Transform2DOperator;
 };

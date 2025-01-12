@@ -17,6 +17,8 @@ export const setTransparent = () => {
   ipcRenderer &&
     setTransparentOption.enabled &&
     ipcRenderer.send("set-ignore-mouse-events", true, { forward: true });
+
+  window.ipcRenderer.send("checkWindow");
 };
 
 export const unsetTransparent = () => {

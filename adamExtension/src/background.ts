@@ -20,9 +20,10 @@ chrome.tabs.onActivated.addListener(function (tabInfo) {
   socket.emit("activeBrowserTab", tabInfo.tabId);
 });
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getFocusStatus") {
-    chrome.windows.getCurrent((window) => {
-      sendResponse({ focused: window.focused });
+  if (request.action === "getCurrentTab") {
+    let queryOptions = { active: true, lastFocusedWindow: true };
+    chrome.tabs.query(queryOptions).then((tab) => {
+      sendResponse({ tabId: tab[0].id });
     });
     return true;
   }

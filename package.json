@@ -50,6 +50,7 @@
     "typescript": "^5.4.2",
     "use-deep-compare-effect": "^1.8.1",
     "web-vitals": "^2.1.4",
+    "win-control": "^0.3.1",
     "workerpool": "^9.1.1"
   },
   "scripts": {

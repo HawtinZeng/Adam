@@ -6,4 +6,5 @@ export type ElementRect = {
   topPadding: number;
   scrollTop: number;
   scrollHeight: number;
+  id: string;
 };

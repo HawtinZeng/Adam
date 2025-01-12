@@ -295,6 +295,20 @@ export function redrawAllEles(
   globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
 
   elements.forEach((el, idx) => {
+    // clip the area beyond window
+    globalAppCtx!.save();
+    const eleCliping = globalSynchronizer.value?.areasMap.get(el.includingPart);
+    if (eleCliping) {
+      globalAppCtx!.beginPath();
+      globalAppCtx!.rect(
+        eleCliping.xmin,
+        eleCliping.ymin,
+        eleCliping.width,
+        eleCliping.height
+      );
+      globalAppCtx!.clip();
+    }
+
     if ((el as FreeDrawing).strokeOptions?.haveTrailling) return;
     if (el.needCacheCanvas) {
       let cachedCvs = drawingCanvasCache.ele2DrawingCanvas.get(el);
@@ -380,18 +394,8 @@ export function redrawAllEles(
       const textPos = el.points[0];
       drawText(globalAppCtx!, textPos, el.id);
     }
-    // clip the area beyond window
-    const eleCliping = globalSynchronizer.value?.eleToBox.get(el);
-    if (eleCliping) {
-      globalAppCtx!.beginPath();
-      globalAppCtx!.rect(
-        eleCliping.xmin,
-        eleCliping.ymin,
-        eleCliping.width,
-        eleCliping.height
-      );
-      globalAppCtx!.clip();
-    }
+
+    globalAppCtx!.restore();
   });
 }
 
