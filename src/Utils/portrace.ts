@@ -159,7 +159,7 @@ export const potrace = function (cvs) {
   function loadCanvas() {
     imgCanvas.width = imgElement.width;
     imgCanvas.height = imgElement.height;
-    var ctx = imgCanvas.getContext("2d");
+    var ctx = imgCanvas.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(imgElement, 0, 0);
   }
 

@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
 import { getBoundryPoly } from "src/CoreRenderer/boundary";
 import { onlyRedrawOneElement } from "src/CoreRenderer/DrawCanvas/core";
@@ -10,10 +10,12 @@ import {
   colorAtom,
   customColor,
   fontSizeAtom,
+  selectedKeyAtom,
+  settings,
 } from "src/state/uiState";
 import { Text } from "src/text/text";
 export const useTextFunction = (): {
-  startText: (c: number) => void;
+  startText: () => void;
   terminateText: () => void;
 } => {
   const currentText = useRef<Text | null>(null);
@@ -22,6 +24,9 @@ export const useTextFunction = (): {
 
   const color = useAtomValue(customColor);
   const canvasWrapper = useAtomValue(canvasEventTriggerAtom);
+
+  const setMenuKey = useSetAtom(selectedKeyAtom);
+  const settingsValue = useAtomValue(settings);
 
   const [s, ss] = useAtom(sceneAtom);
   const [cvsEle] = useAtom(canvasAtom);
@@ -105,6 +110,8 @@ export const useTextFunction = (): {
 
     currentText.current = null;
     window.removeEventListener("mousemove", mouseMoveHandler);
+
+    if (settingsValue[0]) setMenuKey(2);
   };
 
   return {

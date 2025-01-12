@@ -28,7 +28,9 @@ export class ScreenShotter {
   transform(e: MouseEvent) {
     if (this.firstPt && !this.secondPt) {
       if (!this.oriImageData || !this.firstPt) return;
-      const bgCtx = this.drawCanvas!.getContext("2d")!;
+      const bgCtx = this.drawCanvas!.getContext("2d", {
+        willReadFrequently: true,
+      })!;
       bgCtx.putImageData(this.oriImageData, 0, 0);
 
       const newPol = new Polygon(
@@ -50,7 +52,7 @@ export class ScreenShotter {
     this.oriImageData = this.drawCanvas
       .getContext("2d", { willReadFrequently: true })!
       .getImageData(0, 0, this.drawCanvas.width, this.drawCanvas.height);
-    const ctx = this.drawCanvas.getContext("2d")!;
+    const ctx = this.drawCanvas.getContext("2d", { willReadFrequently: true })!;
     if (!ctx) return;
     ctx.save();
     const source = (window as any).sourceId;

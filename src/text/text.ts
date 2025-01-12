@@ -76,7 +76,7 @@ export class Text implements DrawingElement {
   }
 
   get textMetrics() {
-    const ctx = this.canvas!.getContext("2d")!;
+    const ctx = this.canvas!.getContext("2d", { willReadFrequently: true })!;
 
     return ctx.measureText(this.content);
   }
@@ -115,7 +115,7 @@ export class Text implements DrawingElement {
    * 获取索引范围为 0 ~ idx 的文字信息
    */
   textMetricsOfIdx(idx: number) {
-    const ctx = this.canvas!.getContext("2d")!;
+    const ctx = this.canvas!.getContext("2d", { willReadFrequently: true })!;
 
     return ctx.measureText(this.content.slice(0, idx + 1));
   }
@@ -129,7 +129,7 @@ export class Text implements DrawingElement {
     canvas.height = mainCanvas.height;
     this.mainCanvas = mainCanvas;
 
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     ctx.save();
     ctx.font = this.fontSize + " " + this.fontFamily; // 注意不要复原canvas的font属性，不然后续求文字宽度将会不准确
     ctx.fillStyle = this.color;
@@ -162,7 +162,7 @@ export class Text implements DrawingElement {
   }
 
   drawCursor() {
-    const ctx = this.canvas!.getContext("2d");
+    const ctx = this.canvas!.getContext("2d", { willReadFrequently: true });
     ctx!.save();
     ctx!.fillStyle = lightBlue;
     ctx!.fillRect(
@@ -176,7 +176,7 @@ export class Text implements DrawingElement {
 
   clearCursor() {
     if (!this.canvas) return;
-    const ctx = this.canvas!.getContext("2d");
+    const ctx = this.canvas!.getContext("2d", { willReadFrequently: true });
     ctx!.clearRect(
       this.textMetricsOfIdx(this.lastCursorIdx).width + 2,
       this.size - this.boundingLineAboveBaseLine!,

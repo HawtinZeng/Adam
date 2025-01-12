@@ -20,6 +20,8 @@ import {
   canvasEventTriggerAtom,
   disableDrawingAtom,
   eraserRadius,
+  selectedKeyAtom,
+  settings,
 } from "src/state/uiState";
 const updatingLimit = 3;
 
@@ -43,6 +45,9 @@ export function Eraser() {
   const mousePressed = useRef<boolean>(false);
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
   const disableDrawing = useAtomValue(disableDrawingAtom);
+
+  const [_, setMenuKey] = useAtom(selectedKeyAtom);
+  const settingsValue = useAtomValue(settings);
 
   const detectEle = (e: MouseEvent) => {
     const hitedEles: DrawingElement[] = [];
@@ -132,6 +137,7 @@ export function Eraser() {
           updatingElements: [],
         })
     );
+    if (settingsValue[0]) setMenuKey(2);
   };
 
   useEffect(() => {

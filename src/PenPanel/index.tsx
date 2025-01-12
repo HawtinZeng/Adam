@@ -27,10 +27,12 @@ import {
   customColor,
   screenLogAtom,
   selectedKeyAtom,
+  settings,
   sizeAtom,
   subMenuIdx,
 } from "src/state/uiState";
 import { Btn } from "../components/Btn";
+
 type ImageInfo = {
   width: number;
   height: number;
@@ -46,12 +48,14 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
 
   const [sceneState, setSceneAtom] = useAtom(sceneAtom);
 
+  const settingsValue = useAtomValue(settings);
+
   const size = useAtomValue(sizeAtom);
   const color = useAtomValue(customColor);
   const colorIdx = useAtomValue(colorAtom);
   const cvsTrigger = useAtomValue(canvasEventTriggerAtom);
 
-  const [menuKey] = useAtom(selectedKeyAtom);
+  const [menuKey, setMenuKey] = useAtom(selectedKeyAtom);
 
   const animationTasks = useRef<Function[]>([]);
   const isStop = useRef<boolean>(true);
@@ -311,6 +315,9 @@ export function PenPanel(props: { btnConfigs: BtnConfigs }) {
         sceneState.updatingElements.length = 0;
       // setSceneAtom({ ...sceneState });
       redrawAllEles(undefined, undefined, sceneState.elements);
+      if (settingsValue[0]) {
+        setMenuKey(2);
+      }
     });
   };
 

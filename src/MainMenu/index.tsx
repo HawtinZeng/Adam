@@ -171,11 +171,11 @@ const setttingsConfig: BtnConfigs = [
     key: SettingTypes.oneTime,
     svg: OneTime,
   },
-  {
-    label: "单次绘制2",
-    key: "SettingTypes.oneTime",
-    svg: OneTime,
-  },
+  // {
+  //   label: "单次绘制2",
+  //   key: "SettingTypes.oneTime",
+  //   svg: OneTime,
+  // },
 ];
 
 export const shapeConfigs: BtnConfigs = [

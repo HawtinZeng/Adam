@@ -2,6 +2,7 @@ import { Point } from "@zenghawtin/graph2d";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
 import {
+  drawPolygonPointIndex,
   onlyRedrawOneElement,
   restoreOriginalmage,
 } from "src/CoreRenderer/DrawCanvas/core";
@@ -28,12 +29,17 @@ import {
   canvasEventTriggerAtom,
   colorAtom,
   customColor,
+  selectedKeyAtom,
+  settings,
   sizeAtom,
   subMenuIdx,
 } from "src/state/uiState";
 
 export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
   const { btnConfigs } = props;
+
+  const [menuKey, setMenuKey] = useAtom(selectedKeyAtom);
+  const settingsValue = useAtomValue(settings);
 
   const [selectedKey, setSelectedKey] = useAtom(subMenuIdx);
   const [s, ss] = useAtom(sceneAtom);
@@ -87,6 +93,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           s.updatingElements.length = 0;
 
           ss({ ...s });
+          if (settingsValue[0]) setMenuKey(2);
         }
       } else if (currentShape === DrawingType.polyline) {
         if (s.updatingElements.length === 0) {
@@ -112,6 +119,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
 
           a.boundary = [getBoundryPoly(a)!];
           ss({ ...s });
+          if (settingsValue[0]) setMenuKey(2);
         }
       } else if (currentShape === DrawingType.rectangle) {
         if (s.updatingElements.length === 0) {
@@ -128,6 +136,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
           s.updatingElements.length = 0;
 
           ss({ ...s });
+          if (settingsValue[0]) setMenuKey(2);
         }
       }
     },
@@ -191,6 +200,7 @@ export function ShapePanel(props: { btnConfigs: BtnConfigs }) {
       onlyRedrawOneElement(a, u.oriImageData!);
 
       s.updatingElements.length = 0;
+      if (settingsValue[0]) setMenuKey(2);
     }
     clearLastKey();
   }, [clearLastKey, lastKey, s, setSelectedKey]);

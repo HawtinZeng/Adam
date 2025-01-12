@@ -39,6 +39,7 @@ import {
 import {
   clearMainCanvas,
   drawCircle,
+  drawPolygonPointIndex,
   redrawAllEles,
 } from "src/CoreRenderer/DrawCanvas/core";
 import { DrawingElement, ptIsContained } from "src/CoreRenderer/basicTypes";
@@ -81,6 +82,7 @@ import {
   eraserRadius,
   screenLogAtom,
   selectedKeyAtom,
+  settings,
   sizeAtom,
 } from "src/state/uiState";
 import { useTextFunction } from "src/text/activateTextFunction";
@@ -172,6 +174,8 @@ function App() {
   const currentHandle = useRef<[DrawingElement, TransformHandle | any] | null>(
     null
   );
+
+  const settingValue = useAtomValue(settings);
 
   const [showShotPanel, setShowShotPanel] = useState(false);
 
@@ -295,6 +299,7 @@ function App() {
           };
           sceneData.updatingElements[0] = updating;
           setSceneData({ ...sceneData });
+          drawPolygonPointIndex(undefined, ele.boundary[0], "yellow", 3);
           return;
         }
       }
@@ -362,7 +367,6 @@ function App() {
         isShowShiftTip.current = false;
 
         // change the cursor style when moving the cursor out of the element.
-        console.log(u.ele.boundary[0].box);
         const isHit = ptIsContained(
           u.ele.boundary.map((p) => p.rotate(u.ele.rotation, p.box.center)),
           u.ele.excludeArea,
@@ -832,8 +836,10 @@ function App() {
      * 清理画布
      */
     const altCHandler = () => {
-      // sceneData.domElements.length = 0;
+      terminateText();
+
       sceneData.elements.length = 0;
+      setSceneData({ ...sceneData });
       clearMainCanvas();
       globalSynchronizer.value?.clearAllEles();
     };
@@ -910,7 +916,7 @@ function App() {
     window.ipcRenderer?.on("forward", () => moveHead("forward"));
 
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
-    window.ipcRenderer?.on("mouseWheel", globalScrollEle);
+    // window.ipcRenderer?.on("mouseWheel", globalScrollEle);
     window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
       window.ipcRenderer?.on("Alt`", AltToggleHandler);
@@ -925,7 +931,7 @@ function App() {
       window.ipcRenderer?.off("AltC", altCHandler);
       window.ipcRenderer?.off("AltQ", altQHandler);
       window.ipcRenderer?.off("changeWindow", changeWorkspace);
-      window.ipcRenderer?.off("mouseWheel", globalScrollEle);
+      // window.ipcRenderer?.off("mouseWheel", globalScrollEle);
       window.ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
@@ -1005,7 +1011,7 @@ function App() {
     }
 
     if (selectedKey === 6) {
-      startText(colorIdx);
+      startText();
     }
 
     if (selectedKey !== -1) {
@@ -1013,7 +1019,7 @@ function App() {
     } else {
       setTransparent();
     }
-  }, [selectedKey, colorIdx]);
+  }, [selectedKey]);
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
     return () => window.removeEventListener("keydown", globalKeydown);
@@ -1051,6 +1057,50 @@ function App() {
     globalKeydown,
   ]);
   const domElements = useMemo(() => <DomElements />, []);
+
+  async function cropImage(image, x, y, width, height) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(image, x, y, width, height, 0, 0, width, height);
+    const imageData = canvas.toDataURL("image/png"); // Encode image as base64
+
+    return imageData;
+  }
+
+  const handleSaveImgFinish = () => {
+    if (settingValue[0]) {
+      setSeletedKey(2);
+    } else {
+      setSeletedKey(7);
+    }
+  };
+  window.ipcRenderer.on("saveImgFinish", handleSaveImgFinish);
+
+  async function saveShot() {
+    const shot = sceneData.updatingElements[0].ele as any as Shot;
+    const img = await cropImage(
+      shot.screen,
+      shot.position.x,
+      shot.position.y,
+      shot.realWidth,
+      shot.realHeight
+    );
+
+    window.ipcRenderer.send("saveImg", img);
+
+    sceneData.updatingElements.forEach((u) => {
+      const shot = u.ele as unknown as Shot;
+      const i = sceneData.elements.findIndex((e) => (e as any) === shot);
+      sceneData.elements.splice(i, 1);
+    });
+    sceneData.updatingElements = [];
+
+    setSceneData({ ...sceneData });
+    redrawAllEles(undefined, undefined, sceneData.elements);
+    setSeletedKey(-1);
+  }
 
   function pinShot() {
     const shot = sceneData.updatingElements[0].ele as any as Shot;
@@ -1197,6 +1247,7 @@ function App() {
                   src={Save}
                   useRequestCache={true}
                   beforeInjection={(svg) => {}}
+                  onMouseDown={saveShot}
                 />
               </div>
             </div>

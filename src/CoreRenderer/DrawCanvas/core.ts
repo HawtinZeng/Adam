@@ -92,7 +92,7 @@ export function renderDrawCanvas(
   appCanvas: HTMLCanvasElement
 ) {
   // logger.log(sceneData.elements[0]?.id);
-  const appCtx = appCanvas.getContext("2d")!;
+  const appCtx = appCanvas.getContext("2d", { willReadFrequently: true })!;
 
   if (appCtx) globalAppCtx = appCtx;
   if (appCanvas) globalCvs = appCanvas;
@@ -302,7 +302,7 @@ export function redrawAllEles(
       if (!cachedCvs) {
         // We push updating freedrawing eles to sceneData.elements,
         // but we won't create cache for it, we must push updating for laser brush,
-        console.log(`cannot find the canvas cache of ${el.id}`);
+        // console.log(`cannot find the canvas cache of ${el.id}`);
         return;
       }
 
@@ -410,7 +410,7 @@ export function createFreeDrawCvs(
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     canvas.width = appCanvas.width;
     canvas.height = appCanvas.height;
-    const ctx = canvas.getContext("2d")!;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
     fillPolygon(numberPts, freeDraw.strokeColor!, ctx);
     drawingCanvasCache.ele2DrawingCanvas.set(ele, canvas!);
     return canvas;
@@ -664,12 +664,12 @@ export function createDrawingCvs(
   if (ele.points.length === 0) return;
   let ctx, canvas;
   if (dontCreate) {
-    ctx = targetCvs.getContext("2d")!;
+    ctx = targetCvs.getContext("2d", { willReadFrequently: true })!;
   } else {
     canvas = document.createElement("canvas") as HTMLCanvasElement;
     canvas.width = targetCvs.width;
     canvas.height = targetCvs.height;
-    ctx = canvas.getContext("2d")!;
+    ctx = canvas.getContext("2d", { willReadFrequently: true })!;
   }
 
   switch (ele.type) {
@@ -839,7 +839,7 @@ function drawEraserOutline(
   canvas: HTMLCanvasElement
 ) {
   const eraserOutlinePoints = ele.excludeArea;
-  const ctx = canvas.getContext("2d")!;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
 
   ctx.globalCompositeOperation = "destination-out";
   if (updatingEraser !== undefined && eraserOutlinePoints[updatingEraser])

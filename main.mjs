@@ -1,6 +1,13 @@
-import { desktopCapturer, globalShortcut, ipcMain, screen } from "electron";
+import {
+  desktopCapturer,
+  dialog,
+  globalShortcut,
+  ipcMain,
+  screen,
+} from "electron";
 import isDev from "electron-is-dev";
 import { BrowserWindow, app } from "electron/main";
+import * as fs from "fs";
 import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
 import { GlobalKeyboardListener } from "node-global-key-listener";
@@ -65,6 +72,34 @@ ipcMain.on("set-ignore-mouse-events", (event, ignore, options) => {
 
 ipcMain.on("blurAdamWindow", (_) => {
   win.blur();
+});
+
+ipcMain.on("saveImg", (_, img) => {
+  const base64Content = img.replace(/^data:image\/png;base64,/, "");
+  dialog
+    .showSaveDialog({
+      title: "Select the File Path to save",
+      // defaultPath: path.join(__dirname, "../assets/sample.txt"),
+      buttonLabel: "Save",
+      properties: [],
+    })
+    .then((file) => {
+      if (!file.canceled) {
+        if (file.filePath.slice(-4) !== ".png") file.filePath += ".png";
+        fs.writeFile(
+          file.filePath.toString(),
+          base64Content,
+          "base64",
+          function (err) {
+            if (err) throw err;
+            win.webContents.send("saveImgFinish");
+          }
+        );
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 });
 
 ipcMain.on("focusAdamWindow", (_) => {
