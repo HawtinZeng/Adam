@@ -131,6 +131,11 @@ v.addListener(function (e) {
 });
 
 let lastActiveWindow;
+
+ipcMain.on("logActiveWindow", async () => {
+  console.log(await activeWindow());
+});
+
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
   if (!currentWindow || lastActiveWindow?.id === currentWindow.id) return;

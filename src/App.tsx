@@ -521,6 +521,7 @@ function App() {
           redrawAllEles(undefined, undefined, sceneData.elements);
           setSeletedKey(2);
         }
+        setSeletedKey(-1);
       }
     },
     [sceneData.elements, sceneData.updatingElements, setSeletedKey]
@@ -1005,7 +1006,7 @@ function App() {
   useEffect(() => {
     terminateText();
 
-    if (selectedKey !== -1) {
+    if (selectedKey === -1) {
       window.ipcRenderer.send("blurAdamWindow");
       window.ipcRenderer.send("checkWindow");
     }
@@ -1020,9 +1021,12 @@ function App() {
       setTransparent();
     }
   }, [selectedKey]);
+
   useEffect(() => {
     window.addEventListener("keydown", globalKeydown);
-    return () => window.removeEventListener("keydown", globalKeydown);
+    return () => {
+      window.removeEventListener("keydown", globalKeydown);
+    };
   }, [globalKeydown]);
 
   useEffect(() => {
@@ -1054,7 +1058,6 @@ function App() {
     dragMove,
     dragStart,
     dragEnd,
-    globalKeydown,
   ]);
   const domElements = useMemo(() => <DomElements />, []);
 
@@ -1149,18 +1152,24 @@ function App() {
         (transforming.ele as any as Shot).width !== -1 &&
         !(transforming.ele as any as Shot).pined
       ) {
-        const shot = transforming.ele as any as Shot;
-        const pos = new PointZ(
-          shot.position.x,
-          shot.position.y + shot.realHeight + 20
-        );
         setShowShotPanel(true);
-        updateBottomPos(pos);
       }
     } else {
       setShowShotPanel(false);
     }
   }, [sceneData]);
+
+  useEffect(() => {
+    if (showShotPanel) {
+      const transforming = sceneData.updatingElements[0];
+      const shot = transforming.ele as any as Shot;
+      const pos = new PointZ(
+        shot.position.x,
+        shot.position.y + shot.realHeight + 20
+      );
+      updateBottomPos(pos);
+    }
+  }, [showShotPanel]);
 
   return (
     <>
