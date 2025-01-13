@@ -23,8 +23,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getCurrentTab") {
     let queryOptions = { active: true, lastFocusedWindow: true };
     chrome.tabs.query(queryOptions).then((tab) => {
-      sendResponse({ tabId: tab[0].id });
+      chrome.tabs.getZoom().then((zoomValue) => {
+        sendResponse({ tabId: tab[0].id, zoomValue });
+      });
     });
     return true;
   }
+});
+chrome.tabs.onZoomChange.addListener((zoomInfo) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    if (tabs[0])
+      chrome.tabs.sendMessage(tabs[0].id!, {
+        type: "zoom",
+        data: zoomInfo,
+        tabId: tabs[0].id!,
+      });
+  });
 });

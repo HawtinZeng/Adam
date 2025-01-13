@@ -86,7 +86,24 @@ export class ScrollListener {
     });
   }
 
-  getElementArea(ele: Element, id: string) {
+  getAllAreas(tabId: string, zoomValue: number) {
+    return [...this.scrollables]
+      .filter((ele) => {
+        if (!(ele instanceof Document)) {
+          const isShow = ele.checkVisibility({
+            opacityProperty: true, // Check CSS opacity property too
+            visibilityProperty: true, // Check CSS visibility property too
+          });
+          if (!isShow) return false;
+        }
+        return true;
+      })
+      .map((el) => {
+        return this.getElementArea(el, tabId, zoomValue);
+      });
+  }
+
+  getElementArea(ele: Element | Document, id: string, zoomValue: number) {
     const areaData: ElementRect = {
       width: 0,
       height: 0,
@@ -101,26 +118,28 @@ export class ScrollListener {
 
     if (trigger instanceof Document) {
       areaData.width = window.outerWidth;
-      areaData.height = window.innerHeight;
+      areaData.height = window.innerHeight * zoomValue;
 
-      areaData.offsetX = window.screenLeft; // screenLeft is not on the left border of the window, but has a gap of 8.
+      areaData.offsetX = window.screenLeft;
+
       areaData.offsetY =
-        window.screenTop + (window.outerHeight - window.innerHeight);
+        window.screenTop + window.outerHeight - window.innerHeight * zoomValue;
 
-      areaData.scrollTop = (trigger as any)?.scrollTop;
-      areaData.scrollHeight = (trigger as any)?.scrollHeight;
+      areaData.scrollTop =
+        (trigger as Document).documentElement.scrollTop * zoomValue;
     } else if (trigger instanceof HTMLElement) {
       const rect = trigger.getBoundingClientRect(); // have conflicts with https://leetcode.com/problems/maximum-score-from-grid-operations/solutions/5512718/clean-java-recursive-dp/ and https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect
-      areaData.width = rect.width;
-      areaData.height = rect.height;
-      areaData.offsetX = rect.left + window.screenLeft;
+      areaData.width = rect.width * zoomValue;
+      areaData.height = rect.height * zoomValue;
+      areaData.offsetX = rect.left * zoomValue + window.screenLeft;
       areaData.offsetY =
-        rect.top + window.screenTop + window.outerHeight - window.innerHeight;
-      areaData.scrollTop = (trigger as any)?.scrollTop;
-      areaData.scrollHeight = (trigger as any)?.scrollHeight;
+        rect.top * zoomValue +
+        window.screenTop +
+        window.outerHeight -
+        window.innerHeight * zoomValue;
+      areaData.scrollTop = (trigger as any)?.scrollTop * zoomValue;
       areaData.id = (trigger as HTMLElement).dataset.adamExtensionId!;
     }
-    areaData.topPadding = window.outerHeight - window.innerHeight;
     return areaData;
   }
 }

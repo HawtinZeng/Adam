@@ -594,49 +594,88 @@ function App() {
     // 第一次运行，会聚焦到 terminal 中，导致后续存放的 windowId 放到了 terminal 对应的 window 中
     setTransparent();
   }, []);
-  useEffect(() => {
-    function extensionScrollElementHandler(e, areaInfos: string) {
-      const areaInfo = JSON.parse(areaInfos) as ElementRect;
 
+  function changeArea(e, areaInfos: string) {
+    updateArea(areaInfos);
+  }
+
+  function handleInitializeArea(e, areaInfos: string) {
+    updateArea(areaInfos);
+  }
+
+  function updateArea(areaInfos: string) {
+    const allAreaInfo = JSON.parse(areaInfos) as ElementRect[];
+    allAreaInfo.forEach((areaInfo) => {
       const areaId = areaInfo.id;
 
       if (!globalSynchronizer.value) return;
-      if (!globalSynchronizer.value!.elesMap.get(areaId)) {
-        globalSynchronizer.value!.elesMap.set(areaId, []);
-      }
 
-      const needUpdating = globalSynchronizer.value.scrollTop(
-        areaId,
-        areaInfo.scrollTop
+      globalSynchronizer.value!.setArea(
+        new Box(
+          areaInfo.offsetX,
+          areaInfo.offsetY,
+          areaInfo.offsetX + areaInfo.width,
+          areaInfo.offsetY + areaInfo.height
+        ),
+        areaId
       );
-      if (needUpdating) {
-        redrawAllEles(
-          undefined,
-          undefined,
-          sceneData.elements,
-          undefined,
-          undefined
-        );
-      }
+    });
+  }
 
-      if (debugExtensionScroll) {
-        redrawAllEles(undefined, undefined, sceneData.elements);
-      }
+  function extensionScrollElementHandler(e, areaInfos: string) {
+    const areaInfo = JSON.parse(areaInfos) as ElementRect;
 
-      console.log(globalSynchronizer.value!.areasMap.size);
+    const areaId = areaInfo.id;
+    if (!globalSynchronizer.value) return;
 
-      globalSynchronizer.value!.drawAllAreas();
+    const needUpdating = globalSynchronizer.value.scrollTop(
+      areaId,
+      areaInfo.scrollTop
+    );
+
+    if (needUpdating) {
+      redrawAllEles(
+        undefined,
+        undefined,
+        sceneData.elements,
+        undefined,
+        undefined
+      );
     }
 
+    if (debugExtensionScroll) {
+      redrawAllEles(undefined, undefined, sceneData.elements);
+    }
+
+    globalSynchronizer.value!.drawAllAreas();
+    drawCircle(
+      null,
+      new Circle(new PointZ(areaInfo.offsetX, areaInfo.offsetY), 5),
+      "pink"
+    );
+  }
+  useEffect(() => {
     window.ipcRenderer?.on("scrollElement", extensionScrollElementHandler);
+    window.ipcRenderer?.on("zoom", changeArea);
+    window.ipcRenderer?.on("initializeArea", handleInitializeArea);
     return () => {
       window.ipcRenderer?.off("scrollElement", extensionScrollElementHandler);
+      window.ipcRenderer?.off("zoom", changeArea);
+      window.ipcRenderer?.off("initializeArea", handleInitializeArea);
     };
   }, [sceneData]);
 
   useEffect(() => {
-    if (globalSynchronizer.value)
-      globalSynchronizer.value!.partitionAllAreas(sceneData.elements);
+    if (globalSynchronizer.value) {
+      const areas = [...globalSynchronizer.value!.areasMap];
+      areas
+        .sort((a, b) => {
+          return new Polygon(a[1]).area() - new Polygon(b[1]).area();
+        })
+        .forEach((item) => {
+          globalSynchronizer.value!.partition(sceneData.elements, item[0]);
+        });
+    }
   }, [sceneData]);
 
   const changeScene = useCallback(

@@ -9,19 +9,19 @@ declare global {
 
 const socket = io("http://localhost:5555", { transports: ["websocket"] });
 
-socket.on("connect", () => {
-  socket.emit("testLatency", `sent @${new Date().getTime()}`);
-});
 const scrollerListener = new ScrollListener(15); // PUT IT INTO SETTINGS
 
 function emitScroll(e: Event) {
   chrome.runtime.sendMessage(
     { action: "getCurrentTab" },
-    (res: { tabId: number }) => {
+    (res: { tabId: number; zoomValue: number }) => {
       const id = res.tabId.toString();
+      const zoomValue = res.zoomValue;
       socket.emit(
         "scrollElement",
-        JSON.stringify(scrollerListener.getElementArea(e.target as Element, id))
+        JSON.stringify(
+          scrollerListener.getElementArea(e.target as Element, id, zoomValue)
+        )
       );
     }
   );
@@ -34,3 +34,31 @@ function emitSizeChange(borderSize: ResizeObserverEntry["borderBoxSize"]) {
 scrollerListener.addScrollListenerTo(document, emitScroll);
 
 scrollerListener.addSizeChangeLister(emitSizeChange);
+
+socket.on("connect", () => {
+  socket.emit("testLatency", `sent @${new Date().getTime()}`);
+  chrome.runtime.sendMessage(
+    { action: "getCurrentTab" },
+    (res: { tabId: number; zoomValue: number }) => {
+      const id = res.tabId.toString();
+      const zoomValue = res.zoomValue;
+      socket.emit(
+        "initializeArea",
+        JSON.stringify(scrollerListener.getAllAreas(id, zoomValue))
+      );
+    }
+  );
+});
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message.type === "zoom") {
+    socket.emit(
+      "initializeArea",
+      JSON.stringify(
+        scrollerListener.getAllAreas(
+          message.data.tabId + "",
+          message.data.newZoomFactor
+        )
+      )
+    );
+  }
+});

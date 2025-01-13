@@ -275,6 +275,13 @@ server.on("connection", (socket) => {
     win.webContents.send("scrollElement", areaInfo);
   });
 
+  socket.on("initializeArea", (areaInfo) => {
+    win.webContents.send("initializeArea", areaInfo);
+  });
+  socket.on("zoom", (areaInfo) => {
+    win.webContents.send("zoom", areaInfo);
+  });
+
   socket.on("onBoundsChanged", (areaInfo) => {
     console.log("onBoundsChanged");
     console.log(JSON.parse(areaInfo));

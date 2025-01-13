@@ -28,64 +28,60 @@ export class Synchronizer {
     this.title = title;
   }
   // add or get
-  addArea(b: Box, id: string) {
+  setArea(b: Box, id: string) {
     if (!this.areasMap.has(id)) {
-      this.areasMap.set(id, b);
       this.elesMap.set(id, []);
     }
-  }
 
-  partitionAllAreas(eles: DrawingElement[]) {
-    this.areasMap.forEach((area, areaId) => {
-      this.partition(eles, area, areaId);
-    });
+    this.areasMap.set(id, b);
   }
 
   /*
     给没有分区的元素分区，然后记录这个分区
-    给在大区域的元素转移到小区域
   */
-  partition(eles: DrawingElement[], area: Box, areaId: string) {
+  partition(eles: DrawingElement[], areaId: string) {
     try {
       // Re calc areaInfo of  all  ele
+      const scrollTop = this.scrollTopMap.get(areaId) ?? 0;
+      const b = this.areasMap.get(areaId)!;
+
+      const bWithScrollHidden = new Box(
+        b.xmin,
+        b.ymin - scrollTop,
+        b.xmax,
+        b.ymax
+      );
+
       eles.forEach((ele) => {
         const boundingPoly = ele.boundary[0];
         if (!boundingPoly) return;
+        if (ele.includingPart) return; // DON"T change the assigned area of any elements.
 
-        const allAreas = [...this.areasMap.values()];
-        allAreas.sort((a, b) =>
-          new Polygon(a).area > new Polygon(b).area ? 1 : -1
-        );
-        const containsArea = allAreas.find((a) => a.contains(boundingPoly));
-
-        // Delete original ele from elesMap. add it later.
-        if (ele.includingPart) {
-          const i = this.elesMap
-            .get(ele.includingPart!)!
-            .findIndex((allOnes) => allOnes === ele);
-          this.elesMap.get(ele.includingPart!)?.splice(i, 1);
+        const contained = bWithScrollHidden.contains(boundingPoly);
+        if (contained) {
+          ele.includingPart = areaId;
+          const exists = this.elesMap.get(areaId)!;
+          exists.push(ele);
         }
-
-        let id = "";
-        this.areasMap.forEach((box, idC) => {
-          if (box === containsArea) id = idC;
-        });
-
-        ele.includingPart = id;
-
-        const exists = this.elesMap.get(id)!;
-        exists.push(ele);
       });
+      console.log(eles.map((e) => e.includingPart));
     } catch (e) {}
   }
 
   scrollTop(areaId: string, scrollTop: number): boolean {
-    this.scrollTopMap.set(areaId, scrollTop);
     const exist = this.scrollTopMap.get(areaId)!;
+    if (!exist) {
+      this.scrollTopMap.set(areaId, scrollTop);
+      return false;
+    }
 
-    const delta = exist - scrollTop; // scrollTop 与 position.y 的计算方式是相反的
+    const delta = exist - scrollTop; // revert direction from scrollTop to canvas coordinates
+
+    this.scrollTopMap.set(areaId, scrollTop);
 
     const elesNeedScroll = this.elesMap.get(areaId);
+
+    console.log(elesNeedScroll?.map((e) => e.includingPart));
 
     elesNeedScroll?.forEach((el) => {
       el.position.y += delta;
@@ -131,6 +127,8 @@ export class Synchronizer {
   // for debug
   drawAllAreas() {
     let count = 0;
+    console.log(this.areasMap.size);
+
     this.areasMap.forEach((b) => {
       count++;
 
