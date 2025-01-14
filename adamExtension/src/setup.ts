@@ -15,6 +15,7 @@ function emitScroll(e: Event) {
   chrome.runtime.sendMessage(
     { action: "getCurrentTab" },
     (res: { tabId: number; zoomValue: number }) => {
+      if (res.tabId === undefined) return;
       const id = res.tabId.toString();
       const zoomValue = res.zoomValue;
       socket.emit(
@@ -35,10 +36,20 @@ scrollerListener.addScrollListenerTo(document, emitScroll);
 
 scrollerListener.addSizeChangeLister(emitSizeChange);
 
-socket.on("initializeAreaFromNode", () => {
+chrome.runtime.sendMessage(
+  { action: "getCurrentTab" },
+  (res: { tabId: number }) => {
+    if (res.tabId === undefined) return;
+    const id = res.tabId.toString();
+    tabId = id;
+  }
+);
+
+socket.on("initializeAreaFromNode2Chrome", () => {
   chrome.runtime.sendMessage(
     { action: "getCurrentTab" },
     (res: { tabId: number; zoomValue: number }) => {
+      if (res.tabId === undefined) return;
       const id = res.tabId.toString();
 
       if (id === tabId) {
@@ -54,15 +65,15 @@ socket.on("initializeAreaFromNode", () => {
 });
 
 let tabId: string;
+
 socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
   chrome.runtime.sendMessage(
     { action: "getCurrentTab" },
     (res: { tabId: number; zoomValue: number }) => {
+      if (res.tabId === undefined) return;
       const id = res.tabId.toString();
       const zoomValue = res.zoomValue;
-
-      tabId = id;
 
       socket.emit(
         "initializeArea",

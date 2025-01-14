@@ -37,7 +37,6 @@ import {
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
-  clearCanvas,
   clearMainCanvas,
   drawCircle,
   drawPolygonPointIndex,
@@ -628,9 +627,6 @@ function App() {
         areaId
       );
     });
-
-    clearCanvas();
-    globalSynchronizer.value!.drawAllAreas();
   }
 
   function extensionScrollElementHandler(e, areaInfos: string) {
@@ -765,18 +761,15 @@ function App() {
       globalSynchronizer.value &&
       !currentFocusedWindow?.title.includes("Chrome")
     ) {
-      // globalSynchronizer.value.updateArea(
-      //   new Box(
-      //     windowInfo.bounds.x,
-      //     windowInfo.bounds.y,
-      //     windowInfo.bounds.x + windowInfo.bounds.width,
-      //     windowInfo.bounds.y + windowInfo.bounds.height
-      //   ),
-      //   currentFocusedWindow!.id.toString()
-      // );
-
-      // globalSynchronizer.value!.setArea();
-      // globalSynchronizer.value?.partition(sceneData);
+      globalSynchronizer.value.updateArea(
+        new Box(
+          windowInfo.bounds.x,
+          windowInfo.bounds.y,
+          windowInfo.bounds.x + windowInfo.bounds.width,
+          windowInfo.bounds.y + windowInfo.bounds.height
+        ),
+        currentFocusedWindow!.id.toString()
+      );
 
       redrawAllEles(undefined, undefined, sceneData.elements);
       if (debugBAndR)
@@ -792,11 +785,6 @@ function App() {
           });
         });
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
-    } else if (
-      globalSynchronizer.value &&
-      currentFocusedWindow?.title.includes("Chrome")
-    ) {
-      // we use chrome extension boundsChnage event to update graph on chrome browser/DOM
     }
   }
 
@@ -965,8 +953,7 @@ function App() {
     window.ipcRenderer?.on("forward", () => moveHead("forward"));
 
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
-    // window.ipcRenderer?.on("mouseWheel", globalScrollEle);
-    // window.ipcRenderer?.on("mousedrag", mousedragHandler);
+    window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
       window.ipcRenderer?.on("Alt`", AltToggleHandler);
       window.ipcRenderer?.off("Alt1", alt1Handler);
@@ -981,32 +968,9 @@ function App() {
       window.ipcRenderer?.off("AltQ", altQHandler);
       window.ipcRenderer?.off("changeWindow", changeWorkspace);
       // window.ipcRenderer?.off("mouseWheel", globalScrollEle);
-      // window.ipcRenderer?.off("mousedrag", mousedragHandler);
+      window.ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
-
-  async function globalScrollEle(e: any, wheelData: any) {
-    if (selectedKey !== -1) return;
-    const els = sceneData.elements;
-
-    const delta = wheelData.delta;
-    if (currentFocusedWindow && confirmedScrollPage) {
-      if (currentFocusedWindow.title.includes("Chrome")) {
-      } else if (currentFocusedWindow.title.includes("Cursor")) {
-        els.forEach((e) => {
-          e.position.y += delta * 50;
-          e.rotateOrigin.y += delta * 50;
-
-          e.boundary = [getBoundryPoly(e)!];
-          e.excludeArea = getExcludeBoundaryPoly(e) ?? [];
-        });
-      }
-    }
-
-    redrawAllEles(undefined, undefined, els);
-
-    if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
-  }
 
   useEffect(() => {
     // clear Shot

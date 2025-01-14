@@ -94,33 +94,27 @@ export class Synchronizer {
    */
   updateArea(changedWindowBox: Box, id: string) {
     const deltaXmin = changedWindowBox.xmin - this.windowBox.xmin;
-    const deltaXmax = changedWindowBox.xmax - this.windowBox.xmax;
     const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
-    const deltaYmax = changedWindowBox.ymax - this.windowBox.ymax;
     const changedVec = new Vector(deltaXmin, deltaYmin);
     this.windowBox = changedWindowBox;
 
-    this.areasMap.forEach((b) => {
-      b.xmin += deltaXmin;
-      b.ymin += deltaYmin;
-      b.xmax += deltaXmax;
-      b.ymax += deltaYmax;
+    this.areasMap.set(id, changedWindowBox);
 
-      this.elesMap.get(id)?.forEach((e) => {
-        e.position.x += deltaXmin;
-        e.position.y += deltaYmin;
-        e.boundary.forEach(
-          (bd, idx) => (e.boundary[idx] = bd.translate(changedVec))
-        );
-        e.excludeArea.forEach((pol, idx) => {
-          e.excludeArea[idx] = pol.translate(changedVec);
-        });
-
-        e.rotateOrigin.x += changedVec.x;
-        e.rotateOrigin.y += changedVec.y;
+    this.elesMap.get(id)?.forEach((e) => {
+      e.position.x += deltaXmin;
+      e.position.y += deltaYmin;
+      e.boundary.forEach(
+        (bd, idx) => (e.boundary[idx] = bd.translate(changedVec))
+      );
+      e.excludeArea.forEach((pol, idx) => {
+        e.excludeArea[idx] = pol.translate(changedVec);
       });
+
+      e.rotateOrigin.x += changedVec.x;
+      e.rotateOrigin.y += changedVec.y;
     });
   }
+
   // for debug
   drawAllAreas() {
     let count = 0;

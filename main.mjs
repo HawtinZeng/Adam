@@ -197,20 +197,10 @@ app.whenReady().then(async () => {
   mouseEvt.on("mousemove", async () => {
     if (globalMousePress === "pressing") {
       const winInfo = await activeWindow();
-      win.webContents.send("mousedrag", winInfo);
 
-      // (await server.fetchSockets()).forEach((i) => {
-      //   i.emit("initializeAreaFromNode");
-      // });
-      server.sockets.emit("initializeAreaFromNode");
-
-      // socket.emit("initializeAreaFromNode", (d) => {
-      //   console.log("sent initializeAreaFromNode");
-      // });
-
-      // server.on("connection"
-
-      // serverSocket.emit("initializeAreaFromNode");
+      if (winInfo.title.includes("Chrome"))
+        server.sockets.emit("initializeAreaFromNode2Chrome");
+      else win.webContents.send("mousedrag", winInfo);
     }
   });
 
