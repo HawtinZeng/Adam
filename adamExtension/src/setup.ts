@@ -35,6 +35,25 @@ scrollerListener.addScrollListenerTo(document, emitScroll);
 
 scrollerListener.addSizeChangeLister(emitSizeChange);
 
+socket.on("initializeAreaFromNode", () => {
+  chrome.runtime.sendMessage(
+    { action: "getCurrentTab" },
+    (res: { tabId: number; zoomValue: number }) => {
+      const id = res.tabId.toString();
+
+      if (id === tabId) {
+        const zoomValue = res.zoomValue;
+
+        socket.emit(
+          "initializeArea",
+          JSON.stringify(scrollerListener.getAllAreas(id, zoomValue))
+        );
+      }
+    }
+  );
+});
+
+let tabId: string;
 socket.on("connect", () => {
   socket.emit("testLatency", `sent @${new Date().getTime()}`);
   chrome.runtime.sendMessage(
@@ -42,6 +61,9 @@ socket.on("connect", () => {
     (res: { tabId: number; zoomValue: number }) => {
       const id = res.tabId.toString();
       const zoomValue = res.zoomValue;
+
+      tabId = id;
+
       socket.emit(
         "initializeArea",
         JSON.stringify(scrollerListener.getAllAreas(id, zoomValue))

@@ -21,10 +21,10 @@ chrome.tabs.onActivated.addListener(function (tabInfo) {
 });
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getCurrentTab") {
-    let queryOptions = { active: true, lastFocusedWindow: true };
+    let queryOptions = { active: true, currentWindow: true };
     chrome.tabs.query(queryOptions).then((tab) => {
       chrome.tabs.getZoom().then((zoomValue) => {
-        sendResponse({ tabId: tab[0].id, zoomValue });
+        sendResponse({ tabId: tab[0]?.id, zoomValue });
       });
     });
     return true;

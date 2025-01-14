@@ -20,6 +20,42 @@ import { Window } from "win-control";
 
 import { createServer } from "http";
 
+const httpServer = createServer();
+const server = new Server(httpServer, {});
+
+server.on("connection", (socket) => {
+  socket.on("testLatency", (d) => {
+    console.log(`Got: ${d}, received at ${new Date().getTime()}`);
+  });
+
+  socket.on("scrollElement", (areaInfo) => {
+    win.webContents.send("scrollElement", areaInfo);
+  });
+
+  socket.on("initializeArea", (areaInfo) => {
+    win.webContents.send("initializeArea", areaInfo);
+  });
+  socket.on("zoom", (areaInfo) => {
+    win.webContents.send("zoom", areaInfo);
+  });
+
+  socket.on("onBoundsChanged", (areaInfo) => {
+    console.log("onBoundsChanged");
+    console.log(JSON.parse(areaInfo));
+  });
+
+  socket.on("activeBrowserTab", (tabId) => {
+    win.webContents.send("activeBrowserTab", tabId);
+    changeWindowHandler();
+  });
+
+  socket.on("deliverActiveTabId", (tabId) => {
+    win.webContents.send("activeBrowserTab", tabId);
+  });
+});
+
+httpServer.listen(5555);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let win;
@@ -162,6 +198,19 @@ app.whenReady().then(async () => {
     if (globalMousePress === "pressing") {
       const winInfo = await activeWindow();
       win.webContents.send("mousedrag", winInfo);
+
+      // (await server.fetchSockets()).forEach((i) => {
+      //   i.emit("initializeAreaFromNode");
+      // });
+      server.sockets.emit("initializeAreaFromNode");
+
+      // socket.emit("initializeAreaFromNode", (d) => {
+      //   console.log("sent initializeAreaFromNode");
+      // });
+
+      // server.on("connection"
+
+      // serverSocket.emit("initializeAreaFromNode");
     }
   });
 
@@ -263,38 +312,3 @@ function restartApp() {
   app.relaunch();
   app.exit(0);
 }
-const httpServer = createServer();
-const server = new Server(httpServer, {});
-
-server.on("connection", (socket) => {
-  socket.on("testLatency", (d) => {
-    console.log(`Got: ${d}, received at ${new Date().getTime()}`);
-  });
-
-  socket.on("scrollElement", (areaInfo) => {
-    win.webContents.send("scrollElement", areaInfo);
-  });
-
-  socket.on("initializeArea", (areaInfo) => {
-    win.webContents.send("initializeArea", areaInfo);
-  });
-  socket.on("zoom", (areaInfo) => {
-    win.webContents.send("zoom", areaInfo);
-  });
-
-  socket.on("onBoundsChanged", (areaInfo) => {
-    console.log("onBoundsChanged");
-    console.log(JSON.parse(areaInfo));
-  });
-
-  socket.on("activeBrowserTab", (tabId) => {
-    win.webContents.send("activeBrowserTab", tabId);
-    changeWindowHandler();
-  });
-
-  socket.on("deliverActiveTabId", (tabId) => {
-    win.webContents.send("activeBrowserTab", tabId);
-  });
-});
-
-httpServer.listen(5555);

@@ -64,7 +64,6 @@ export class Synchronizer {
           exists.push(ele);
         }
       });
-      console.log(eles.map((e) => e.includingPart));
     } catch (e) {}
   }
 
@@ -80,8 +79,6 @@ export class Synchronizer {
     this.scrollTopMap.set(areaId, scrollTop);
 
     const elesNeedScroll = this.elesMap.get(areaId);
-
-    console.log(elesNeedScroll?.map((e) => e.includingPart));
 
     elesNeedScroll?.forEach((el) => {
       el.position.y += delta;
@@ -127,7 +124,6 @@ export class Synchronizer {
   // for debug
   drawAllAreas() {
     let count = 0;
-    console.log(this.areasMap.size);
 
     this.areasMap.forEach((b) => {
       count++;

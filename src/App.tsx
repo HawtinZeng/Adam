@@ -37,6 +37,7 @@ import {
   TransformHandle,
 } from "src/CoreRenderer/DrawCanvas/Transform2DOperator";
 import {
+  clearCanvas,
   clearMainCanvas,
   drawCircle,
   drawPolygonPointIndex,
@@ -596,7 +597,7 @@ function App() {
   }, []);
 
   function changeArea(e, areaInfos: string) {
-    updateArea(areaInfos);
+    // updateArea(areaInfos);
   }
 
   function handleInitializeArea(e, areaInfos: string) {
@@ -604,7 +605,14 @@ function App() {
   }
 
   function updateArea(areaInfos: string) {
+    if (globalSynchronizer.value) {
+      globalSynchronizer.value.areasMap.clear();
+      globalSynchronizer.value.elesMap.clear();
+      globalSynchronizer.value.scrollTopMap.clear();
+    }
+
     const allAreaInfo = JSON.parse(areaInfos) as ElementRect[];
+
     allAreaInfo.forEach((areaInfo) => {
       const areaId = areaInfo.id;
 
@@ -620,6 +628,9 @@ function App() {
         areaId
       );
     });
+
+    clearCanvas();
+    globalSynchronizer.value!.drawAllAreas();
   }
 
   function extensionScrollElementHandler(e, areaInfos: string) {
@@ -754,15 +765,17 @@ function App() {
       globalSynchronizer.value &&
       !currentFocusedWindow?.title.includes("Chrome")
     ) {
-      globalSynchronizer.value.updateArea(
-        new Box(
-          windowInfo.bounds.x,
-          windowInfo.bounds.y,
-          windowInfo.bounds.x + windowInfo.bounds.width,
-          windowInfo.bounds.y + windowInfo.bounds.height
-        ),
-        currentFocusedWindow!.id.toString()
-      );
+      // globalSynchronizer.value.updateArea(
+      //   new Box(
+      //     windowInfo.bounds.x,
+      //     windowInfo.bounds.y,
+      //     windowInfo.bounds.x + windowInfo.bounds.width,
+      //     windowInfo.bounds.y + windowInfo.bounds.height
+      //   ),
+      //   currentFocusedWindow!.id.toString()
+      // );
+
+      // globalSynchronizer.value!.setArea();
       // globalSynchronizer.value?.partition(sceneData);
 
       redrawAllEles(undefined, undefined, sceneData.elements);
@@ -953,7 +966,7 @@ function App() {
 
     window.ipcRenderer?.on("changeWindow", changeWorkspace);
     // window.ipcRenderer?.on("mouseWheel", globalScrollEle);
-    window.ipcRenderer?.on("mousedrag", mousedragHandler);
+    // window.ipcRenderer?.on("mousedrag", mousedragHandler);
     return () => {
       window.ipcRenderer?.on("Alt`", AltToggleHandler);
       window.ipcRenderer?.off("Alt1", alt1Handler);
@@ -968,7 +981,7 @@ function App() {
       window.ipcRenderer?.off("AltQ", altQHandler);
       window.ipcRenderer?.off("changeWindow", changeWorkspace);
       // window.ipcRenderer?.off("mouseWheel", globalScrollEle);
-      window.ipcRenderer?.off("mousedrag", mousedragHandler);
+      // window.ipcRenderer?.off("mousedrag", mousedragHandler);
     };
   }, [sceneData, selectedKey, setSceneData, setSeletedKey]);
 

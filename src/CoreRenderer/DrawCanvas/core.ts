@@ -399,6 +399,15 @@ export function redrawAllEles(
   });
 }
 
+export function clearCanvas() {
+  if (!globalAppCtx || !globalCvs) {
+    console.error("globalAppCtx or globalCvs is not initialized");
+    return;
+  }
+
+  globalAppCtx.clearRect(0, 0, globalCvs.width, globalCvs.height);
+}
+
 // after transform FreeDraw, we need to record the pts of FreeDraw, then we need to update the cached canvas of this element. we use outlinePoints to recorder the pts of this FreeDraw element
 export function createFreeDrawCvs(
   ele: DrawingElement,
