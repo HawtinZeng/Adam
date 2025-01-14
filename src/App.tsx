@@ -114,7 +114,7 @@ export const showEleId = false;
 
 const debugBAndR = false;
 const showDebugPanel = false;
-const debugExtensionScroll = false;
+const debugExtensionScroll = true;
 const debugDrawAllAreas = true;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
@@ -606,8 +606,6 @@ function App() {
   function updateArea(areaInfos: string) {
     if (globalSynchronizer.value) {
       globalSynchronizer.value.areasMap.clear();
-      globalSynchronizer.value.elesMap.clear();
-      globalSynchronizer.value.scrollTopMap.clear();
     }
 
     const allAreaInfo = JSON.parse(areaInfos) as ElementRect[];
@@ -650,11 +648,11 @@ function App() {
       );
     }
 
-    if (debugExtensionScroll) {
+    if (debugExtensionScroll && globalSynchronizer.value!) {
       redrawAllEles(undefined, undefined, sceneData.elements);
+      globalSynchronizer.value!.drawAllAreas();
     }
 
-    globalSynchronizer.value!.drawAllAreas();
     drawCircle(
       null,
       new Circle(new PointZ(areaInfo.offsetX, areaInfo.offsetY), 5),
@@ -686,7 +684,11 @@ function App() {
   }, [sceneData]);
 
   const changeScene = useCallback(
-    (_?: IpcRendererEvent, tabId?: number | undefined) => {
+    (
+      _?: IpcRendererEvent,
+      tabId?: number | undefined,
+      windowInfo?: BaseResult
+    ) => {
       multipleScenes.set(sceneData.windowId, { ...sceneData });
       if (globalSynchronizer.value) {
         multipleSynchronizer.set(sceneData.windowId, globalSynchronizer.value);
@@ -734,10 +736,21 @@ function App() {
     },
     [sceneData, setSceneData]
   );
+  const wrapped = (
+    _?: IpcRendererEvent,
+    tabId?: number | undefined,
+    windowInfo?: BaseResult
+  ) =>
+    setTimeout(() => {
+      mousedragHandler(_, windowInfo!);
+    });
+
   useEffect(() => {
     window.ipcRenderer?.on("activeBrowserTab", changeScene);
+    window.ipcRenderer?.on("activeBrowserTab", wrapped);
     return () => {
       window.ipcRenderer?.off("activeBrowserTab", changeScene);
+      window.ipcRenderer?.off("activeBrowserTab", wrapped);
     };
   }, [changeScene]);
 
@@ -755,23 +768,26 @@ function App() {
 
   //  triggered when drag window
   function mousedragHandler(_: any, windowInfo: BaseResult) {
+    console.log(windowInfo.bounds.x);
+
     if (!windowInfo || windowInfo.title === "Adam" || windowInfo.title === "")
       return;
+    const changedWindowBox = new Box(
+      windowInfo.bounds.x,
+      windowInfo.bounds.y,
+      windowInfo.bounds.x + windowInfo.bounds.width,
+      windowInfo.bounds.y + windowInfo.bounds.height
+    );
+
     if (
       globalSynchronizer.value &&
       !currentFocusedWindow?.title.includes("Chrome")
     ) {
       globalSynchronizer.value.updateArea(
-        new Box(
-          windowInfo.bounds.x,
-          windowInfo.bounds.y,
-          windowInfo.bounds.x + windowInfo.bounds.width,
-          windowInfo.bounds.y + windowInfo.bounds.height
-        ),
+        changedWindowBox,
         currentFocusedWindow!.id.toString()
       );
 
-      redrawAllEles(undefined, undefined, sceneData.elements);
       if (debugBAndR)
         sceneData.elements.forEach((e) => {
           drawCircle(
@@ -785,7 +801,14 @@ function App() {
           });
         });
       if (debugDrawAllAreas) globalSynchronizer.value?.drawAllAreas();
+    } else if (
+      globalSynchronizer.value &&
+      currentFocusedWindow?.title.includes("Chrome")
+    ) {
+      globalSynchronizer.value!.updateBindElePosAllAreas(changedWindowBox);
     }
+
+    redrawAllEles(undefined, undefined, sceneData.elements);
   }
 
   useEffect(() => {

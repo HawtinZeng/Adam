@@ -29,10 +29,6 @@ export class Synchronizer {
   }
   // add or get
   setArea(b: Box, id: string) {
-    if (!this.areasMap.has(id)) {
-      this.elesMap.set(id, []);
-    }
-
     this.areasMap.set(id, b);
   }
 
@@ -60,8 +56,10 @@ export class Synchronizer {
         const contained = bWithScrollHidden.contains(boundingPoly);
         if (contained) {
           ele.includingPart = areaId;
-          const exists = this.elesMap.get(areaId)!;
-          exists.push(ele);
+          let exists = this.elesMap.get(areaId)!;
+          if (!exists) this.elesMap.set(areaId, []);
+
+          this.elesMap.get(areaId)!.push(ele);
         }
       });
     } catch (e) {}
@@ -93,16 +91,47 @@ export class Synchronizer {
    * @param newArea 新的最大的Box，即为窗口的Box
    */
   updateArea(changedWindowBox: Box, id: string) {
+    this.updateBindElePos(changedWindowBox, id);
+    this.areasMap.set(id, changedWindowBox);
+
+    this.windowBox = changedWindowBox;
+  }
+
+  updateBindElePosAllAreas(box: Box) {
+    const deltaXmin = box.xmin - this.windowBox.xmin;
+    const deltaYmin = box.ymin - this.windowBox.ymin;
+    const changedVec = new Vector(deltaXmin, deltaYmin);
+
+    [...this.areasMap.keys()].forEach((areaId) => {
+      this.elesMap.get(areaId)?.forEach((e) => {
+        e.position.x += deltaXmin;
+        e.position.y += deltaYmin;
+        console.log(e.position.y);
+
+        e.boundary.forEach(
+          (bd, idx) => (e.boundary[idx] = bd.translate(changedVec))
+        );
+        e.excludeArea.forEach((pol, idx) => {
+          e.excludeArea[idx] = pol.translate(changedVec);
+        });
+
+        e.rotateOrigin.x += changedVec.x;
+        e.rotateOrigin.y += changedVec.y;
+      });
+    });
+
+    this.windowBox = box;
+  }
+  updateBindElePos(changedWindowBox: Box, id: string) {
     const deltaXmin = changedWindowBox.xmin - this.windowBox.xmin;
     const deltaYmin = changedWindowBox.ymin - this.windowBox.ymin;
-    const changedVec = new Vector(deltaXmin, deltaYmin);
-    this.windowBox = changedWindowBox;
 
-    this.areasMap.set(id, changedWindowBox);
+    const changedVec = new Vector(deltaXmin, deltaYmin);
 
     this.elesMap.get(id)?.forEach((e) => {
       e.position.x += deltaXmin;
       e.position.y += deltaYmin;
+
       e.boundary.forEach(
         (bd, idx) => (e.boundary[idx] = bd.translate(changedVec))
       );

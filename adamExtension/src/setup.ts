@@ -82,6 +82,7 @@ socket.on("connect", () => {
     }
   );
 });
+
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   if (message.type === "zoom") {
     socket.emit(

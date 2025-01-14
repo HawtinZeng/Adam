@@ -58,8 +58,8 @@ export class ScrollListener {
   ) {
     if (depth > this.maxDepth) return;
 
-    const { vertical, horizontal } = isScrollable(node);
-    if (vertical || horizontal) {
+    const { vertical } = isScrollable(node);
+    if (vertical) {
       if (!this.scrollables.has(node)) {
         this.scrollables.add(node);
         node.addEventListener("scroll", handler);

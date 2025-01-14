@@ -44,8 +44,10 @@ server.on("connection", (socket) => {
     console.log(JSON.parse(areaInfo));
   });
 
-  socket.on("activeBrowserTab", (tabId) => {
-    win.webContents.send("activeBrowserTab", tabId);
+  socket.on("activeBrowserTab", async (tabId) => {
+    const currentWindow = await activeWindow();
+
+    win.webContents.send("activeBrowserTab", tabId, currentWindow);
     changeWindowHandler();
   });
 
@@ -200,11 +202,12 @@ app.whenReady().then(async () => {
 
       if (winInfo.title.includes("Chrome"))
         server.sockets.emit("initializeAreaFromNode2Chrome");
-      else win.webContents.send("mousedrag", winInfo);
+
+      win.webContents.send("mousedrag", winInfo);
     }
   });
 
-  mouseEvt.on("mousedown", () => {
+  mouseEvt.on("mousedown", async () => {
     globalMousePress =
       globalMousePress === "unPressing" ? "pressing" : "unPressing";
   });
