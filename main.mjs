@@ -12,12 +12,12 @@ import { BrowserWindow, app } from "electron/main";
 import * as fs from "fs";
 import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
-import { GlobalKeyboardListener } from "node-global-key-listener";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
 import { fileURLToPath } from "url";
 import { Window } from "win-control";
 
+import { ActiveWindow } from "@paymoapp/active-window";
 import { createServer } from "http";
 
 const httpServer = createServer();
@@ -160,12 +160,10 @@ ipcMain.on("queryActiveTabId", () => {
   server.emit("queryActiveTabId");
 });
 
-const v = new GlobalKeyboardListener();
-v.addListener(function (e) {
-  if (e.name === "LEFT ALT" || e.name === "RIGHT ALT" || e.name === "TAB") {
-    setTimeout(changeWindowHandler, 10);
-  } else if (e.name === "MOUSE LEFT") {
-    setTimeout(changeWindowHandler, 10); // 等待操作系统将对应窗口激活
+ActiveWindow.initialize();
+ActiveWindow.subscribe((windowInfo) => {
+  if (windowInfo) {
+    changeWindowHandler();
   }
 });
 
@@ -177,6 +175,7 @@ ipcMain.on("logActiveWindow", async () => {
 
 async function changeWindowHandler() {
   const currentWindow = await activeWindow();
+
   if (!currentWindow || lastActiveWindow?.id === currentWindow.id) return;
   if (
     currentWindow?.id &&
@@ -200,7 +199,7 @@ app.whenReady().then(async () => {
     if (globalMousePress === "pressing") {
       const winInfo = await activeWindow();
 
-      if (winInfo.title.includes("Chrome"))
+      if (winInfo?.title.includes("Chrome"))
         server.sockets.emit("initializeAreaFromNode2Chrome");
 
       win.webContents.send("mousedrag", winInfo);

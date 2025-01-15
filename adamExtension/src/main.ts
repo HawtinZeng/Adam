@@ -1,13 +1,6 @@
 import "./style.css";
 import typescriptLogo from "./typescript.svg";
 import viteLogo from "/vite.svg";
-// const socket = io("http://localhost:3000");
-// // client-side
-// socket.on("connect", () => {
-//   console.log(socket.id); // x8WIv7-mJelg7on_ALbx
-// });
-// socket.open();
-// console.log("socket");
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>

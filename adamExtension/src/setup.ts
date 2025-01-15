@@ -28,13 +28,13 @@ function emitScroll(e: Event) {
   );
 }
 
-function emitSizeChange(borderSize: ResizeObserverEntry["borderBoxSize"]) {
-  socket.emit("onBoundsChanged", JSON.stringify(borderSize));
-}
+// function emitSizeChange(borderSize: ResizeObserverEntry["borderBoxSize"]) {
+//   socket.emit("onBoundsChanged", JSON.stringify(borderSize));
+// }
 
 scrollerListener.addScrollListenerTo(document, emitScroll);
 
-scrollerListener.addSizeChangeLister(emitSizeChange);
+// scrollerListener.addSizeChangeLister(emitSizeChange);
 
 chrome.runtime.sendMessage(
   { action: "getCurrentTab" },

@@ -768,7 +768,6 @@ function App() {
 
   //  triggered when drag window
   function mousedragHandler(_: any, windowInfo: BaseResult) {
-    console.log(windowInfo.bounds.x);
 
     if (!windowInfo || windowInfo.title === "Adam" || windowInfo.title === "")
       return;
