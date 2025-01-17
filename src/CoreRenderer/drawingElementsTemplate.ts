@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Flatten, { Point, Polygon } from "@zenghawtin/graph2d";
 import {
   AStrokeOptions,

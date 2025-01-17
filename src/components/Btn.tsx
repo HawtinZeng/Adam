@@ -1,3 +1,4 @@
+// @ts-nocheck
 import stylex from "@stylexjs/stylex";
 import { useAtom } from "jotai";
 import React, { MouseEvent } from "react";

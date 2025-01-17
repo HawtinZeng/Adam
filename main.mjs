@@ -14,14 +14,16 @@ import { activeWindow } from "get-windows";
 import mouseEvt from "global-mouse-events";
 import path, { dirname } from "path";
 import { Server } from "socket.io";
-import { fileURLToPath } from "url";
+import { fileURLToPath, format } from "url";
 import { Window } from "win-control";
 
 import { ActiveWindow } from "@paymoapp/active-window";
+import electronSquirrelStartup from "electron-squirrel-startup";
 import { createServer } from "http";
 
 const httpServer = createServer();
 const server = new Server(httpServer, {});
+if (electronSquirrelStartup) app.quit();
 
 server.on("connection", (socket) => {
   socket.on("testLatency", (d) => {
@@ -77,7 +79,7 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegrationInWorker: true,
       contextIsolation: false,
-      preload: path.join(__dirname, "./preload.js"),
+      preload: path.join(__dirname, "./preload.cjs"),
     },
   });
   win.webContents.send("SET_MENUBAR_HEIGHT", [width, height]);
@@ -91,15 +93,12 @@ const createWindow = () => {
 
     win.loadURL(startURL);
   } else {
-    // TODO: test build process, add the output into .gitignore
-    const startURL = require("url").format({
+    const startURL = format({
       protocol: "file",
       slashes: true,
-      pathname: require("path").join(__dirname, "build/index.html"),
+      pathname: path.join(__dirname, "index.html"),
     });
     win.loadURL(startURL);
-
-    //  initialize
     changeWindowHandler();
   }
 };
@@ -182,7 +181,9 @@ async function changeWindowHandler() {
     currentWindow?.title !== "Adam" &&
     currentWindow?.title !== "Open" &&
     currentWindow?.title !== "" &&
-    currentWindow?.title !== "Task Switching"
+    currentWindow?.title !== "Task Switching" &&
+    currentWindow?.title !== "EVCapture" &&
+    currentWindow?.title !== "ScreenToGif"
   ) {
     win.webContents.send("changeWindow", currentWindow);
     lastActiveWindow = currentWindow;

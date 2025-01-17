@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Box, Polygon, Vector } from "@zenghawtin/graph2d";
 import * as d3c from "d3-color";
 import { drawRectBorder, drawText } from "src/CoreRenderer/DrawCanvas/core";

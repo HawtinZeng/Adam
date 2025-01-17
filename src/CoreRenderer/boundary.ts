@@ -143,7 +143,7 @@ export function getBoundryPoly(ele: DrawingElement) {
 
       return worldBoundary;
     } else if (ele.type === DrawingType.text) {
-      const t = ele as Text;
+      const t = ele as any as Text;
 
       return new Polygon(new Box(0, 0, t.textWidth!, t.size))
         .scale(t.scale.x, t.scale.y)

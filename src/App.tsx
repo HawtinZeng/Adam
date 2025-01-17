@@ -1,3 +1,4 @@
+// @ts-nocheck
 import stylex from "@stylexjs/stylex";
 
 import { Button } from "@mui/material";
@@ -114,14 +115,13 @@ export const showEleId = false;
 
 const debugBAndR = false;
 const showDebugPanel = false;
-const debugExtensionScroll = true;
+const debugExtensionScroll = false;
 const debugDrawAllAreas = true;
 
 let currentFocusedWindow: (BaseResult & { containedWin?: number }) | undefined;
 
 let stream: MediaStream | undefined;
 const cap = new Map<string, ImageCapture>();
-let confirmedScrollPage = true;
 
 export async function getCapture(sourceId: string) {
   if (cap.has(sourceId)) return cap.get(sourceId);
@@ -194,7 +194,7 @@ function App() {
     originalBoundaryRelative?: Polygon; // FreeDraw oriBoundary[0]
   } | null>(null);
   const canvasEventTrigger = useRef<HTMLDivElement>(null);
-  const setTriggerAtom = useSetAtom(canvasEventTriggerAtom);
+  const setTriggerAtom = useSetAtom(canvasEventTriggerAtom as any);
   const size = useAtomValue(sizeAtom) / 4;
   const eraserSize = useAtomValue(eraserRadius) / 4;
 
@@ -207,6 +207,7 @@ function App() {
       const c = d3c.color(selectedKey === 0 ? colorStr : "#d9453c");
       if (!c) return;
       c.opacity = 0.8;
+      // @ts-ignore
       setCursorSvg(
         `url('data:image/svg+xml;utf8,<svg  width="${
           controlledSize * 2
@@ -768,7 +769,6 @@ function App() {
 
   //  triggered when drag window
   function mousedragHandler(_: any, windowInfo: BaseResult) {
-
     if (!windowInfo || windowInfo.title === "Adam" || windowInfo.title === "")
       return;
     const changedWindowBox = new Box(

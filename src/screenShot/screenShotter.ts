@@ -48,6 +48,7 @@ export class ScreenShotter {
   }
 
   async startScreenShot(drawCanvas: HTMLCanvasElement) {
+    console.log("source");
     this.drawCanvas = drawCanvas;
     this.oriImageData = this.drawCanvas
       .getContext("2d", { willReadFrequently: true })!
@@ -71,6 +72,7 @@ export class ScreenShotter {
       });
       const i = new ImageCapture(stream.getVideoTracks()[0]);
       const screenImg = await i.grabFrame();
+
       this.shot = new Shot(screenImg);
 
       this.overlay = new Rect(new Box(0, 0, screenImg.width, screenImg.height));

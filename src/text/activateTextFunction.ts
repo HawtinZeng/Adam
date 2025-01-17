@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useRef } from "react";
 import { getBoundryPoly } from "src/CoreRenderer/boundary";

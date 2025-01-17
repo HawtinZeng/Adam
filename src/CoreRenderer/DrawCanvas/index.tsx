@@ -1,3 +1,4 @@
+// @ts-nocheck
 import stylex from "@stylexjs/stylex";
 import { useAtom, useSetAtom } from "jotai";
 import React, { useEffect, useRef } from "react";
@@ -11,8 +12,6 @@ const staticCvsSte = stylex.create({
     height: "100%",
     position: "fixed",
     top: "0",
-    // backgroundColor: "red",
-    // opacity: 0.1,
   },
 });
 

@@ -1,6 +1,7 @@
 import stylex from "@stylexjs/stylex";
 import React, { ReactNode, Ref, forwardRef, useEffect, useState } from "react";
 import Draggable from "react-draggable";
+import { setTransparentOption } from "src/commonUtils";
 import { Point } from "src/Utils/Data/geometry";
 export const menuContainer = stylex.create({
   flexContent: {
@@ -68,9 +69,11 @@ export const DraggableTransparent = forwardRef(
           cancel="#btn"
           onDrag={() => {
             isDragging = true;
+            setTransparentOption.enabled = false;
             onDrag?.();
           }}
           onStop={() => {
+            setTransparentOption.enabled = true;
             if (isDragging) {
               isDragging = false;
             }

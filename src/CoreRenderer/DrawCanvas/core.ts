@@ -364,10 +364,7 @@ export function redrawAllEles(
           free.scaleOrigin?.y ?? 0
         );
         globalAppCtx!.scale(el.scale.x, el.scale.y);
-        globalAppCtx!.translate(
-          -free.scaleOrigin?.x ?? 0,
-          -free.scaleOrigin?.y ?? 0
-        );
+        globalAppCtx!.translate(-free.scaleOrigin.x, -free.scaleOrigin.y);
 
         globalAppCtx!.drawImage(cachedCvs!, 0, 0);
       }

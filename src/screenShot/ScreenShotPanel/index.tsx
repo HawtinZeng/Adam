@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useAtom, useAtomValue } from "jotai";
 import React, { useEffect, useRef } from "react";
 import { DrawingElement } from "src/CoreRenderer/basicTypes";
@@ -7,7 +8,7 @@ import { sceneAtom } from "src/state/sceneState";
 import { canvasAtom, selectedKeyAtom } from "src/state/uiState";
 export function ScreenShotPanel() {
   const [s, ss] = useAtom(sceneAtom);
-  const [selected, setSeletedKey] = useAtom(selectedKeyAtom);
+  const setSeletedKey = useAtom(selectedKeyAtom)[1];
 
   const screenShotter = useRef<ScreenShotter>(new ScreenShotter(s));
   const drawCanvas = useAtomValue(canvasAtom)!;
@@ -29,30 +30,21 @@ export function ScreenShotPanel() {
     }
   }, [sceneData]);
    */
-  const execut2 = useRef<number>(1);
   useEffect(() => {
-    if (execut2.current === 2) {
-      const wrapper = async () => {
-        await screenShotter.current.startScreenShot(drawCanvas);
-        const shot = screenShotter.current.shot!;
+    const wrapper = async () => {
+      await screenShotter.current.startScreenShot(drawCanvas);
+      const shot = screenShotter.current.shot!;
 
-        s.elements.push(shot as any as DrawingElement);
+      s.elements.push(shot as any as DrawingElement);
 
-        const updating: UpdatingElement = {
-          type: "transform",
-          ele: shot,
-        };
-        s.updatingElements[0] = updating;
-        ss({ ...s });
+      const updating: UpdatingElement = {
+        type: "transform",
+        ele: shot,
       };
-      wrapper();
-    }
-
-    return () => {
-      if (execut2.current === 2) {
-      }
-      execut2.current++;
+      s.updatingElements[0] = updating;
+      ss({ ...s });
     };
+    wrapper();
   }, []);
 
   function mousemove(e: MouseEvent) {

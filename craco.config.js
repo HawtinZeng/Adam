@@ -8,10 +8,7 @@ module.exports = {
         styleXPlugin,
         {
           dev: true,
-          // Set this to true for snapshot testing
-          // default: false
           test: false,
-          // Required for CSS variable support
           unstable_moduleResolution: {
             // type: 'commonJS' | 'haste'
             // default: 'commonJS'
@@ -33,24 +30,11 @@ module.exports = {
       worker_threads: false,
     },
     configure: (webpackConfig, { env, paths }) => {
-      // Find the index of the ModuleScopePlugin
-      // const scopePluginIndex = webpackConfig.resolve.plugins.findIndex(
-      //   (plugin) =>
-      //     plugin.constructor && plugin.constructor.name === "ModuleScopePlugin"
-      // );
-
-      // // Remove the ModuleScopePlugin to allow resolving browser-compatible modules
-      // if (scopePluginIndex !== -1) {
-      //   webpackConfig.resolve.plugins.splice(scopePluginIndex, 1);
-      // }
-
-      // Configure fallback for specific modules (replace with your needs)
       webpackConfig.resolve.fallback = {
         fs: false,
         path: false,
         crypto: false,
       };
-
       return webpackConfig;
     },
     plugins: (webpackConfig, { env, paths }) => {
@@ -77,13 +61,8 @@ module.exports = {
       ];
     },
   },
-  typescript: {
-    compilerOptions: {
-      jsx: "react-jsx",
-    },
-  },
   eslint: {
-    enable: true /* (default value) */,
+    enable: true,
     mode: "extends",
     configure: (eslintConfig, { env, paths }) => {
       eslintConfig.rules = {

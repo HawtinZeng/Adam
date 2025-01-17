@@ -4,7 +4,7 @@
   "private": true,
   "main": "main.mjs",
   "author": "ZengHawtin",
-  "description": "adam: a drawing editor in any window in windows machines",
+  "description": "adam: a window-based drawing software in windows machine",
   "dependencies": {
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
@@ -25,6 +25,7 @@
     "buffer": "^6.0.3",
     "chrome-net": "^3.3.4",
     "d3-color": "^3.1.0",
+    "electron-is-dev": "^3.0.1",
     "electron-squirrel-startup": "^1.0.1",
     "get-windows": "^9.1.1",
     "global-mouse-events": "^1.2.0",
@@ -44,7 +45,6 @@
     "react-draggable": "^4.4.6",
     "react-scripts": "^5.0.1",
     "react-svg": "^16.1.33",
-    "resemblejs": "^5.0.0",
     "socket.io": "^4.7.5",
     "svg-path-commander": "^2.0.9",
     "typescript": "^5.4.2",
@@ -65,7 +65,10 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps",
-    "ex:dev": "cd adamExtension && nr dev"
+    "ex:dev": "cd adamExtension && nr dev",
+    "app:dir": "electron-builder --dir",
+    "app:dist": "electron-builder",
+    "electron-pack": "build --em.main=src/main.mjs"
   },
   "eslintConfig": {
     "extends": [
@@ -111,7 +114,7 @@
     "@electron-forge/cli": "^7.4.0",
     "@electron-forge/maker-deb": "^7.4.0",
     "@electron-forge/maker-rpm": "^7.4.0",
-    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
     "@electron-forge/maker-zip": "^7.4.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.4.0",
     "@electron-forge/plugin-fuses": "^7.4.0",
@@ -122,17 +125,25 @@
     "@stylexjs/webpack-plugin": "^0.5.1",
     "@types/lodash": "^4.17.0",
     "@webgpu/types": "^0.1.40",
+    "concurrently": "^9.1.2",
     "conventional-recommended-bump": "^10.0.0",
     "cross-env": "^7.0.3",
     "electron": "^31.1.0",
+    "electron-builder": "^25.1.8",
     "electron-devtools-installer": "^3.2.0",
-    "electron-is-dev": "^3.0.1",
-    "foreman": "^3.0.1"
+    "foreman": "^3.0.1",
+    "wait-on": "^8.0.2"
   },
   "build": {
     "appId": "Zenghawtin",
-    "mac": {
-      "category": "your.app.category.type"
+    "files": [
+      "src/**/*",
+      "node_modules/**/*",
+      "build/**/*"
+    ],
+    "extraMetadata": {
+      "main": "build/main.mjs"
     }
-  }
+  },
+  "homepage": "./"
 }

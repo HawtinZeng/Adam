@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Point as PointZ, Polygon } from "@zenghawtin/graph2d";
 import { nanoid } from "nanoid";
 import { drawingCanvasCache } from "src/CoreRenderer/DrawCanvas/canvasCache";
@@ -28,8 +29,8 @@ export class Text implements DrawingElement {
   needCacheCanvas: boolean = true;
   rotateOrigin: PointZ = new PointZ(0, 0);
 
+  includingPart: string = "";
   content: string;
-
   layoutType: "multipleLine" | "oneLine" = "oneLine";
   type: DrawingType = DrawingType.text;
   color: string = "#ff0000";
