@@ -13,3 +13,5 @@ Hi, I am hawtin.
 - Attensions
 
 1. The Shot element is different with Circle, Rectangle elements..., when we click the screen shot icon, we will add this element into the scene, if we quit drawing, we will delete the added Shot element.(See src/App.tsx line 957)
+
+- Release V1.0.0 [link](./documents/releaseV1.0.0.md)

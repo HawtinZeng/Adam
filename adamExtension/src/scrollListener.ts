@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { uniqueId } from "lodash";
 import { ElementRect } from "../../commonModule/types";
 
